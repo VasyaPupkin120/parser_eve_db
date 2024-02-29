@@ -1,0 +1,12 @@
+{% extends "_base.html" %}
+
+{% block title %}Regions{% endblock title %}
+
+{% block content %}
+    <h1>Regions list</h1>
+{{ status }}
+<br>
+{% for region in regions %}
+    {{ region.region_id }}
+{% endfor %}
+{% endblock content %}

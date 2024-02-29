@@ -1,0 +1,8 @@
+{% extends "_base.html" %}
+{% block title %}Universe{% endblock title %}
+
+{% block content %}
+    <a class="p-2 text-dark" href="{% url 'dbeve_universe:systems' %}">Systems</a>
+    <a class="p-2 text-dark" href="{% url 'dbeve_universe:constellations' %}">Constellations</a>
+    <a class="p-2 text-dark" href="{% url 'dbeve_universe:regions' %}">Regions</a>
+{% endblock content %}
