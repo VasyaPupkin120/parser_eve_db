@@ -3,10 +3,10 @@
 {% block title %}Systems{% endblock title %}
 
 {% block content %}
-    <h1>Systems list</h1>
+    <h1><a href='{% url "dbeve_universe:universe" %}'>Universe</a> -> Systems</h1>
 {{ status }}
 <br>
 {% for system in systems %}
-    {{ system.system_id }}
+    <a href="https://zkillboard.com/system/{{ system.system_id }}/">{{ system.system_id }}</a>
 {% endfor %}
 {% endblock content %}

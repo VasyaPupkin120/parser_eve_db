@@ -3,10 +3,10 @@
 {% block title %}Regions{% endblock title %}
 
 {% block content %}
-    <h1>Regions list</h1>
+    <h1><a href='{% url "dbeve_universe:universe" %}'>Universe</a> -> Regions</h1>
 {{ status }}
 <br>
 {% for region in regions %}
-    {{ region.region_id }}
+    <a href="https://zkillboard.com/region/{{ region.region_id }}/">{{ region.region_id }}</a>
 {% endfor %}
 {% endblock content %}

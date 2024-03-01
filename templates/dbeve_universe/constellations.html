@@ -3,11 +3,11 @@
 {% block title %}Constellations{% endblock title %}
 
 {% block content %}
-    <h1>Constellations list</h1>
+    <h1><a href='{% url "dbeve_universe:universe" %}'>Universe</a> -> Constellations</h1>
 {{ status }}
 <br>
 {% for constellation in constellations %}
-    {{ constellation.constellation_id }}
+    <a href="https://zkillboard.com/constellation/{{ constellation.constellation_id }}/">{{ constellation.constellation_id }}</a>
 {% endfor %}
 {% endblock content %}
 
