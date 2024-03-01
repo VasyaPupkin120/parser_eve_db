@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'users',
     'dbeve_universe',
     'pages',
+    'requests_to_esi',
 ]
 
 MIDDLEWARE = [
