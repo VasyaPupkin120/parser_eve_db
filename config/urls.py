@@ -23,6 +23,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('dbeve/universe/', include("dbeve_universe.urls", namespace="dbeve_universe")),
 
+    # app requests to esi 
+    path("requests_to_esi/", include("requests_to_esi.urls", namespace="requests_to_esi")),
 
     # app pages
     path('dboverview/', db_overview, name="db_overview"),

@@ -15,6 +15,7 @@
                 <a href="{% url 'index' %}" class="navbar-brand my-0 mr-md-auto font-weight-normal">Main page</a>
                 <a href="#" class="navbar-brand my-0 mr-md-auto font-weight-normal">Compensations</a>
                 <a href="{% url 'db_overview' %}" class="navbar-brand my-0 mr-md-auto font-weight-normal">Database EVE</a>
+                <a href="{% url 'requests_to_esi:main_request' %}" class="navbar-brand my-0 mr-md-auto font-weight-normal">Requests ESI</a>
                 <a class="p-2 text-dark" href="{% url 'admin:index' %}">Admin Site</a>
                 <nav class="my-2 my-md-0 mr-md-3">
                     {% if user.is_authenticated %}
