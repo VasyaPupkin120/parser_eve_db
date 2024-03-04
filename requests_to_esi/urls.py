@@ -4,4 +4,5 @@ app_name = "requests_to_esi"
 urlpatterns = [
     path('', main_request, name="main_request"),
     path('get_one_system/', get_one_system, name="get_one_system"),
+    path('all_lines/', all_lines, name="all_lines"),
 ]

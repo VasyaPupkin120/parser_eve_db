@@ -7,6 +7,8 @@ from .services import request_data_one_system
 def main_request(request):
     return render(request, "requests_to_esi/main_request.html")
 
+
+
 def get_one_system(request):
     if request.method == "POST":
         sys_form = RequestSystemForm(request.POST)
@@ -21,3 +23,9 @@ def get_one_system(request):
         sys_form = RequestSystemForm()
     context = {"form": sys_form}
     return render(request, "requests_to_esi/request_one_system.html", context=context)
+
+
+def all_lines(request):
+    data = ResultJSON.objects.all()
+    return render(request, "requests_to_esi/all_lines.html", context={"data": data})
+
