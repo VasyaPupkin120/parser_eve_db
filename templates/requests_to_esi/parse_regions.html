@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+
+{% block title %}Parse regions{% endblock title %}
+
+{% block content %}
+    <h1>Parse all regions</h1>
+    {% if exception %}
+        {{ exception }}
+        {{ exception.extra_info }}
+    {% else %}
+        <form method="post" action={% url "requests_to_esi:parse_regions" %}>
+            {% csrf_token %}
+            <input type="submit" value="Parse all regions">
+        </form>
+    {% endif %}
+{% endblock content %}

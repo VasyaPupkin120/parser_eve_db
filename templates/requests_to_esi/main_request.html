@@ -4,6 +4,10 @@
 
 {% block content %}
     <h1>Requests to ESI</h1>
+    <a href='{% url "requests_to_esi:parse_regions"%}'>Parse regions</a>
+    <br>
+    <a href='{% url "requests_to_esi:parse_constellations"%}'>Parse constellations</a>
+    <br>
     <a href='{% url "requests_to_esi:get_one_system"%}'>Request one system</a>
     <br>
     <br>

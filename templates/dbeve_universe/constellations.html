@@ -7,7 +7,13 @@
 {{ status }}
 <br>
 {% for constellation in constellations %}
-    <a href="https://zkillboard.com/constellation/{{ constellation.constellation_id }}/">{{ constellation.constellation_id }}</a>
+    <div>
+        <a href="https://zkillboard.com/constellation/{{ constellation.constellation_id }}/">{{ constellation.constellation_id }}</a>
+        {{ constellation.position_x }}
+        {{ constellation.position_y }}
+        {{ constellation.position_z }}
+        <a href="https://zkillboard.com/region/{{ constellation.region.region_id }}/">{{ constellation.region.region_id }}</a>
+    </div>
 {% endfor %}
 {% endblock content %}
 
