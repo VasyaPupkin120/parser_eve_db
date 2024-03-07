@@ -33,7 +33,7 @@ def all_lines(request):
 def parse_regions(request):
     if request.method == "POST":
         try:
-            get_and_save_all_regions()
+            get_and_save_all_regions(action="update")
         except StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_regions.html", {"exception": e})
         return redirect(reverse("dbeve_universe:regions"))
@@ -42,7 +42,7 @@ def parse_regions(request):
 def parse_constellatons(request):
     if request.method == "POST":
         try:
-            get_and_save_all_constellations()
+            get_and_save_all_constellations(action="update")
         except StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_constellations.html", {"exception": e})
         return redirect(reverse("dbeve_universe:constellations"))

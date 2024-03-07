@@ -31,6 +31,7 @@ class Regions(models.Model):
     description = models.TextField(null=True)
     name = models.CharField(null=True)
     region_id = models.IntegerField(primary_key=True)
+    response_body = models.JSONField(null=True)
 
 class Constellations(models.Model):
     constellation_id = models.IntegerField(primary_key=True)
@@ -39,6 +40,7 @@ class Constellations(models.Model):
     position_y = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     position_z = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     region = models.ForeignKey("Regions",on_delete=models.CASCADE, null=True)
+    response_body = models.JSONField(null=True)
     # вместо поля systems - менеджер обратной связи на модель Systems
 #
 # class Systems(models.Model):

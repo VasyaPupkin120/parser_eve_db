@@ -8,7 +8,7 @@ import json
 
 
 
-def get_and_save_all_regions():
+def get_and_save_all_regions(action="update"):
     """
     Запрашиваем список id регионов, сравниваем с имеющимся списком id регионов в БД,
     если есть новые регионы - добавляем id этого региона в БД. 
@@ -21,9 +21,12 @@ def get_and_save_all_regions():
     all_id = GET_request_to_esi(url).json()
     all_id = list(all_id)
     for region_id in all_id:
-        get_and_save_one_region(region_id)
+        if action == "create":
+            create_one_region(region_id)
+        else:
+            update_one_region(region_id)
 
-def get_and_save_one_region(region_id):
+def create_one_region(region_id):
     """
     получает id региона, проверяет не полные ли данные по региону и если не полные - то
     выполняет запрос по этому id и сохраняет в БД. Если полные, то ничего не делает
@@ -37,10 +40,26 @@ def get_and_save_one_region(region_id):
                 region_id=resp["region_id"],
                 name=resp.get("name"),
                 description=resp.get("description"),
+                response_body=resp,
                 )
 
+def update_one_region(region_id):
+    """
+    Обновляет все данные региона
+    """
+    url = f"https://esi.evetech.net/latest/universe/regions/{region_id}/?datasource=tranquility&language=en"
+    resp = GET_request_to_esi(url).json()
+    Regions.objects.update_or_create(
+            region_id=resp["region_id"],
+            defaults={
+                "name": resp.get("name"),
+                "description": resp.get("description"),
+                "response_body": resp, 
+                }
+            )
 
-def get_and_save_all_constellations():
+
+def get_and_save_all_constellations(action="update"):
     """
     Функция запрашивает список id констеллций  - сразу всех 
     проходим по списку констелляций и отправляем каждую по очереди в get_and_save_one_constellations
@@ -49,10 +68,13 @@ def get_and_save_all_constellations():
     all_id = GET_request_to_esi(url).json()
     all_id = list(all_id)
     for constellation_id in all_id:
-        get_and_save_one_constellation(constellation_id)
+        if action == 'create':
+            create_one_constellation(constellation_id)
+        else:
+            update_one_constellation(constellation_id)
 
 
-def get_and_save_one_constellation(constellation_id):
+def create_one_constellation(constellation_id):
     """
     выполняем запрос инфы по констелляции, получаем всю инфу по ней
     """
@@ -71,8 +93,31 @@ def get_and_save_one_constellation(constellation_id):
                 position_y=resp.get("position")["y"],
                 position_z=resp.get("position")["z"],
                 region=region,
+                response_body=resp,
                 )
         print(constellation)
+
+def update_one_constellation(constellation_id):
+    """
+    обновление информации по констелляциям
+    """
+    url = f"https://esi.evetech.net/latest/universe/constellations/{constellation_id}/?datasource=tranquility&language=en"
+    resp = GET_request_to_esi(url).json()
+    region = Regions.objects.get(region_id=resp["region_id"])
+    constellation = Constellations.objects.update_or_create(
+            constellation_id=resp["constellation_id"],
+            defaults={
+                "name": resp.get("name"),
+                "position_x": resp.get("position")["x"],
+                "position_y": resp.get("position")["y"],
+                "position_z": resp.get("position")["z"],
+                "region": region,
+                "response_body": resp,
+                }
+            )
+
+
+
 
 def get_and_save_systems(list_systems:list):
     """
