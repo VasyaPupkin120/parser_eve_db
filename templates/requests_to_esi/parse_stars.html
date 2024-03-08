@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+
+{% block title %}Parse stars{% endblock title %}
+
+{% block content %}
+    <h1>Parse all stars</h1>
+    {% if exception %}
+        {{ exception }}
+        {{ exception.extra_info }}
+    {% else %}
+        <form method="post" action={% url "requests_to_esi:parse_stars" %}>
+            {% csrf_token %}
+            <input type="submit" value="Parse all stars">
+        </form>
+    {% endif %}
+{% endblock content %}

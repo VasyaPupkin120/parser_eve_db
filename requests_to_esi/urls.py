@@ -6,6 +6,7 @@ urlpatterns = [
     path('parse_regions/', parse_regions, name="parse_regions"),
     path('parse_constellations/', parse_constellatons, name="parse_constellations"),
     path('parse_systems/', parse_systems, name="parse_systems"),
+    path('parse_stars/', parse_stars, name="parse_stars"),
     path('get_one_system/', get_one_system, name="get_one_system"),
     path('all_lines/', all_lines, name="all_lines"),
 ]

@@ -120,11 +120,60 @@ def update_or_create_one_system(system_id):
                 "name": resp.get("name"),
                 "position_x": resp.get("position")["x"],
                 "position_y": resp.get("position")["y"],
-                "position_z": resp.get("position")["z"],
-                "security_class": resp.get("security_class"),
+                "position_z": resp.get("position")["z"], "security_class": resp.get("security_class"),
                 "security_status": resp.get("security_status"),
                 "system_id": resp["system_id"],
                 "response_body": resp,
                 }
             )
     print(f"Successful save to DB system: {resp['system_id']}")
+
+
+def update_or_create_all_stars():
+    """
+    Загружает из БД список систем, находит в response_body системы id звезды,
+    выполняет запрос, создает запись звезды.
+
+    причем что интересно, в теле ответа звезды нет информации об самой себе - об star_id
+    Приходится брать star_id из информации об системе
+    """
+    count = 1
+    star_id = None
+    systems = Systems.objects.all()
+    amount_systems = len(systems)
+    print("Start downloading information by stars.")
+    for system in systems:
+        print(f"\nLoad: {count}/{amount_systems}")
+        star_id = system.response_body.get("star_id")
+
+        if not star_id:
+            print(f"System {system.system_id} has no star")
+            count += 1 
+            continue
+
+        try:
+            Stars.objects.get(star_id=star_id)
+            print(f"Star {star_id} already exists in DB")
+            count += 1
+            continue
+        except ObjectDoesNotExist:
+            ...
+
+        url = f"https://esi.evetech.net/latest/universe/stars/{star_id}/?datasource=tranquility"
+        resp = GET_request_to_esi(url).json()
+        print(f"Successful load star: {star_id}")
+        Stars.objects.update_or_create(star_id=star_id,
+                                       defaults={
+                                           "age": resp.get("age"),
+                                           "luminosity": resp.get("luminosity"),
+                                           "name": resp.get("name"),
+                                           "radius": resp.get("radius"),
+                                           "solar_system": system,
+                                           "spectral_class": resp.get("spectral_class"),
+                                           "star_id": star_id,
+                                           "temperature": resp.get("temperature"),
+                                           "response_body": resp,
+                                           }
+                                       )
+        print(f"Successful save to DB star: {star_id}")
+        count += 1 

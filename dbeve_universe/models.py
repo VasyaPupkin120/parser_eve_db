@@ -59,19 +59,22 @@ class Systems(models.Model):
     system_id = models.IntegerField(primary_key=True)
     response_body = models.JSONField(null=True)
 
-# class Star(models.Model):
-#     """
-#     Вторична для Systems
-#     Модель одной звезды
-#     """
-#     age = models.IntegerField(null=True)
-#     luminosity = models.FloatField(null=True)
-#     name = models.CharField(null=True)
-#     radius = models.IntegerField(null=True)
-#     solar_system_id = models.OneToOneField("Systems", on_delete=CASCADE, null=True)
-#     spectral_class = models.CharField(null=True)
-#     temperature = models.IntegerField(null=True)
-#     type_id = models.IntegerField(null=True)
+class Stars(models.Model):
+    """
+    Связана с Systems
+    Связана с Type
+    Модель одной звезды
+    """
+    # внешний ключ на Type добавить позже
+    age = models.BigIntegerField(null=True)
+    luminosity = models.FloatField(null=True)
+    name = models.CharField(null=True)
+    radius = models.BigIntegerField(null=True)
+    solar_system = models.OneToOneField("Systems", on_delete=CASCADE, null=True)
+    spectral_class = models.CharField(null=True)
+    star_id = models.IntegerField(primary_key=True)
+    temperature = models.IntegerField(null=True)
+    response_body = models.JSONField(null=True)
 #
 # class Celestials(models.Model):
 #     """

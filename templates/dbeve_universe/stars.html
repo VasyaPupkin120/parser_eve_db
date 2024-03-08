@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+
+{% block title %}Stars{% endblock title %}
+
+{% block content %}
+    <h1><a href='{% url "dbeve_universe:universe" %}'>Universe</a> -> Stars</h1>
+{{ status }}
+<br>
+{% for star in stars %}
+    <div>
+        {{ star.name }}
+        {{ star.star_id }}
+    </div>
+{% endfor %}
+{% endblock content %}
+

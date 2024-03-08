@@ -57,3 +57,11 @@ def parse_systems(request):
         return redirect(reverse("dbeve_universe:systems"))
     return render(request, "requests_to_esi/parse_systems.html")
 
+def parse_stars(request):
+    if request.method == "POST":
+        try:
+            update_or_create_all_stars()
+        except StatusCodeNot200Exception as e:
+            return render(request, "requests_to_esi/parse_stars.html", {"exception": e})
+        return redirect(reverse("dbeve_universe:stars"))
+    return render(request, "requests_to_esi/parse_stars.html")
