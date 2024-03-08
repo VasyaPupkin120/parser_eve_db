@@ -25,7 +25,6 @@ from django.db.models.deletion import CASCADE
 #     Types
 
 
-# Create your models here.
 class Regions(models.Model):
     # вместо поля constellations - менеджер обратной связи на модель Constellations
     description = models.TextField(null=True)
@@ -33,7 +32,9 @@ class Regions(models.Model):
     region_id = models.IntegerField(primary_key=True)
     response_body = models.JSONField(null=True)
 
+
 class Constellations(models.Model):
+    # вместо поля systems - менеджер обратной связи на модель Systems
     constellation_id = models.IntegerField(primary_key=True)
     name = models.CharField(null=True)
     position_x = models.DecimalField(max_digits=32, decimal_places=0, null=True)
@@ -41,23 +42,23 @@ class Constellations(models.Model):
     position_z = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     region = models.ForeignKey("Regions",on_delete=models.CASCADE, null=True)
     response_body = models.JSONField(null=True)
-    # вместо поля systems - менеджер обратной связи на модель Systems
-#
-# class Systems(models.Model):
-#     constellation_id = models.ForeignKey("Constellations", on_delete=CASCADE, null=True)
-#     name = models.CharField(null=True)
-#     # вместо поля plantes - менеджер обратной связи на модель Celestials
-#     position_x = models.IntegerField(null=True)
-#     position_y = models.IntegerField(null=True)
-#     position_z = models.IntegerField(null=True)
-#     security_class = models.CharField(null=True)
-#     security_status = models.FloatField(null=True)
-#     # вместо поля star_id - менеджер обратной связи на модель Star
-#     # здесь закончил писать про связи
-#     stargates = models.JSONField(null=True)
-#     stations = models.JSONField(null=True)
-#     system_id = models.IntegerField(primary_key=True)
-#
+
+
+class Systems(models.Model):
+    # вместо поля celestials(planets) - менеджер обратной связи на модель Celestials
+    # вместо поля star - менеджер обратной связи на модель Star
+    # вместо поля stargates - менеджер обратной связи на Stargates
+    # вместо поля stations - менеджер обратной связи на Stations
+    constellation = models.ForeignKey("Constellations", on_delete=CASCADE, null=True)
+    name = models.CharField(null=True)
+    position_x = models.DecimalField(max_digits=32, decimal_places=0, null=True)
+    position_y = models.DecimalField(max_digits=32, decimal_places=0, null=True)
+    position_z = models.DecimalField(max_digits=32, decimal_places=0, null=True)
+    security_class = models.CharField(null=True)
+    security_status = models.FloatField(null=True)
+    system_id = models.IntegerField(primary_key=True)
+    response_body = models.JSONField(null=True)
+
 # class Star(models.Model):
 #     """
 #     Вторична для Systems
