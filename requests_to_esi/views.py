@@ -3,7 +3,7 @@ from django.urls import reverse
 from .models import ResultJSON
 from requests_to_esi.forms import RequestSystemForm
 from .services.base_requests import request_data_one_system, StatusCodeNot200Exception
-from .services.universe import get_and_save_all_regions, get_and_save_all_constellations
+from .services.universe import *
 
 # Create your views here.
 def main_request(request):
@@ -33,7 +33,7 @@ def all_lines(request):
 def parse_regions(request):
     if request.method == "POST":
         try:
-            get_and_save_all_regions(action="update")
+            update_or_create_all_regions()
         except StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_regions.html", {"exception": e})
         return redirect(reverse("dbeve_universe:regions"))
@@ -42,8 +42,18 @@ def parse_regions(request):
 def parse_constellatons(request):
     if request.method == "POST":
         try:
-            get_and_save_all_constellations(action="update")
+            update_or_create_all_constellations()
         except StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_constellations.html", {"exception": e})
         return redirect(reverse("dbeve_universe:constellations"))
     return render(request, "requests_to_esi/parse_constellations.html")
+
+def parse_systems(request):
+    if request.method == "POST":
+        try:
+            update_or_create_all_systems()
+        except StatusCodeNot200Exception as e:
+            return render(request, "requests_to_esi/parse_systems.html", {"exception": e})
+        return redirect(reverse("dbeve_universe:systems"))
+    return render(request, "requests_to_esi/parse_systems.html")
+

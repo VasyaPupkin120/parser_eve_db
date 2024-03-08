@@ -6,12 +6,11 @@ def universe(request):
 
 # Create your views here.
 def systems_list(request):
-    ...
-    # if not Systems.objects.all():
-    #     return render(request, "dbeve_universe/systems.html", context={"status": "отсутствуют данные в БД"})
-    # else:
-    #     systems = Systems.objects.all()
-    #     return render(request, "dbeve_universe/systems.html", context={"systems": systems, "status": "Данные загружены из БД"})
+    if not Systems.objects.all():
+        return render(request, "dbeve_universe/systems.html", context={"status": "отсутствуют данные в БД"})
+    else:
+        systems = Systems.objects.all()
+        return render(request, "dbeve_universe/systems.html", context={"systems": systems, "status": "Данные загружены из БД"})
 
 def constellations_list(request):
     if not Constellations.objects.all():
