@@ -1,6 +1,5 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from .models import ResultJSON
 from requests_to_esi.forms import RequestSystemForm
 from .services.base_requests import request_data_one_system, StatusCodeNot200Exception
 from .services.universe import *
@@ -23,11 +22,6 @@ def get_one_system(request):
         sys_form = RequestSystemForm()
     context = {"form": sys_form}
     return render(request, "requests_to_esi/request_one_system.html", context=context)
-
-
-def all_lines(request):
-    data = ResultJSON.objects.all()
-    return render(request, "requests_to_esi/all_lines.html", context={"data": data})
 
 
 def parse_regions(request):

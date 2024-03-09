@@ -1,6 +1,5 @@
 import requests
 import time
-from requests_to_esi.models import ResultJSON
 
 class StatusCodeNot200Exception(Exception):
     def __init__(self, message, status_code, limit_remain, limit_reset, error_limited, url, resp):
@@ -15,7 +14,6 @@ class StatusCodeNot200Exception(Exception):
 def request_data_one_system(system_id):
     url = f"https://esi.evetech.net/latest/universe/systems/{system_id}/?datasource=tranquility&language=en"
     response = requests.get(url).json()
-    ResultJSON.objects.create(request=url, response=response)
 
 
 def GET_request_to_esi(url):
