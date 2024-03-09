@@ -106,7 +106,10 @@ def update_or_create_one_system(system_id, action="create"):
     """
     запрашиваем и сохраняем данные по одной системе
     """
-    # можно отключить проверку наличия системы в БД и в любом случае загружать и обновлять данные
+
+    # если не хочется сначала обращаться в esi а потом сравнивать поля. 
+    # этот шаг пропускается для случая, когда нужно обновить запись - 
+    # так как для обновления нужно и сходить в esi и сравнить поля
     if action == "create":
         try:
             Systems.objects.get(system_id=system_id)
@@ -114,6 +117,7 @@ def update_or_create_one_system(system_id, action="create"):
             return
         except ObjectDoesNotExist:
             ...
+
     url = f"https://esi.evetech.net/latest/universe/systems/{system_id}/?datasource=tranquility&language=en"
     resp = GET_request_to_esi(url).json()
     print(f"Successful load system: {resp['system_id']}")

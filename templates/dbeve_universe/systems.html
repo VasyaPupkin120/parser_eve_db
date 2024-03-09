@@ -7,6 +7,6 @@
 {{ status }}
 <br>
 {% for system in systems %}
-    <a href="https://zkillboard.com/system/{{ system.system_id }}/">{{ system.system_id }}</a>
+<a href="{% url 'dbeve_universe:one_system' system.system_id %}">{{ system.system_id }}</a>
 {% endfor %}
 {% endblock content %}

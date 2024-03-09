@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from .models import *
 
@@ -25,6 +26,14 @@ def systems_list(request):
     else:
         systems = Systems.objects.all()
         return render(request, "dbeve_universe/systems.html", context={"systems": systems, "status": "Данные загружены из БД"})
+
+def one_system(request, system_id):
+    try:
+        system = Systems.objects.get(system_id=system_id)
+    except ObjectDoesNotExist:
+        return render(request, "dbeve_universe/one_system.html", context={"status": "отсутствуют данные в БД"})
+    return render(request, "dbeve_universe/one_system.html", context={"system": system, "status": "Данные загружены из БД"})
+
 
 def stars_list(request):
     if not Stars.objects.all():

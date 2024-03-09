@@ -1,0 +1,14 @@
+{% extends "_base.html" %}
+
+{% block title %}One system{% endblock title %}
+
+{% block content %}
+    <h1><a href='{% url "dbeve_universe:universe" %}'>Universe</a>-><a href='{% url "dbeve_universe:systems" %}'>Systems</a>-> One System</h1>
+{{ status }}
+<br>
+    ZKB: <a href="https://zkillboard.com/system/{{ system.system_id }}/">{{ system.system_id }}</a>
+    <br>
+    Name: {{ system.name }}
+    <br>
+    Constellation: {{ system.constellation_id }}
+{% endblock content %}

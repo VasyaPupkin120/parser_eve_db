@@ -1,5 +1,5 @@
 from django import forms
 
-class RequestSystemForm(forms.Form):
+class ParseOneSystemForm(forms.Form):
     system_id = forms.IntegerField()
     # request = forms.CharField(label="запрос")
