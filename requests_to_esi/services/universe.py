@@ -10,8 +10,11 @@ import json
 
 # выглядит как чрезмерное дублирование кода, но хз как это обойти - слишком много возни с разными полями.
 
+# регионы, констелляции - их не так много, поэтому они в любом случае загружаются с esi и выполняется update_or_create
+# систем много, поэтому нужно точно знать, нужен ли запрос в esi для получения новой информации и обновления данных в БД
+# звезды вроде как не должны изменяться, поэтому оставил как есть. При необходимости можно также разделить случаи или снова отпарсить все звезды
 
-def update_or_create_all_regions():
+def create_all_regions():
     """
     Получение и обработка списка регионов.
     """
@@ -23,10 +26,10 @@ def update_or_create_all_regions():
     print("Start downloading information by region.")
     for region_id in all_id:
         print(f"\nLoad: {count}/{len(all_id)}")
-        update_or_create_one_region(region_id)
+        create_one_region(region_id)
         count += 1
 
-def update_or_create_one_region(region_id):
+def create_one_region(region_id):
     """
     Запрашивает и обновляет (или создает) данные конкретного региона.
     """
@@ -45,7 +48,7 @@ def update_or_create_one_region(region_id):
     print(f"Successful save to DB region: {resp['region_id']}\n")
 
 
-def update_or_create_all_constellations():
+def create_all_constellations():
     """
     Запрашивает и обрабатывает весь список констелляций.
     """
@@ -57,10 +60,10 @@ def update_or_create_all_constellations():
     print("Start downloading information by constellation.")
     for constellation_id in all_id:
         print(f"\nLoad: {count}/{len(all_id)}")
-        update_or_create_one_constellation(constellation_id)
+        create_one_constellation(constellation_id)
         count += 1
 
-def update_or_create_one_constellation(constellation_id):
+def create_one_constellation(constellation_id):
     """
     выполняем запрос инфы по конкретной констелляции, сохраняем информацию в БД
     """
@@ -83,7 +86,7 @@ def update_or_create_one_constellation(constellation_id):
     print(f"Successful save to DB constellation: {resp['constellation_id']}")
 
 
-def update_or_create_all_systems():
+def create_all_systems():
     """
     Запрашивает у esi список систем, обрабатывает их.
     """
@@ -99,16 +102,18 @@ def update_or_create_all_systems():
         count += 1
 
 
-def update_or_create_one_system(system_id):
+def update_or_create_one_system(system_id, action="create"):
     """
     запрашиваем и сохраняем данные по одной системе
     """
-    try:
-        Systems.objects.get(system_id=system_id)
-        print(f"System {system_id} already exists in DB")
-        return
-    except ObjectDoesNotExist:
-        ...
+    # можно отключить проверку наличия системы в БД и в любом случае загружать и обновлять данные
+    if action == "create":
+        try:
+            Systems.objects.get(system_id=system_id)
+            print(f"System {system_id} already exists in DB")
+            return
+        except ObjectDoesNotExist:
+            ...
     url = f"https://esi.evetech.net/latest/universe/systems/{system_id}/?datasource=tranquility&language=en"
     resp = GET_request_to_esi(url).json()
     print(f"Successful load system: {resp['system_id']}")
@@ -129,7 +134,7 @@ def update_or_create_one_system(system_id):
     print(f"Successful save to DB system: {resp['system_id']}")
 
 
-def update_or_create_all_stars():
+def create_all_stars():
     """
     Загружает из БД список систем, находит в response_body системы id звезды,
     выполняет запрос, создает запись звезды.
