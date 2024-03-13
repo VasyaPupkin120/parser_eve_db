@@ -1,3 +1,4 @@
+from typing import Literal
 from django.core.exceptions import ObjectDoesNotExist
 from .base_requests import GET_request_to_esi
 from dbeve_universe.models import Regions, Constellations
@@ -98,11 +99,11 @@ def create_all_systems():
     print("Start downloading information by system.")
     for system_id in all_id:
         print(f"\nLoad: {count}/{len(all_id)}")
-        update_or_create_one_system(system_id)
+        update_or_create_one_system(system_id, "create")
         count += 1
 
 
-def update_or_create_one_system(system_id, action="create"):
+def update_or_create_one_system(system_id, action: Literal["create", "update"]):
     """
     запрашиваем и сохраняем данные по одной системе
     """
@@ -129,7 +130,8 @@ def update_or_create_one_system(system_id, action="create"):
                 "name": resp.get("name"),
                 "position_x": resp.get("position")["x"],
                 "position_y": resp.get("position")["y"],
-                "position_z": resp.get("position")["z"], "security_class": resp.get("security_class"),
+                "position_z": resp.get("position")["z"],
+                "security_class": resp.get("security_class"),
                 "security_status": resp.get("security_status"),
                 "system_id": resp["system_id"],
                 "response_body": resp,

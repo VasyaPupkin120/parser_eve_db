@@ -1,0 +1,13 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}All alliances{% endblock title %}
+
+{% block content %}
+    {% for alliance in alliances %}
+        <div>
+            <img src="img/alliances/{{ alliance.nameicon }}"/>
+            <a class="p-2 text-dark" href="https://zkillboard.com/alliance/{{ allinace.alliance_id }}/">{{ allinace.alliance_id }}</a>
+        </div>
+    {% endfor %}
+{% endblock content %}

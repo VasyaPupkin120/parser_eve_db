@@ -13,6 +13,7 @@ psycopg2-binary = "^2.9.9"
 environs = {version = "^10.3.0", extras = ["django"]}
 django-allauth = "^0.61.1"
 django-stubs = "^4.2.7"
+pillow = "^10.2.0"
 
 
 [build-system]

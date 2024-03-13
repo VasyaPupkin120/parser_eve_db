@@ -4,14 +4,18 @@
 
 {% block content %}
     <h1>Requests to ESI</h1>
+    <h2>Universe</h2>
     <a href='{% url "requests_to_esi:parse_regions"%}'>Parse regions</a>
     <br>
     <a href='{% url "requests_to_esi:parse_constellations"%}'>Parse constellations</a>
     <br>
     <a href='{% url "requests_to_esi:parse_systems"%}'>Parse systems</a>
     <br>
+    <a href='{% url "requests_to_esi:parse_one_system"%}'>Parse one system</a>
+    <br>
     <a href='{% url "requests_to_esi:parse_stars"%}'>Parse stars</a>
     <br>
-    <a href='{% url "requests_to_esi:parse_one_system"%}'>Parse one system</a>
+    <h2>Social</h2>
+    <a href='{% url "requests_to_esi:parse_alliances"%}'>Parse alliances</a>
     <br>
 {% endblock content %}

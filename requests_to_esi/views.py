@@ -1,7 +1,8 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests_to_esi.forms import ParseOneSystemForm
-from .services.base_requests import request_data_one_system, StatusCodeNot200Exception
+from requests_to_esi.services.social import create_or_update_all_alliances
+from .services.base_requests import StatusCodeNot200Exception
 from .services.universe import *
 
 # Create your views here.
@@ -57,3 +58,13 @@ def parse_stars(request):
             return render(request, "requests_to_esi/parse_stars.html", {"exception": e})
         return redirect(reverse("dbeve_universe:stars"))
     return render(request, "requests_to_esi/parse_stars.html")
+
+def parse_alliances(request):
+    if request.method == "POST":
+        try:
+            create_or_update_all_alliances("create")
+        except StatusCodeNot200Exception as e:
+            return render(request, "requests_to_esi/parse_alliances.html", {"exception": e})
+        return redirect(reverse("dbeve_social:alliances"))
+    return render(request, "requests_to_esi/parse_alliances.html")
+

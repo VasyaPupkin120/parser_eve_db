@@ -60,8 +60,9 @@ INSTALLED_APPS = [
 
     # local
     'users',
-    'dbeve_universe',
     'pages',
+    'dbeve_universe',
+    'dbeve_social',
     'requests_to_esi',
 ]
 
@@ -155,15 +156,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/staticfiles/'
-STATICFILES_DIRS = (str(BASE_DIR.joinpath('static')),)
-STATIC_ROOT = str(BASE_DIR.joinpath('staticfiles'))
+# STATICFILES_DIRS = (str(BASE_DIR.joinpath('static')),)
+STATICFILES_DIRS = (BASE_DIR.joinpath('static'),)
+# STATIC_ROOT = str(BASE_DIR.joinpath('staticfiles'))
+STATIC_ROOT = BASE_DIR.joinpath('staticfiles')
 STATICFILES_FINDERS = [
         "django.contrib.staticfiles.finders.FileSystemFinder",
         "django.contrib.staticfiles.finders.AppDirectoriesFinder",
         ]
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = str(BASE_DIR.joinpath("media"))
+# MEDIA_ROOT = str(BASE_DIR.joinpath("media"))
+MEDIA_ROOT = BASE_DIR.joinpath("media")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

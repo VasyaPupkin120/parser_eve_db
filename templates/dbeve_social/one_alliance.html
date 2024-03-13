@@ -1,0 +1,11 @@
+{% extends "_base.html" %}
+{% load static %}
+{% block title %}One alliance{% endblock title %}
+
+{% block content %}
+    <div>
+        <img src="{% static 'img/alliances/'%}{{ alliance.nameicon }}" width="40" height="40"/>
+        <a class="p-2 text-dark" href="https://zkillboard.com/alliance/{{ alliance.alliance_id }}/">{{ alliance.alliance_id }}</a>
+    </div>
+
+{% endblock content %}
