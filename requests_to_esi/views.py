@@ -1,9 +1,7 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests_to_esi.forms import ParseOneSystemForm
-from requests_to_esi.services.social import create_or_update_all_alliances
-from .services.base_requests import StatusCodeNot200Exception
-from .services.universe import *
+from .services import base_requests, one_entity, social, types, universe
 
 # Create your views here.
 def main_request(request):
@@ -12,8 +10,8 @@ def main_request(request):
 def parse_regions(request):
     if request.method == "POST":
         try:
-            create_all_regions()
-        except StatusCodeNot200Exception as e:
+            universe.create_all_regions()
+        except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_regions.html", {"exception": e})
         return redirect(reverse("dbeve_universe:regions"))
     return render(request, "requests_to_esi/parse_regions.html")
@@ -21,8 +19,8 @@ def parse_regions(request):
 def parse_constellatons(request):
     if request.method == "POST":
         try:
-            create_all_constellations()
-        except StatusCodeNot200Exception as e:
+            universe.create_all_constellations()
+        except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_constellations.html", {"exception": e})
         return redirect(reverse("dbeve_universe:constellations"))
     return render(request, "requests_to_esi/parse_constellations.html")
@@ -30,8 +28,8 @@ def parse_constellatons(request):
 def parse_systems(request):
     if request.method == "POST":
         try:
-            create_all_systems()
-        except StatusCodeNot200Exception as e:
+            universe.create_all_systems()
+        except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_systems.html", {"exception": e})
         return redirect(reverse("dbeve_universe:systems"))
     return render(request, "requests_to_esi/parse_systems.html")
@@ -42,8 +40,8 @@ def parse_one_system(request):
         if sys_form.is_valid():
             system_id = sys_form.cleaned_data["system_id"]
         try:
-            update_or_create_one_system(system_id, action="update")
-        except StatusCodeNot200Exception as e:
+            one_entity.create_or_update_one_entity("system", system_id, "update")
+        except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_one_system.html", {"exception": e})
         return redirect(reverse("dbeve_universe:one_system", kwargs={"system_id": system_id}))
     sys_form = ParseOneSystemForm()
@@ -53,8 +51,8 @@ def parse_one_system(request):
 def parse_stars(request):
     if request.method == "POST":
         try:
-            create_all_stars()
-        except StatusCodeNot200Exception as e:
+            universe.create_all_stars()
+        except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_stars.html", {"exception": e})
         return redirect(reverse("dbeve_universe:stars"))
     return render(request, "requests_to_esi/parse_stars.html")
@@ -62,8 +60,8 @@ def parse_stars(request):
 def parse_alliances(request):
     if request.method == "POST":
         try:
-            create_or_update_all_alliances("create")
-        except StatusCodeNot200Exception as e:
+            social.create_or_update_all_alliances("create")
+        except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_alliances.html", {"exception": e})
         return redirect(reverse("dbeve_social:alliances"))
     return render(request, "requests_to_esi/parse_alliances.html")

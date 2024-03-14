@@ -1,6 +1,7 @@
 from typing import Literal
 from django.core.exceptions import ObjectDoesNotExist
-from .base_requests import GET_request_to_esi
+from .base_requests import GET_request_to_esi 
+from .one_entity import create_or_update_one_entity
 from dbeve_universe.models import Regions, Constellations
 from dbeve_universe.models import *
 import json
@@ -15,6 +16,7 @@ import json
 # систем много, поэтому нужно точно знать, нужен ли запрос в esi для получения новой информации и обновления данных в БД
 # звезды вроде как не должны изменяться, поэтому оставил как есть. При необходимости можно также разделить случаи или снова отпарсить все звезды
 
+
 def create_all_regions():
     """
     Получение и обработка списка регионов.
@@ -27,26 +29,8 @@ def create_all_regions():
     print("Start downloading information by region.")
     for region_id in all_id:
         print(f"\nLoad: {count}/{len(all_id)}")
-        create_one_region(region_id)
+        create_or_update_one_entity("region", region_id, "create")
         count += 1
-
-def create_one_region(region_id):
-    """
-    Запрашивает и обновляет (или создает) данные конкретного региона.
-    """
-    url = f"https://esi.evetech.net/latest/universe/regions/{region_id}/?datasource=tranquility&language=en"
-    resp = GET_request_to_esi(url).json()
-    print(f"Successful load region: {resp['region_id']}")
-    Regions.objects.update_or_create(
-            region_id=resp["region_id"],
-            defaults={
-                "region_id": resp["region_id"],
-                "name": resp.get("name"),
-                "description": resp.get("description"),
-                "response_body": resp, 
-                }
-            )
-    print(f"Successful save to DB region: {resp['region_id']}\n")
 
 
 def create_all_constellations():
@@ -61,30 +45,8 @@ def create_all_constellations():
     print("Start downloading information by constellation.")
     for constellation_id in all_id:
         print(f"\nLoad: {count}/{len(all_id)}")
-        create_one_constellation(constellation_id)
+        create_or_update_one_entity("constellation", constellation_id, "create")
         count += 1
-
-def create_one_constellation(constellation_id):
-    """
-    выполняем запрос инфы по конкретной констелляции, сохраняем информацию в БД
-    """
-    url = f"https://esi.evetech.net/latest/universe/constellations/{constellation_id}/?datasource=tranquility&language=en"
-    resp = GET_request_to_esi(url).json()
-    print(f"Successful load constellation: {resp['constellation_id']}")
-    region = Regions.objects.get(region_id=resp["region_id"])
-    Constellations.objects.update_or_create(
-            constellation_id=resp["constellation_id"],
-            defaults={
-                "constellation_id": resp["constellation_id"],
-                "name": resp.get("name"),
-                "position_x": resp.get("position")["x"],
-                "position_y": resp.get("position")["y"],
-                "position_z": resp.get("position")["z"],
-                "region": region,
-                "response_body": resp,
-                }
-            )
-    print(f"Successful save to DB constellation: {resp['constellation_id']}")
 
 
 def create_all_systems():
@@ -99,45 +61,8 @@ def create_all_systems():
     print("Start downloading information by system.")
     for system_id in all_id:
         print(f"\nLoad: {count}/{len(all_id)}")
-        update_or_create_one_system(system_id, "create")
+        create_or_update_one_entity("system", system_id, "create")
         count += 1
-
-
-def update_or_create_one_system(system_id, action: Literal["create", "update"]):
-    """
-    запрашиваем и сохраняем данные по одной системе
-    """
-
-    # если не хочется сначала обращаться в esi а потом сравнивать поля. 
-    # этот шаг пропускается для случая, когда нужно обновить запись - 
-    # так как для обновления нужно и сходить в esi и сравнить поля
-    if action == "create":
-        try:
-            Systems.objects.get(system_id=system_id)
-            print(f"System {system_id} already exists in DB")
-            return
-        except ObjectDoesNotExist:
-            ...
-
-    url = f"https://esi.evetech.net/latest/universe/systems/{system_id}/?datasource=tranquility&language=en"
-    resp = GET_request_to_esi(url).json()
-    print(f"Successful load system: {resp['system_id']}")
-    constellation = Constellations.objects.get(constellation_id=resp["constellation_id"])
-    Systems.objects.update_or_create(
-            system_id=resp["system_id"],
-            defaults={
-                "constellation": constellation,
-                "name": resp.get("name"),
-                "position_x": resp.get("position")["x"],
-                "position_y": resp.get("position")["y"],
-                "position_z": resp.get("position")["z"],
-                "security_class": resp.get("security_class"),
-                "security_status": resp.get("security_status"),
-                "system_id": resp["system_id"],
-                "response_body": resp,
-                }
-            )
-    print(f"Successful save to DB system: {resp['system_id']}")
 
 
 def create_all_stars():
@@ -149,7 +74,6 @@ def create_all_stars():
     Приходится брать star_id из информации об системе
     """
     count = 1
-    star_id = None
     systems = Systems.objects.all()
     amount_systems = len(systems)
     print("Start downloading information by stars.")
@@ -161,30 +85,5 @@ def create_all_stars():
             print(f"System {system.system_id} has no star")
             count += 1 
             continue
-
-        try:
-            Stars.objects.get(star_id=star_id)
-            print(f"Star {star_id} already exists in DB")
-            count += 1
-            continue
-        except ObjectDoesNotExist:
-            ...
-
-        url = f"https://esi.evetech.net/latest/universe/stars/{star_id}/?datasource=tranquility"
-        resp = GET_request_to_esi(url).json()
-        print(f"Successful load star: {star_id}")
-        Stars.objects.update_or_create(star_id=star_id,
-                                       defaults={
-                                           "age": resp.get("age"),
-                                           "luminosity": resp.get("luminosity"),
-                                           "name": resp.get("name"),
-                                           "radius": resp.get("radius"),
-                                           "solar_system": system,
-                                           "spectral_class": resp.get("spectral_class"),
-                                           "star_id": star_id,
-                                           "temperature": resp.get("temperature"),
-                                           "response_body": resp,
-                                           }
-                                       )
-        print(f"Successful save to DB star: {star_id}")
+        create_or_update_one_entity(entity="star", entity_id=star_id, action="create", solar_system=system)
         count += 1 
