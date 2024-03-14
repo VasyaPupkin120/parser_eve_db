@@ -3,7 +3,9 @@
 
 {% block content %}
     <div>
-        <!-- временная ссылка на страничку одного альянса -->
         <a class="p-2 text-dark" href="{% url 'dbeve_social:one_alliance' 99012122 %}">Hold my probs alliance</a>
+    </div>
+    <div>
+        <a class="p-2 text-dark" href="{% url 'dbeve_social:all_alliances' %}">All alliances</a>
     </div>
 {% endblock content %}

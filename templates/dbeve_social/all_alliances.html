@@ -5,9 +5,7 @@
 
 {% block content %}
     {% for alliance in alliances %}
-        <div>
-            <img src="img/alliances/{{ alliance.nameicon }}"/>
-            <a class="p-2 text-dark" href="https://zkillboard.com/alliance/{{ allinace.alliance_id }}/">{{ allinace.alliance_id }}</a>
-        </div>
+            <img src="{% static 'img/alliances/'%}{{ alliance.nameicon }}" height="40" width="40"/>
+            <a class="p-2 text-dark" href="https://zkillboard.com/alliance/{{ alliance.alliance_id }}/">{{ alliance.alliance_id }}</a>
     {% endfor %}
 {% endblock content %}

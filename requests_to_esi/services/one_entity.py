@@ -128,7 +128,7 @@ def create_or_update_one_entity(
         print(f"Successful save to DB system: {resp['system_id']}")
 
     # парсер звезды
-    # должен получать ссылку на звезду, с которой будет связан
+    # должен через аргумент функции kwargs["solar_system"] получать ссылку на звезду, с которой будет связан
     if entity == "star":
         if action == "create":
             try:
@@ -146,7 +146,7 @@ def create_or_update_one_entity(
                                            "luminosity": resp.get("luminosity"),
                                            "name": resp.get("name"),
                                            "radius": resp.get("radius"),
-                                           "solar_system": kwargs["solar_system"], # систему возможно передать только через аргументы
+                                           "solar_system": kwargs["solar_system"],
                                            "spectral_class": resp.get("spectral_class"),
                                            "star_id": entity_id,
                                            "temperature": resp.get("temperature"),

@@ -8,6 +8,7 @@ app_name = "dbeve_social"
 urlpatterns = [
     path('', social, name="social"),
     path('one_alliance/<int:alliance_id>/', one_alliance, name="one_alliance"),
+    path('all_alliances/', all_alliances, name="all_alliances"),
 ]
 
 if settings.DEBUG:

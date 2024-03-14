@@ -80,7 +80,6 @@ def create_all_stars():
     for system in systems:
         print(f"\nLoad: {count}/{amount_systems}")
         star_id = system.response_body.get("star_id")
-
         if not star_id:
             print(f"System {system.system_id} has no star")
             count += 1 
