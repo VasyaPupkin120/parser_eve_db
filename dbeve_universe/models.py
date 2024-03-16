@@ -116,3 +116,25 @@ class Stars(models.Model):
 #     """
 #     group_id = models.ForeignKey("Groups", on_delete=CASCADE, null=True)
 #     ...
+
+class Stations(models.Model):
+    """
+    """
+    station_id = models.BigIntegerField(primary_key=True)
+
+class Bloodlines(models.Model):
+    """
+    """
+    bloodline_id = models.BigIntegerField(primary_key=True)
+
+class Races(models.Model):
+    """
+    """
+    race_id = models.BigIntegerField(primary_key=True)
+
+class Factions(models.Model):
+    """
+    Модель государства, нужна для указания принадлежности стороны 
+    в фрак войнах.
+    """
+    faction_id = models.BigIntegerField(primary_key=True)

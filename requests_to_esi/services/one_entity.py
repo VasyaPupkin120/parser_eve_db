@@ -12,6 +12,23 @@ from dbeve_social.models import Alliances
 #                          Парсинг одной сущности.                            #
 ###############################################################################
 
+def get_associated_corp(alliance_id, corp_creator_id, corp_executor_id):
+    """
+    Получает id алли, выполняет запрос, возвращает json-ответ
+    не суммирует id корпы-экзекутора и корпы-основателя - исключительно 
+    результат запроса на url
+    """
+    url = f"https://esi.evetech.net/latest/alliances/{alliance_id}/corporations/?datasource=tranquility"
+    print(f"Start load list associated corporation for alliance {alliance_id}")
+    corporations = GET_request_to_esi(url).json() # приходит простой список
+    if corp_creator_id:
+        corporations.append(corp_creator_id)
+    if corp_executor_id:
+        corporations.append(corp_executor_id)
+    # убираем дублирующиеся - creator и executor могут повторяться в общем списке корп
+    print(f"Successful load list associated corporation for alliance {alliance_id}")
+    return tuple(set(corporations))
+
 entity_list_type = Literal["region", "constellation", "system", "star", "alliance", "corporation", "character"] 
 action_list_type = Literal["create", "update"]
 
@@ -21,12 +38,14 @@ def create_or_update_one_entity(
         action: action_list_type,
         **kwargs,
         ):
+    # FIXME перенести связывание Stars и Systems в отдельную функцию-линкер
+    # здесь должен быть исключительно парсинг, без линковки
     """
     Функция для первоначальной загрузки или для обновления информации
     об одной сущности.
 
     Режим update - это однозначно загрузить данные с esi и обновить запись. Нужно
-    когда БД уже сформирована и требуется собственно обновить одну запись.
+    когда БД уже сформирована и требуется собственно обновить одну запись. 
 
     Режим create - это проверить, есть ли такая запись в БД и если есть, 
     то не запрашивать данные с esi. Нужно для первоначального заполнения БД - 
@@ -36,6 +55,10 @@ def create_or_update_one_entity(
     все это можно делать через текущую функцию.
 
     в начале идут блоки для обработки universe-данных, потом блоки social-данных
+    
+    возможные варианты аргументов, полученные через kwargs:
+        solar_system - солнечная система для Stars
+
     """
 
     # LSP ругается, но все работает. Эта проверка нужна, 
@@ -166,6 +189,9 @@ def create_or_update_one_entity(
                 print(f"Start load alliance: {entity_id}")
         url = f"https://esi.evetech.net/latest/alliances/{entity_id}/?datasource=tranquility"
         resp = GET_request_to_esi(url).json()
+        associated_corp = get_associated_corp(entity_id, resp.get("creator_corporation_id"), resp.get("executor_corporation_id"))
+        # вносим корпорации в response_body, в котором этой инфы не было - чтобы не создавать дополнительные поля модели
+        resp["associated_corp"] = associated_corp
         nameicon = load_and_save_icon(entity, entity_id)
         print(f"Successful load alliance: {entity_id}")
         Alliances.objects.update_or_create(
@@ -181,4 +207,5 @@ def create_or_update_one_entity(
                 )
         print(f"Successful save to DB alliance: {entity_id}")
 
-            
+
+

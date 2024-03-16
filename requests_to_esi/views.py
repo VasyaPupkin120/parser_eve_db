@@ -60,9 +60,18 @@ def parse_stars(request):
 def parse_alliances(request):
     if request.method == "POST":
         try:
-            social.create_or_update_all_alliances("create")
+            social.create_all_alliances()
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_alliances.html", {"exception": e})
         return redirect(reverse("dbeve_social:alliances"))
     return render(request, "requests_to_esi/parse_alliances.html")
 
+
+def parse_associated_corporations(request):
+    if request.method == "POST":
+        try:
+            social.create_all_associated_corporations()
+        except base_requests.StatusCodeNot200Exception as e:
+            return render(request, "requests_to_esi/parse_associated_corporations.html", {"exception": e})
+        return redirect(reverse("dbeve_social:all_corporations"))
+    return render(request, "requests_to_esi/parse_associated_corporations.html")
