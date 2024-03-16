@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from dbeve_universe.models import Constellations, Regions, Stars, Systems
 
 from .base_requests import GET_request_to_esi, load_and_save_icon, entity_not_processed, action_not_allowed
-from dbeve_social.models import Alliances
+from dbeve_social.models import Alliances, Corporations
 
 
 ###############################################################################
@@ -38,11 +38,11 @@ def create_or_update_one_entity(
         action: action_list_type,
         **kwargs,
         ):
-    # FIXME перенести связывание Stars и Systems в отдельную функцию-линкер
+    # FIXME перенести связывание Stars, Systems, Constellations в отдельную функцию-линкер
     # здесь должен быть исключительно парсинг, без линковки
     """
     Функция для первоначальной загрузки или для обновления информации
-    об одной сущности.
+    об одной сущности. Здесь не должно быть линковок записей друг с другом.
 
     Режим update - это однозначно загрузить данные с esi и обновить запись. Нужно
     когда БД уже сформирована и требуется собственно обновить одну запись. 
@@ -51,11 +51,12 @@ def create_or_update_one_entity(
     то не запрашивать данные с esi. Нужно для первоначального заполнения БД - 
     когда парсинг приходится запускать по несколько раз.
 
-    соответственно, более нет необходимости в множестве функций-парсеров отдельных алли, систем и т.д.
-    все это можно делать через текущую функцию.
+    соответственно, более нет необходимости в множестве функций-парсеров 
+    отдельных алли, систем и т.д. все это можно делать через текущую функцию.
 
     в начале идут блоки для обработки universe-данных, потом блоки social-данных
     
+    #FIXME после написаниия линкера для Systems убрать эти аргументы
     возможные варианты аргументов, полученные через kwargs:
         solar_system - солнечная система для Stars
 
@@ -207,5 +208,34 @@ def create_or_update_one_entity(
                 )
         print(f"Successful save to DB alliance: {entity_id}")
 
-
-
+    # парсер корпорации
+    if entity == "corporation":
+        if action == "create":
+            try:
+                Corporations.objects.get(corporation_id=entity_id)
+                print(f"Corporation {entity_id} already exists in DB")
+                return
+            except ObjectDoesNotExist:
+                print(f"Start load corporation: {entity_id}")
+        url = f"https://esi.evetech.net/latest/corporations/{entity_id}/?datasource=tranquility"
+        resp = GET_request_to_esi(url).json()
+        nameicon = load_and_save_icon(entity, entity_id)
+        print(f"Successful load corporation: {entity_id}")
+        Corporations.objects.update_or_create(
+                corporation_id=entity_id,
+                defaults={
+                    "corporation_id": entity_id,
+                    "date_founded": resp.get("date_founded"),
+                    "description": resp.get("description"),
+                    "member_count": resp.get("member_count"),
+                    "name": resp.get("name"),
+                    "nameicon": nameicon,
+                    "shares": resp.get("shares"),
+                    "ticker": resp.get("ticker"),
+                    "tax_rate": resp.get("tax_rate"),
+                    "url": resp.get("url"),
+                    "war_eligible": resp.get("war_eligible"),
+                    "response_body": resp,
+                    }
+                )
+        print(f"Successful save to DB corporation: {entity_id}")

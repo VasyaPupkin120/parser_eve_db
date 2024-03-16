@@ -9,9 +9,6 @@ from .one_entity import create_or_update_one_entity
 
 def create_all_alliances():
     """
-    альянсы, корпы, чары слишком сильно связаны друг с другом, поэтому нужно
-    одновременно с созданием одного алли создавать все его корпы, а для каждой
-    корпы создавать чара-основателя.
     """
     url = "https://esi.evetech.net/latest/alliances/?datasource=tranquility"
     alliances_id = GET_request_to_esi(url).json()
@@ -23,7 +20,6 @@ def create_all_alliances():
         print(f"\nLoad: {count}/{len_alliances}")
         create_or_update_one_entity("alliance", alliance_id, "create")
         count += 1
-
 
 # временная фунцкия-парсер для поиска всех ассоциированных с алли корпороаций.
 # def create_only_id_all_associated_corporations():
@@ -56,5 +52,19 @@ def create_all_alliances():
 #         print(f"успешно выполнено внесение списка корпораций в альянс {alliance.alliance_id}")
 #         count += 1
 
-
-
+def create_all_associated_corporations():
+    """
+    Запрашивает в БД у альянсов списки id ассоциированных корпораций,
+    объединяет их в один большой список, запрашивает инфу для каждой.
+    """
+    corporations_id = []
+    for alliance in Alliances.objects.values("response_body"):
+        corporations_id.extend(alliance["response_body"]["associated_corp"])
+    len_corporations = len(corporations_id)
+    count = 1
+    print("\nSuccessful compile list all corporations id.")
+    print("Start downloading information by all corporation.")
+    for corporation_id in corporations_id:
+        print(f"\nLoad: {count}/{len_corporations}")
+        create_or_update_one_entity("corporation", corporation_id, "create")
+        count += 1

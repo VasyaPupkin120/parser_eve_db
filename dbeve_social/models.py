@@ -29,6 +29,7 @@ class Corporations(models.Model):
     description = models.TextField(null=True)
     member_count = models.BigIntegerField(null=True)
     name = models.CharField(null=True)
+    nameicon = models.CharField(null=True)
     shares = models.BigIntegerField(null=True)
     ticker = models.CharField(null=True)
     tax_rate = models.FloatField(null=True)
@@ -50,6 +51,7 @@ class Characters(models.Model):
     description = models.TextField(null=True)
     gender = models.CharField(null=True)
     name = models.CharField(null=True)
+    nameicon = models.CharField(null=True)
     security_status = models.FloatField(null=True)
     title = models.TextField(null=True)
 

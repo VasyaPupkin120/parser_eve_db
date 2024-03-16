@@ -75,3 +75,5 @@ def parse_associated_corporations(request):
             return render(request, "requests_to_esi/parse_associated_corporations.html", {"exception": e})
         return redirect(reverse("dbeve_social:all_corporations"))
     return render(request, "requests_to_esi/parse_associated_corporations.html")
+
+
