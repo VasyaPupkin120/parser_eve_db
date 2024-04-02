@@ -14,8 +14,8 @@ class Alliances(models.Model):
     ticker = models.CharField(null=True)
     nameicon = models.CharField(null=True)
     
-    creator = models.OneToOneField("Characters", on_delete=models.SET_NULL, null=True, related_name="creator_alliance")
-    creator_corporation = models.OneToOneField("Corporations", on_delete=models.SET_NULL, null=True, related_name="creator_corporation")
+    creator = models.ForeignKey("Characters", on_delete=models.SET_NULL, null=True, related_name="creator_alliance")
+    creator_corporation = models.ForeignKey("Corporations", on_delete=models.SET_NULL, null=True, related_name="creator_corporation")
     executor_corporation = models.OneToOneField("Corporations", on_delete=models.SET_NULL, null=True, related_name="executor_corporation")
 
     response_body = models.JSONField(null=True)

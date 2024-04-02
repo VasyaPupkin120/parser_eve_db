@@ -68,3 +68,21 @@ def create_all_associated_corporations():
         print(f"\nLoad: {count}/{len_corporations}")
         create_or_update_one_entity("corporation", corporation_id, "create")
         count += 1
+
+
+def create_all_associated_characters():
+    """
+    Запрашивает в БД чары, ассоциированные с альянсами и корпами - 
+    т.е. ceo корпорации, creator корпорации, creator альянса, объединяет их 
+    в список, запрашивает в esi инфу по каждому.
+    """
+    characters_id = []
+    for alliance in Alliances.objects.values("response_body"):
+        characters_id.append(alliance["response_body"]["creator_id"])
+    for corporation in Corporations.objects.values("response_body"):
+        characters_id.append(corporation["response_body"]["creator_id"])
+        characters_id.append(corporation["response_body"]["ceo_id"])
+    characters_id = set(characters_id)
+    print(len(characters_id))
+    if 90238191 in characters_id:
+        print("90238191")

@@ -4,8 +4,9 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from dbeve_universe.models import Constellations, Regions, Stars, Systems
 
-from .base_requests import GET_request_to_esi, load_and_save_icon, entity_not_processed, action_not_allowed
-from dbeve_social.models import Alliances, Corporations
+from .base_errors import entity_not_processed, action_not_allowed
+from .base_requests import GET_request_to_esi, load_and_save_icon
+from dbeve_social.models import Alliances, Characters, Corporations
 
 
 ###############################################################################
@@ -14,20 +15,40 @@ from dbeve_social.models import Alliances, Corporations
 
 def get_associated_corp(alliance_id, corp_creator_id, corp_executor_id):
     """
-    Получает id алли, выполняет запрос, возвращает json-ответ
-    не суммирует id корпы-экзекутора и корпы-основателя - исключительно 
-    результат запроса на url
+    Вспомогательная функция для create_or_update_one_entity()
+    Получает id алли, id корпы-экзекутора, id корпы-основателя, 
+    выполняет запрос, возвращает кортеж с всеми ассоциированными корпорациями.
     """
     url = f"https://esi.evetech.net/latest/alliances/{alliance_id}/corporations/?datasource=tranquility"
     print(f"Start load list associated corporation for alliance {alliance_id}")
-    corporations = GET_request_to_esi(url).json() # приходит простой список
+    corporations = GET_request_to_esi(url).json()
     if corp_creator_id:
         corporations.append(corp_creator_id)
     if corp_executor_id:
         corporations.append(corp_executor_id)
-    # убираем дублирующиеся - creator и executor могут повторяться в общем списке корп
     print(f"Successful load list associated corporation for alliance {alliance_id}")
+    # убираем дублирующиеся - creator и executor могут повторяться в общем списке корп
     return tuple(set(corporations))
+
+
+def get_corporationhistory(character_id):
+    """
+    Вспомогательная для create_or_update_one_entity().
+    Получает id персонажа, выполняет запрос, возвращает json-ответ.
+    """
+    url = f"https://esi.evetech.net/latest/characters/{character_id}/corporationhistory/?datasource=tranquility"
+    print(f"Start load corporation history for character {character_id}")
+    resp = GET_request_to_esi(url).json()
+    print(f"Successful load corporation history")
+    return resp
+
+
+
+################################################################################
+#              очень большая функция-креатор, но альтернатива -                #
+#               очень много маленьких однообразных функций                     #
+#     сложно придумать обобщенный вариант из-за разных имен полей в моделях    #
+################################################################################
 
 entity_list_type = Literal["region", "constellation", "system", "star", "alliance", "corporation", "character"] 
 action_list_type = Literal["create", "update"]
@@ -239,3 +260,35 @@ def create_or_update_one_entity(
                     }
                 )
         print(f"Successful save to DB corporation: {entity_id}")
+
+    # парсер отдельного персонажа
+    if entity == "character":
+        if action == "create":
+            try:
+                Characters.objects.get(character_id=entity_id)
+                print(f"Character {entity_id} already exists in DB")
+                return
+            except ObjectDoesNotExist:
+                print(f"Start load character: {entity_id}")
+        url = f"https://esi.evetech.net/latest/characters/{entity_id}/?datasource=tranquility"
+        resp = GET_request_to_esi(url).json()
+        # изображение пока не грузить, не особо нужно
+        # nameicon = load_and_save_icon(entity, entity_id)
+        corporation_history = get_corporationhistory(entity_id)
+        resp["corporation_history"] = corporation_history
+        print(f"Successful load character: {entity_id}")
+        Characters.objects.update_or_create(
+                character_id=entity_id,
+                defaults={
+                    "character_id": entity_id,
+                    "birthday": resp.get("birthday"),
+                    "description": resp.get("description"),
+                    "gender": resp.get("gender"),
+                    "name": resp.get("name"),
+                    # "nameicon": nameicon,
+                    "security_status": resp.get("security_status"),
+                    "title": resp.get("title"),
+                    "response_body": resp,
+                    }
+                )
+        print(f"Successful save to DB character: {entity_id}")
