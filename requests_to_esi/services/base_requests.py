@@ -1,8 +1,14 @@
+"""
+Синхронные запросы устарели, не использовать в новых функциях-парсерах.
+Оставить только в функциях с одним запросом (типа списка альянсов или списка звездных систем).
+Остальные фукнции переделать под асинхронные запросы.
+
+"""
 from typing import Literal
 import requests
 import time
 from django.conf import settings
-from .base_errors import StatusCodeNot200Exception
+from .base_errors import StatusCodeNot200Exception, raise_entity_not_processed
 
 
 def GET_request_to_esi(url):
@@ -25,6 +31,8 @@ def GET_request_to_esi(url):
         return resp
 
     #FIXME внести сюда обращение к модели-логу для записи всей инфы об неудачном коде. Логирование удачного запроса будет в рабочих функциях - там где запрос вернул результат
+
+    #FIXME на самом деле не нужно выполнять повторный запрос при ответе 404 так как уже точно ничего не поможет
 
     # определяем параметры ошибок
     limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
@@ -107,7 +115,7 @@ def load_and_save_icon(entity: Literal["alliance", "corporation", "character"], 
         url_images = f"https://images.evetech.net/characters/{entity_id}/portrait?tenant=tranquility&size=128"
         path = settings.STATICFILES_DIRS[0].joinpath("img/characters")
     else:
-        entity_not_processed(entity)
+        raise_entity_not_processed(entity)
 
     # пробуем использовать ту же функцию загрузки, что и все esi-запросы
     # несмотря на то, что это запрос не к esi а к images.evetech.net
