@@ -1,13 +1,18 @@
 import asyncio
-from typing import Literal
-from django.core.exceptions import ObjectDoesNotExist
-from base_requests import GET_request_to_esi 
-from async_base_requests import several_async_requests
-# from one_entity import enter_one_entity_to_DB
-# from dbeve_universe.models import Regions, Constellations
-# from dbeve_universe.models import *
 import json
 import aiohttp
+
+from asgiref.sync import sync_to_async
+
+from .base_errors import raise_action_not_allowed
+from .base_requests import GET_request_to_esi 
+from .async_base_requests import several_async_requests
+from .enter_entitys_to_db import enter_entitys_to_db
+from .asynctimer import async_timed
+from .conf import NUMBER_OF_REQUEST, action_list_type, entity_list_type
+
+from dbeve_universe.models import *
+
 
 
 # создать универсальную функцию загрузки объекта сложно - нужно как то выделить список полей которые вносить в модеь
@@ -19,13 +24,12 @@ import aiohttp
 # систем много, поэтому нужно точно знать, нужен ли запрос в esi для получения новой информации и обновления данных в БД
 # звезды вроде как не должны изменяться, поэтому оставил как есть. При необходимости можно также разделить случаи или снова отпарсить все звезды
 
-# общее количество конкурентных запросов.
-NUMBER_OF_REQUEST = 20
 
 
-def create_chunks(all_id):
+
+def create_chunks(all_id:tuple):
     """
-    принимает большой список данных, возвращает список разбитый на чанки.
+    принимает большой кортеж id, возвращает кортеж разбитый на чанки - тоже кортежи.
     Размер чанка определяется NUMBER_OF_REQUEST.
     В последнем чанке остатки.
     """
@@ -34,41 +38,92 @@ def create_chunks(all_id):
     temp = []
     for count, id_key in enumerate(all_id):
         if count % NUMBER_OF_REQUEST == 0 and count != 0:
-            all_id_chunks.append(temp[:]) 
+            all_id_chunks.append(tuple(temp[:])) 
             temp = []
         temp.append(id_key) 
-    all_id_chunks.append(temp[:]) 
-    return all_id_chunks
+    all_id_chunks.append(tuple(temp[:])) 
+    return tuple(all_id_chunks)
 
 
-async def create_all_regions():
+def check_action(action: action_list_type):
     """
-    Получает список регионов, чанками асинхронно запрашивает данные у esi,
-    сохраняет данные в БД c помощью create_or_update_one_entity
+    Для ограничения работы исключительно указаными действиями
     """
+    # LSP ругается на __args__, но все работает.
+    if action not in action_list_type.__args__:
+        raise_action_not_allowed(action)
+
+
+
+@sync_to_async
+def create_list_entered_id(action:action_list_type, entity:entity_list_type, external_ids:tuple):
+    """
+    Получает действие, сущность для указания модели 
+    и множество с внешними id по которым нужно внести данные. 
+    Запрашивает список внутренних (уже имющюихся) id из БД, 
+    при необходимости сравнивает и возвращает те id из внешних, 
+    которых нет в БД.
+
+    Поскольку здесь есть запрос в БД и эта функция вызвается из другой асинхронной
+    функции, то пришлось ее тоже делать асинхронной и вызывать через await.
+    """
+    if action == "update_all":
+        print(f"\nMode used 'update_all'. Need load all external {entity} id.")
+        return external_ids
+
+    if entity == "region":
+        records = Regions.objects.values("region_id")
+
+    if not records:
+        print(f"\nThere are no records in {entity} model. Need load all external {entity} id.")
+        return external_ids
+
+    print(f"\nStart compare external and internal {entity} id.")
+    internal_ids = []
+    # превращаем список словарей в обычный список id
+    for dict_record in records:
+        for key in dict_record:
+            internal_ids.append(dict_record[key])
+    # не понимаю почему LSP ругается на преобразование кортежа в множество
+    external_ids = set(external_ids)
+    internal_ids = set(internal_ids)
+    # удаляем из внешних id все те id, которые есть среди внутренних
+    external_ids.difference_update(internal_ids) 
+    ret = tuple(external_ids)
+    print(f"\nSuccessful compare. Need load next id: {ret}")
+    return ret
+
+
+
+@async_timed()
+async def create_all_regions(action:action_list_type):
+    """
+    Запрашивает список регионов из ESI, чанками асинхронно запрашивает данные 
+    по регионам у esi, сохраняет данные в БД c помощью enter_entitys_to_db
+    """
+    check_action(action)
+    print("\nStart loading all region id of ESI.")
     url_get_ids_all_regions = "https://esi.evetech.net/latest/universe/regions/?datasource=tranquility"
     all_id = GET_request_to_esi(url_get_ids_all_regions).json()
-    all_id = list(all_id)
-    count = 1
     print("\nSuccessful loading of all region id.")
-    print("Start downloading information by region.")
-    chunks = create_chunks(all_id)
+    all_id = tuple(all_id)
+    id_for_enter_to_db = await create_list_entered_id(action, "region", all_id) 
+    count = 1
+    # print("Start downloading information by region.")
+    chunks = create_chunks(id_for_enter_to_db)
+    print(chunks)
     base_url = "https://esi.evetech.net/latest/universe/regions/!/?datasource=tranquility&language=en"
-
-
     async with aiohttp.ClientSession() as session:
-        for chunk in chunks[:2]:
+        for chunk in chunks:
             data = await several_async_requests(session, base_url, chunk)
-            print(data)
-            # print(f"\nLoad: {count}/{len(all_id)}")
-            # create_or_update_one_entity("region", region_id, "create")
-            # count += 1
+            await enter_entitys_to_db("region", data)
 
 
-# def create_all_constellations():
-#     """
-#     Запрашивает и обрабатывает весь список констелляций.
-#     """
+def create_all_constellations():
+    """
+    Запрашивает и обрабатывает весь список констелляций.
+    """
+    ...
 #     url = "https://esi.evetech.net/latest/universe/constellations/?datasource=tranquility"
 #     all_id = GET_request_to_esi(url).json()
 #     all_id = list(all_id)
@@ -81,10 +136,11 @@ async def create_all_regions():
 #         count += 1
 #
 #
-# def create_all_systems():
-#     """
-#     Запрашивает у esi список систем, обрабатывает их.
-#     """
+def create_all_systems():
+    """
+    Запрашивает у esi список систем, обрабатывает их.
+    """
+    ...
 #     url = "https://esi.evetech.net/latest/universe/systems/?datasource=tranquility"
 #     all_id = GET_request_to_esi(url).json()
 #     all_id = list(all_id)
@@ -97,14 +153,15 @@ async def create_all_regions():
 #         count += 1
 #
 #
-# def create_all_stars():
-#     """
-#     Загружает из БД список систем, находит в response_body системы id звезды,
-#     выполняет запрос, создает запись звезды.
-#
-#     причем что интересно, в теле ответа звезды нет информации об самой себе - об star_id
-#     Приходится брать star_id из информации об системе
-#     """
+def create_all_stars():
+    """
+    Загружает из БД список систем, находит в response_body системы id звезды,
+    выполняет запрос, создает запись звезды.
+
+    причем что интересно, в теле ответа звезды нет информации об самой себе - об star_id
+    Приходится брать star_id из информации об системе
+    """
+    ...
 #     count = 1
 #     systems = Systems.objects.all()
 #     amount_systems = len(systems)

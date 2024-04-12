@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from .base_requests import GET_request_to_esi
 from dbeve_social.models import Alliances, Corporations
 
-from .one_entity import create_or_update_one_entity
+from .enter_entitys_to_db import enter_entitys_to_db
 
 
 def create_all_alliances():
@@ -18,14 +18,15 @@ def create_all_alliances():
     print("Start downloading information by alliance.")
     for alliance_id in alliances_id:
         print(f"\nLoad: {count}/{len_alliances}")
-        create_or_update_one_entity("alliance", alliance_id, "create")
+        # enter_one_entity_to_DB("alliance", alliance_id, "create")
         count += 1
 
 # временная фунцкия-парсер для поиска всех ассоциированных с алли корпороаций.
-# def create_only_id_all_associated_corporations():
-#     """
-#     временная функция для дополнения данных по каждому альянсу списком ассоциированных корп
-#     """
+def create_only_id_all_associated_corporations():
+    """
+    временная функция для дополнения данных по каждому альянсу списком ассоциированных корп
+    """
+    ...
 #     from .one_entity import get_associated_corp
 #     alliances = Alliances.objects.all()
 #     count = 1
@@ -57,17 +58,18 @@ def create_all_associated_corporations():
     Запрашивает в БД у альянсов списки id ассоциированных корпораций,
     объединяет их в один большой список, запрашивает инфу для каждой.
     """
-    corporations_id = []
-    for alliance in Alliances.objects.values("response_body"):
-        corporations_id.extend(alliance["response_body"]["associated_corp"])
-    len_corporations = len(corporations_id)
-    count = 1
-    print("\nSuccessful compile list all corporations id.")
-    print("Start downloading information by all corporation.")
-    for corporation_id in corporations_id:
-        print(f"\nLoad: {count}/{len_corporations}")
-        create_or_update_one_entity("corporation", corporation_id, "create")
-        count += 1
+    ...
+    # corporations_id = []
+    # for alliance in Alliances.objects.values("response_body"):
+    #     corporations_id.extend(alliance["response_body"]["associated_corp"])
+    # len_corporations = len(corporations_id)
+    # count = 1
+    # print("\nSuccessful compile list all corporations id.")
+    # print("Start downloading information by all corporation.")
+    # for corporation_id in corporations_id:
+    #     print(f"\nLoad: {count}/{len_corporations}")
+    #     create_or_update_one_entity("corporation", corporation_id, "create")
+        # count += 1
 
 
 def create_all_associated_characters():
@@ -76,13 +78,14 @@ def create_all_associated_characters():
     т.е. ceo корпорации, creator корпорации, creator альянса, объединяет их 
     в список, запрашивает в esi инфу по каждому.
     """
-    characters_id = []
-    for alliance in Alliances.objects.values("response_body"):
-        characters_id.append(alliance["response_body"]["creator_id"])
-    for corporation in Corporations.objects.values("response_body"):
-        characters_id.append(corporation["response_body"]["creator_id"])
-        characters_id.append(corporation["response_body"]["ceo_id"])
-    characters_id = set(characters_id)
-    print(len(characters_id))
-    if 90238191 in characters_id:
-        print("90238191")
+    ...
+    # characters_id = []
+    # for alliance in Alliances.objects.values("response_body"):
+    #     characters_id.append(alliance["response_body"]["creator_id"])
+    # for corporation in Corporations.objects.values("response_body"):
+    #     characters_id.append(corporation["response_body"]["creator_id"])
+    #     characters_id.append(corporation["response_body"]["ceo_id"])
+    # characters_id = set(characters_id)
+    # print(len(characters_id))
+    # if 90238191 in characters_id:
+    #     print("90238191")

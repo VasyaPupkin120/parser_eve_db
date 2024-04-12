@@ -1,9 +1,8 @@
 import asyncio
 import aiohttp
-from asynctimer import async_timed
-from base_errors import StatusCodeNot200Exception
+from .asynctimer import async_timed
+from .base_errors import StatusCodeNot200Exception, raise_StatusCodeNot200Exception
 from typing import List
-from base_errors import raise_StatusCodeNot200Exception
 
 @async_timed()
 async def async_GET(session: aiohttp.ClientSession, url: str, id_key: int):
@@ -17,7 +16,9 @@ async def async_GET(session: aiohttp.ClientSession, url: str, id_key: int):
     MAX_COUNT_REMAINS = 90
     async with session.get(url) as resp:
         if resp.status == 200:
-            return {id_key: {"headers": resp.headers, "content": await resp.json()}}
+            # попробуем возвращать просто результат, без заголовков
+            # return {id_key: {"headers": resp.headers, "content": await resp.json()}}
+            return {id_key: await resp.json()}
         else:
             print("Ошибка запроса")
             # нельзя допускать слишком много ошибок - проще уронить сервис чем возиться с блокировкой ip
@@ -41,7 +42,8 @@ async def async_GET(session: aiohttp.ClientSession, url: str, id_key: int):
     await asyncio.sleep(70)
     async with session.get(url) as resp:
         if resp.status == 200:
-            return {id_key: {"headers": resp.headers, "content": await resp.json()}}
+            # return {id_key: {"headers": resp.headers, "content": await resp.json()}}
+            return {id_key: await resp.json()}
         else:
             # в случае повторной ошибки - выброс исключения
             raise_StatusCodeNot200Exception(url, resp)
@@ -56,6 +58,8 @@ async def several_async_requests(session:aiohttp.ClientSession, base_url:str, id
     Обращается к функции-одиночному запросу, получает из нее словарь с результатами
     одного запроса, объединяет все результаты в один возвращаемый словарь.
     Выполняет конкурентные запросы одновременно для всех полученных урл-ов.
+
+    Использует ! как символ, вместо которого должен вставляться id.
     
     """
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key

@@ -1,12 +1,11 @@
-from typing import Literal
-
-from django.core.exceptions import ObjectDoesNotExist
-
-from dbeve_universe.models import Constellations, Regions, Stars, Systems
+from asgiref.sync import sync_to_async
 
 from .base_errors import raise_entity_not_processed, raise_action_not_allowed
 from .base_requests import GET_request_to_esi, load_and_save_icon
+from .conf import entity_list_type
+
 from dbeve_social.models import Alliances, Characters, Corporations
+from dbeve_universe.models import Constellations, Regions, Stars, Systems
 
 
 ###############################################################################
@@ -19,16 +18,17 @@ def get_associated_corp(alliance_id, corp_creator_id, corp_executor_id):
     Получает id алли, id корпы-экзекутора, id корпы-основателя, 
     выполняет запрос, возвращает кортеж с всеми ассоциированными корпорациями.
     """
-    url = f"https://esi.evetech.net/latest/alliances/{alliance_id}/corporations/?datasource=tranquility"
-    print(f"Start load list associated corporation for alliance {alliance_id}")
-    corporations = GET_request_to_esi(url).json()
-    if corp_creator_id:
-        corporations.append(corp_creator_id)
-    if corp_executor_id:
-        corporations.append(corp_executor_id)
-    print(f"Successful load list associated corporation for alliance {alliance_id}")
-    # убираем дублирующиеся - creator и executor могут повторяться в общем списке корп
-    return tuple(set(corporations))
+    ...
+    # url = f"https://esi.evetech.net/latest/alliances/{alliance_id}/corporations/?datasource=tranquility"
+    # print(f"Start load list associated corporation for alliance {alliance_id}")
+    # corporations = GET_request_to_esi(url).json()
+    # if corp_creator_id:
+    #     corporations.append(corp_creator_id)
+    # if corp_executor_id:
+    #     corporations.append(corp_executor_id)
+    # print(f"Successful load list associated corporation for alliance {alliance_id}")
+    # # убираем дублирующиеся - creator и executor могут повторяться в общем списке корп
+    # return tuple(set(corporations))
 
 
 def get_corporationhistory(character_id):
@@ -36,11 +36,12 @@ def get_corporationhistory(character_id):
     Вспомогательная для create_or_update_one_entity().
     Получает id персонажа, выполняет запрос, возвращает json-ответ.
     """
-    url = f"https://esi.evetech.net/latest/characters/{character_id}/corporationhistory/?datasource=tranquility"
-    print(f"Start load corporation history for character {character_id}")
-    resp = GET_request_to_esi(url).json()
-    print(f"Successful load corporation history")
-    return resp
+    ...
+    # url = f"https://esi.evetech.net/latest/characters/{character_id}/corporationhistory/?datasource=tranquility"
+    # print(f"Start load corporation history for character {character_id}")
+    # resp = GET_request_to_esi(url).json()
+    # print(f"Successful load corporation history")
+    # return resp
 
 
 
@@ -50,13 +51,13 @@ def get_corporationhistory(character_id):
 #     сложно придумать обобщенный вариант из-за разных имен полей в моделях    #
 ################################################################################
 
-entity_list_type = Literal["region", "constellation", "system", "star", "alliance", "corporation", "character"] 
-action_list_type = Literal["create", "update"]
 
-# def create_or_update_one_entity(
-def enter_one_entity_to_DB(
+# пришлось преобразовать enter_entitys_to_db в асинхронную, т.к. иначе запись в БД
+# вызывала ошибку django.core.exceptions.SynchronousOnlyOperation
+# соответсвенно, ее нужно вызывать через await
+@sync_to_async
+def enter_entitys_to_db(
         entity: entity_list_type,
-        entity_id:int, 
         data:dict,
         # action: action_list_type,
         **kwargs,
@@ -64,12 +65,14 @@ def enter_one_entity_to_DB(
     # FIXME перенести связывание Stars, Systems, Constellations в отдельную функцию-линкер
     # здесь должен быть исключительно парсинг, без линковки
     """
-    Функция получает тип сущности, id сущности и данные сущности и 
-    вносит данные в БД. Данные - это словарь, содержащийся по ключу content, 
-    полученный из функции several_async_requests
-    без учета ключа-id. etity_id - это и есть тот самый ключ.
+    Получает словарь и сохраняет данные из него в БД.
 
-    Как и ранее, это для внесения данных об одной сущности, без линковки.
+    Функция получает тип сущности и словарь с данными и 
+    вносит данные по значению в БД. Количество записей в словаре зависит от размера чанка
+    data - словарь, полученный из функции several_async_requests, последний раз
+    эта функция передавала только тело ответа без заголовков.
+
+    Линковка связей также должна осуществляться другой функцией.
 
     Нет разделения на create и update - функция однозначно вносит все полученные данные в БД.
 
@@ -116,17 +119,18 @@ def enter_one_entity_to_DB(
         # url = f"https://esi.evetech.net/latest/universe/regions/{entity}/?datasource=tranquility&language=en"
         # resp = GET_request_to_esi(url).json()
         # print(f"Successful load region: {resp['region_id']}")
-        Regions.objects.update_or_create(
-                # region_id=resp["region_id"],
-                region_id=entity_id,
-                defaults={
-                    "region_id": entity_id,
-                    "name": data["name"],
-                    "description": data["description"],
-                    "response_body": data, 
-                    }
-                )
-        print(f"Successful save to DB region: {entity_id}\n")
+        for key in data:
+            Regions.objects.update_or_create(
+                    # region_id=resp["region_id"],
+                    region_id=key,
+                    defaults={
+                        "region_id": key,
+                        "name": data[key].get("name"),
+                        "description": data[key].get("description"),
+                        "response_body": dict(data[key]), 
+                        }
+                    )
+            print(f"Successful save to DB region: {key}\n")
 
     # # парсер констелляции
     # if entity == "constellation":

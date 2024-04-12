@@ -16,7 +16,10 @@ def async_timed():
             print(f"start {this_uuid}: выполняется {func} с аргументами {args} {kwargs}")
             start = time.time()
             try:
-                return await func(*args, **kwargs)
+                res = await func(*args, **kwargs)
+                print(res)
+                return res
+                # return await func(*args, **kwargs)
             finally:
                 end = time.time()
                 total = end - start
