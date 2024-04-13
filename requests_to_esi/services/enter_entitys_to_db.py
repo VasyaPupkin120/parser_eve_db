@@ -59,8 +59,6 @@ def get_corporationhistory(character_id):
 def enter_entitys_to_db(
         entity: entity_list_type,
         data:dict,
-        # action: action_list_type,
-        **kwargs,
         ):
     # FIXME перенести связывание Stars, Systems, Constellations в отдельную функцию-линкер
     # здесь должен быть исключительно парсинг, без линковки
@@ -72,93 +70,59 @@ def enter_entitys_to_db(
     data - словарь, полученный из функции several_async_requests, последний раз
     эта функция передавала только тело ответа без заголовков.
 
-    Линковка связей также должна осуществляться другой функцией.
+    ЛИНКОВКА СВЯЗЕЙ ТАКЖЕ ДОЛЖНА ОСУЩЕСТВЛЯТЬСЯ ДРУГОЙ ФУНКЦИЕЙ.
+    ВСЕ ПОЛЯ ВНЕШНЕГО КЛЮЧА НЕ ДОЛЖНЫ ЗАПОЛНЯТЬСЯ ЗДЕСЬ!!
+    ЛИНКОВКА - ПОТОМ, НА ОСНОВЕ ПОЛЯ response_body, В КОТОРОМ ЕСТЬ ИНФА ПО СВЯЗЯМ.
 
     Нет разделения на create и update - функция однозначно вносит все полученные данные в БД.
 
-    # Функция для первоначальной загрузки или для обновления информации
-    # об одной сущности. Здесь не должно быть линковок записей друг с другом.
-    #
-    # Режим update - это однозначно загрузить данные с esi и обновить запись. Нужно
-    # когда БД уже сформирована и требуется собственно обновить одну запись. 
-    #
-    # Режим create - это проверить, есть ли такая запись в БД и если есть, 
-    # то не запрашивать данные с esi. Нужно для первоначального заполнения БД - 
-    # когда парсинг приходится запускать по несколько раз.
-    #
-    # соответственно, более нет необходимости в множестве функций-парсеров 
-    # отдельных алли, систем и т.д. все это можно делать через текущую функцию.
-    #
-    # в начале идут блоки для обработки universe-данных, потом блоки social-данных
-    # 
-    # #FIXME после написаниия линкера для Systems убрать эти аргументы
-    # возможные варианты аргументов, полученные через kwargs:
-    #     solar_system - солнечная система для Stars
+    соответственно, более нет необходимости в множестве функций-парсеров 
+    отдельных алли, систем и т.д. все это можно делать через текущую функцию.
 
+    в начале идут блоки для обработки universe-данных, потом блоки social-данных
+
+    #FIXME после написаниия линкера для Systems убрать эти аргументы
+    возможные варианты аргументов, полученные через kwargs:
+        solar_system - солнечная система для Stars
     """
 
     # LSP ругается, но все работает. Эта проверка нужна, 
     # чтобы не выполнять впустую запросы для ошибочных параметров
     if entity not in entity_list_type.__args__:
         raise_entity_not_processed(entity)
-    # if action not in action_list_type.__args__:
-    #     raise_action_not_allowed(action)
-    
-    # парсер региона
+
+    # запись данных по региону
     if entity == "region":
-        # если не хочется сначала обращаться в esi а потом сравнивать поля. 
-        # этот шаг пропускается для случая, когда нужно обновить запись - 
-        # так как для обновления нужно и сходить в esi и сравнить поля
-        # if action == "create":
-        #     try:
-        #         Regions.objects.get(region_id=entity_id)
-        #         print(f"Region {entity_id} already exists in DB")
-        #         return
-        #     except ObjectDoesNotExist:
-        #         print(f"Start load region: {entity_id}")
-        # url = f"https://esi.evetech.net/latest/universe/regions/{entity}/?datasource=tranquility&language=en"
-        # resp = GET_request_to_esi(url).json()
-        # print(f"Successful load region: {resp['region_id']}")
         for key in data:
             Regions.objects.update_or_create(
-                    # region_id=resp["region_id"],
                     region_id=key,
                     defaults={
                         "region_id": key,
                         "name": data[key].get("name"),
                         "description": data[key].get("description"),
-                        "response_body": dict(data[key]), 
+                        "response_body": data[key], 
                         }
                     )
             print(f"Successful save to DB region: {key}\n")
 
-    # # парсер констелляции
-    # if entity == "constellation":
-    #     if action == "create":
-    #         try:
-    #             Constellations.objects.get(constellation_id=entity_id)
-    #             print(f"Constellation {entity_id} already exists in DB")
-    #             return
-    #         except ObjectDoesNotExist:
-    #             print(f"Start load constellation: {entity_id}")
-    #     url = f"https://esi.evetech.net/latest/universe/constellations/{entity_id}/?datasource=tranquility&language=en"
-    #     resp = GET_request_to_esi(url).json()
-    #     print(f"Successful load constellation: {resp['constellation_id']}")
-    ##     region = Regions.objects.get(region_id=resp["region_id"])
-    #     Constellations.objects.update_or_create(
-    #             constellation_id=resp["constellation_id"],
-    #             defaults={
-    #                 "constellation_id": resp["constellation_id"],
-    #                 "name": resp.get("name"),
-    #                 "position_x": resp.get("position")["x"],
-    #                 "position_y": resp.get("position")["y"],
-    #                 "position_z": resp.get("position")["z"],
-    #                 "region": region,
-    #                 "response_body": resp,
-    #                 }
-    #             )
-    #     print(f"Successful save to DB constellation: {resp['constellation_id']}")
-    #
+    # запись данных по констелляции
+    elif entity == "constellation":
+        for key in data:
+            Constellations.objects.update_or_create(
+                    constellation_id=key,
+                    defaults={
+                        "constellation_id": key,
+                        "name": data[key].get("name"),
+                        "position_x": data[key].get("position")["x"],
+                        "position_y": data[key].get("position")["y"],
+                        "position_z": data[key].get("position")["z"],
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB constellation: {key}\n")
+    else:
+        raise_entity_not_processed(entity)
+
     # # парсер системы
     # if entity == "system":
     #     if action == "create":

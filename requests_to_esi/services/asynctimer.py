@@ -17,9 +17,8 @@ def async_timed():
             start = time.time()
             try:
                 res = await func(*args, **kwargs)
-                print(res)
+                # print(res)
                 return res
-                # return await func(*args, **kwargs)
             finally:
                 end = time.time()
                 total = end - start

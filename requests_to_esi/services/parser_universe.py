@@ -4,12 +4,14 @@ import aiohttp
 
 from asgiref.sync import sync_to_async
 
-from .base_errors import raise_action_not_allowed
+
+from .base_errors import raise_action_not_allowed, raise_entity_not_processed
 from .base_requests import GET_request_to_esi 
 from .async_base_requests import several_async_requests
 from .enter_entitys_to_db import enter_entitys_to_db
 from .asynctimer import async_timed
 from .conf import NUMBER_OF_REQUEST, action_list_type, entity_list_type
+from .linker_universe import link_constellations
 
 from dbeve_universe.models import *
 
@@ -56,41 +58,56 @@ def check_action(action: action_list_type):
 
 
 @sync_to_async
-def create_list_entered_id(action:action_list_type, entity:entity_list_type, external_ids:tuple):
+def create_list_ids_to_add_to_db(action:action_list_type, entity:entity_list_type, external_ids:tuple):
     """
     Получает действие, сущность для указания модели 
-    и множество с внешними id по которым нужно внести данные. 
+    и кортеж с внешними id по которым нужно внести данные. 
     Запрашивает список внутренних (уже имющюихся) id из БД, 
     при необходимости сравнивает и возвращает те id из внешних, 
     которых нет в БД.
 
     Поскольку здесь есть запрос в БД и эта функция вызвается из другой асинхронной
     функции, то пришлось ее тоже делать асинхронной и вызывать через await.
+
+    Запускается всегда - и для режима update_all и для add_missing, в первом случае
+    есть лишние расходы на передачу данных в параметрах туда-сюда, но пофиг - зато все
+    однообразно.
+
+    Внешние id - полученные каким то образом, неизвестно находятся ли такие в БД или нет.
+    Внутренние id - которые точно находятся в БД.
     """
     if action == "update_all":
-        print(f"\nMode used 'update_all'. Need load all external {entity} id.")
+        print(f"\nUsed mode 'update_all'. Need load all external {entity} id.")
+        print(f"External ids: {external_ids}.")
         return external_ids
 
+    print(f"\nStart load internal id of {entity} model.")
     if entity == "region":
-        records = Regions.objects.values("region_id")
+        db_records = Regions.objects.values("region_id")
+    if entity == "constellation":
+        db_records = Constellations.objects.values("constellation_id")
+    else:
+        raise_entity_not_processed(entity)
+    print(f"Succesful load internal id of {entity} model.")
 
-    if not records:
+    if not db_records:
         print(f"\nThere are no records in {entity} model. Need load all external {entity} id.")
+        print(f"External ids: {external_ids}.")
         return external_ids
 
     print(f"\nStart compare external and internal {entity} id.")
     internal_ids = []
     # превращаем список словарей в обычный список id
-    for dict_record in records:
+    for dict_record in db_records:
         for key in dict_record:
             internal_ids.append(dict_record[key])
-    # не понимаю почему LSP ругается на преобразование кортежа в множество
+    # не понимаю почему LSP ругается на преобразование кортежа в множество, все работает
     external_ids = set(external_ids)
     internal_ids = set(internal_ids)
     # удаляем из внешних id все те id, которые есть среди внутренних
     external_ids.difference_update(internal_ids) 
     ret = tuple(external_ids)
-    print(f"\nSuccessful compare. Need load next id: {ret}")
+    print(f"Successful compare. Need load next id: {ret}")
     return ret
 
 
@@ -102,40 +119,71 @@ async def create_all_regions(action:action_list_type):
     по регионам у esi, сохраняет данные в БД c помощью enter_entitys_to_db
     """
     check_action(action)
+
     print("\nStart loading all region id of ESI.")
-    url_get_ids_all_regions = "https://esi.evetech.net/latest/universe/regions/?datasource=tranquility"
-    all_id = GET_request_to_esi(url_get_ids_all_regions).json()
-    print("\nSuccessful loading of all region id.")
-    all_id = tuple(all_id)
-    id_for_enter_to_db = await create_list_entered_id(action, "region", all_id) 
-    count = 1
-    # print("Start downloading information by region.")
+    url_to_load_external_ids  = "https://esi.evetech.net/latest/universe/regions/?datasource=tranquility"
+    external_ids = GET_request_to_esi(url_to_load_external_ids).json()
+    print("Successful loading of all region id.")
+
+    external_ids = tuple(external_ids)
+    id_for_enter_to_db = await create_list_ids_to_add_to_db(action, "region", external_ids) 
+    if not id_for_enter_to_db:
+        print("\nThere are no IDs that need to be entered into the database\n")
+        return
+
+    count = 0
     chunks = create_chunks(id_for_enter_to_db)
-    print(chunks)
     base_url = "https://esi.evetech.net/latest/universe/regions/!/?datasource=tranquility&language=en"
+    print("\nStart downloading information by region.")
     async with aiohttp.ClientSession() as session:
         for chunk in chunks:
+            print(f"\nLoad {count * NUMBER_OF_REQUEST}/{len(id_for_enter_to_db)} regions")
             data = await several_async_requests(session, base_url, chunk)
             await enter_entitys_to_db("region", data)
+            count += 1
+    print("Successful downloading information by region.")
 
 
-def create_all_constellations():
+@async_timed()
+async def create_all_constellations(action:action_list_type, forced_linking:bool=False):
     """
     Запрашивает и обрабатывает весь список констелляций.
     """
-    ...
-#     url = "https://esi.evetech.net/latest/universe/constellations/?datasource=tranquility"
-#     all_id = GET_request_to_esi(url).json()
-#     all_id = list(all_id)
-#     count = 1
-#     print("\nSuccessful loading of all constellation id.")
-#     print("Start downloading information by constellation.")
-#     for constellation_id in all_id:
-#         print(f"\nLoad: {count}/{len(all_id)}")
-#         create_or_update_one_entity("constellation", constellation_id, "create")
-#         count += 1
-#
-#
+    check_action(action)
+
+    print("\nStart loading all constellations id of ESI.")
+    url_to_load_external_ids = "https://esi.evetech.net/latest/universe/constellations/?datasource=tranquility"
+    external_ids = GET_request_to_esi(url_to_load_external_ids).json()
+    print("Successful loading of all constellation id.")
+
+    external_ids = tuple(external_ids)
+    id_for_enter_to_db = await create_list_ids_to_add_to_db(action, "constellation", external_ids)
+    if not id_for_enter_to_db:
+        print("\nThere are no IDs that need to be entered into the database\n")
+        # если изменений не было но нужно почему то перелинковать связи
+        if forced_linking:
+            print("\nStart forced linking\n")
+            await link_constellations()
+            print("\nSuccessful forced linking\n")
+        return
+
+    count = 0
+    chunks = create_chunks(id_for_enter_to_db)
+    base_url = "https://esi.evetech.net/latest/universe/constellations/!/?datasource=tranquility&language=en"
+    print("\nStart downloading information by constellation.")
+    async with aiohttp.ClientSession() as session:
+        for chunk in chunks:
+            print(f"\nLoad {count * NUMBER_OF_REQUEST}/{len(id_for_enter_to_db)} constellation")
+            data = await several_async_requests(session, base_url, chunk)
+            await enter_entitys_to_db("constellation", data)
+            count += 1
+    print("Successful downloading information by constellation.")
+
+    print("\nStart link foreign key for constellations.")
+    await link_constellations()
+    print("\nSuccessful link foreign key for constellation.")
+
+@async_timed()
 def create_all_systems():
     """
     Запрашивает у esi список систем, обрабатывает их.
@@ -153,6 +201,7 @@ def create_all_systems():
 #         count += 1
 #
 #
+@async_timed()
 def create_all_stars():
     """
     Загружает из БД список систем, находит в response_body системы id звезды,
