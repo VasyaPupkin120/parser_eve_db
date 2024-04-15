@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests_to_esi.forms import ParseOneSystemForm
-from .services import base_requests, parser_social, parser_types, parser_universe
+from .services import base_requests, parser_social, parser_types, parser_universe, base_parser
 import asyncio
 
 # Create your views here.
@@ -11,7 +11,9 @@ def main_request(request):
 def parse_regions(request):
     if request.method == "POST":
         try:
-            asyncio.run(parser_universe.create_all_regions("add_missing"))
+            asyncio.run(base_parser.create_all_entities("update_all", "region"))
+            # asyncio.run(base_parser.create_all_entities("add_missing", "region"))
+            # asyncio.run(parser_universe.create_all_regions("add_missing"))
             # asyncio.run(parser_universe.create_all_regions("update_all"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_regions.html", {"exception": e})

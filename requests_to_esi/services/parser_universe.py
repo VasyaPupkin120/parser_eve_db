@@ -6,8 +6,7 @@ from asgiref.sync import sync_to_async
 
 
 from .base_errors import raise_action_not_allowed, raise_entity_not_processed
-from .base_requests import GET_request_to_esi 
-from .async_base_requests import several_async_requests
+from .base_requests import GET_request_to_esi, several_async_requests
 from .enter_entitys_to_db import enter_entitys_to_db
 from .asynctimer import async_timed
 from .conf import NUMBER_OF_REQUEST, action_list_type, entity_list_type

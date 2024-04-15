@@ -10,10 +10,23 @@ import time
 from django.conf import settings
 from .base_errors import StatusCodeNot200Exception, raise_entity_not_processed
 
+import asyncio
+import aiohttp
+from .asynctimer import async_timed
+from .base_errors import StatusCodeNot200Exception, raise_StatusCodeNot200Exception
+from typing import List
+
+from . import conf
+
+
+
+################################################################################
+#                         Блок синхронных запросов.                            #
+################################################################################
 
 def GET_request_to_esi(url):
     """
-    Единичный запрос к esi, в случае не 200 ответа необходима нормальная логика обработки
+    Единичный синхронный запрос к esi, в случае не 200 ответа необходима нормальная логика обработки
 
     Может выполняться в два подхода - если в первый раз пришла ошибка, то ожидаем
     конца окна и выполняем повторно запрос. Если во второй запрос также не 200 ответ, то выброс исключения.
@@ -25,7 +38,7 @@ def GET_request_to_esi(url):
     Если оставить обработку где нибудь в функциях систем, то следующим циклом произойдет повтороное обращение
     к GET_request_to_esi и уменьшение счетчика на единицу. То есть блокировка.
     """
-    MAX_COUNT_REMAINS = 99
+    MAX_COUNT_REMAINS = conf.MAX_COUNT_REMAINS
     resp = requests.get(url)
     if resp.status_code == 200:
         return resp
@@ -140,3 +153,94 @@ def load_and_save_icon(entity: Literal["alliance", "corporation", "character"], 
 
 
 
+
+################################################################################
+#                         Блок aсинхронных запросов.                            #
+################################################################################
+
+@async_timed()
+async def async_GET_requrest_to_esi(session: aiohttp.ClientSession, url: str, id_key: int):
+    """
+    Принимает сеанс, url, ключ - чтобы проще было идентифицировать запрос 
+    в условиях асинхронности и отсутствия сохранения порядка запросов.
+    Повторный запрос только в случае 500х ошибок - в надежде на то что сервер поднялся.
+    Логика защиты от ошибочных запросов должна быть выше по вызовам - т.к. 
+    асинхронно в текущем запросе не получится остановить выполнение остальных запросов.
+    """
+    MAX_COUNT_REMAINS = 90
+    async with session.get(url) as resp:
+        if resp.status == 200:
+            return {id_key: await resp.json()}
+        else:
+            print("Ошибка запроса")
+            # нельзя допускать слишком много ошибок - проще уронить сервис чем возиться с блокировкой ip
+            # более чем 40 ошибок - это значит где то кривая логика
+            # если почему то нет параметра X-ESI-Error-Limit-Remain - счетчика ошибок, то тоже надо ронять
+            limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
+            if not limit_remain or int(limit_remain) < MAX_COUNT_REMAINS:
+                print("ERRORS. TERMINATE.")
+                exit()
+            # если ошибка в запросе, то нет смысла в повторном запросе
+            # поэтому сразу формируем и выбрасываем исключение
+            if resp.status not in [500, 501, 502, 503, 504, 505]:
+                raise_StatusCodeNot200Exception(url, resp)
+
+    # повторный запрос только в случае ошибок сервера
+    # ожидание отката окна запроса с небольшим запасом и повторный запрос
+    # ожидание должно быть асинхронным  но не таской, т.е. asyncio.sleep без оборачивания таской
+    # - чтобы оно блокировало исключительно ту корутину в которой выполняется 
+    # текущий запрос
+    print("Повторный запрос")
+    await asyncio.sleep(conf.TIME_WAIT_NEXT_REQUEST)
+    async with session.get(url) as resp:
+        if resp.status == 200:
+            # return {id_key: {"headers": resp.headers, "content": await resp.json()}}
+            return {id_key: await resp.json()}
+        else:
+            # в случае повторной ошибки - выброс исключения
+            raise_StatusCodeNot200Exception(url, resp)
+
+
+def get_urls(entity, id_keys):
+    """
+    Принимает сущность и набор id, формирует урлы для запросов в esi.
+    """
+    if entity == "region":
+        base_url = "https://esi.evetech.net/latest/universe/regions/!/?datasource=tranquility&language=en"
+    elif entity == "constellation":
+        base_url = "https://esi.evetech.net/latest/universe/constellations/!/?datasource=tranquility&language=en"
+    else:
+        raise_entity_not_processed(entity)
+    # формируем список кортежей, 0 элемент - url, 1 элемент - id_key
+    base = base_url.split("!")
+    urls_and_ids = [(base[0] + str(id_key) + base[1], id_key) for id_key in id_keys]
+    return urls_and_ids
+
+@async_timed()
+async def several_async_requests(session:aiohttp.ClientSession, id_keys:List[str], entity:conf.entity_list_type):
+    """
+    Принимает сессию, список подставляемых в урл id, сущность, 
+    с помощью get_url на основе сущности формирует список урлов для запроса, выполняет запросы,
+    возвращает словарь с ключом - id и значением - результатом запроса.
+    Обращается к функции-одиночному запросу, получает из нее словарь с результатами
+    одного запроса, объединяет все результаты в один возвращаемый словарь.
+    Выполняет конкурентные запросы одновременно для всех полученных урл-ов.
+    """
+    urls_and_ids = get_urls(entity, id_keys)
+    out_responses = {}
+    pending = []
+    for url, id_key in urls_and_ids:
+        pending.append(asyncio.create_task(async_GET_requrest_to_esi(session, url, id_key)))
+    while pending:
+        done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_EXCEPTION)
+        # обход завершившихся задач, обработка исключения
+        for done_task in done:
+            # если не исключение - дополняем словарь с данными для ответа
+            if done_task.exception() is None:
+                out_responses.update(done_task.result())
+            # если исключение - то отчет, снятие всех остальных задач
+            else:
+                print("Возникло исключение")
+                for pending_task in pending:
+                    pending_task.cancel()
+    return out_responses
