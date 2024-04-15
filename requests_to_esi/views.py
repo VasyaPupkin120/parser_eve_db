@@ -11,10 +11,8 @@ def main_request(request):
 def parse_regions(request):
     if request.method == "POST":
         try:
-            asyncio.run(base_parser.create_all_entities("update_all", "region"))
-            # asyncio.run(base_parser.create_all_entities("add_missing", "region"))
-            # asyncio.run(parser_universe.create_all_regions("add_missing"))
-            # asyncio.run(parser_universe.create_all_regions("update_all"))
+            asyncio.run(base_parser.create_all_entities("add_missing", "region"))
+            # asyncio.run(base_parser.create_all_entities("update_all", "region"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_regions.html", {"exception": e})
         return redirect(reverse("dbeve_universe:regions"))
@@ -23,8 +21,8 @@ def parse_regions(request):
 def parse_constellations(request):
     if request.method == "POST":
         try:
-            asyncio.run(parser_universe.create_all_constellations("add_missing"))
-            # asyncio.run(parser_universe.create_all_constellations("update_all"))
+            asyncio.run(base_parser.create_all_entities("add_missing", "constellation"))
+            # asyncio.run(base_parser.create_all_entities("update_all", "constellation"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_constellations.html", {"exception": e})
         return redirect(reverse("dbeve_universe:constellations"))

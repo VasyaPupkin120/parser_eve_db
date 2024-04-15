@@ -43,6 +43,9 @@ async def get_external_ids(entity:entity_list_type):
     if entity == "region":
         url = "https://esi.evetech.net/latest/universe/regions/?datasource=tranquility"
         external_ids = list(GET_request_to_esi(url).json())
+    if entity == "constellation":
+        url = "https://esi.evetech.net/latest/universe/constellations/?datasource=tranquility"
+        external_ids = list(GET_request_to_esi(url).json())
     else:
         base_errors.raise_entity_not_processed(entity)
     print(f"Successful loading of all {entity}s id.")
@@ -109,12 +112,27 @@ async def formed_list_ids_to_enter_in_DB(action:action_list_type, entity:entity_
     print(f"Successful compare. Need load next id: {external_ids or 'No distinguishing ids'}")
     return list(external_ids)
 
+
+async def linking(entity:entity_list_type):
+    """
+    Линковка для тех сущностей, которым она нужна.
+    """
+    if entity == "constellation":
+        await linking_constellations()
+    if entity == "system":
+        await linking_systems()
+    else:
+        print(f"Linking for the {entity} is not needed or the method is not defined.")
+
+
+
 @async_timed()
 async def create_all_entities(action:action_list_type, entity:entity_list_type):
     """
-    Работает для сразу всей модели.
-    Определяет список id по которым нужно запросить инфу в esi, запрашивает
-    инфу по этим id, вносит эту инфу в БД.
+    Главная функция-парсер, все остальные - вспомогательные.
+    Работает для случая, когда нужно спарсить сразу все записи модели.
+    Определяет список id по которым нужно запросить инфу в esi,
+    запрашивает инфу по этим id, вносит эту инфу в БД.
     """
     # проверка сущностей и действий
     base_errors.check_action(action)
@@ -134,8 +152,11 @@ async def create_all_entities(action:action_list_type, entity:entity_list_type):
     count = 0
     async with aiohttp.ClientSession() as session:
         for chunk in chunks:
-            print(f"\nLoad {count * NUMBER_OF_REQUEST}/{len(id_for_enter_to_db)} regions")
+            print(f"\nLoad {count * NUMBER_OF_REQUEST}/{len(id_for_enter_to_db)} {entity}s")
             data = await several_async_requests(session, chunk, entity)
             await enter_entitys_to_db(entity, data)
             count += 1
     print("Successful downloading and saving information by {entity}.")
+
+    # запуск линковки
+    await linking(entity)
