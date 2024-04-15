@@ -46,6 +46,9 @@ async def get_external_ids(entity:entity_list_type):
     if entity == "constellation":
         url = "https://esi.evetech.net/latest/universe/constellations/?datasource=tranquility"
         external_ids = list(GET_request_to_esi(url).json())
+    if entity == "system":
+        url = "https://esi.evetech.net/latest/universe/systems/?datasource=tranquility"
+        external_ids = list(GET_request_to_esi(url).json())
     else:
         base_errors.raise_entity_not_processed(entity)
     print(f"Successful loading of all {entity}s id.")
@@ -119,10 +122,10 @@ async def linking(entity:entity_list_type):
     """
     if entity == "constellation":
         await linking_constellations()
-    if entity == "system":
+    elif entity == "system":
         await linking_systems()
     else:
-        print(f"Linking for the {entity} is not needed or the method is not defined.")
+        print(f"Linking for the {entity}s is not needed or the method is not defined.")
 
 
 

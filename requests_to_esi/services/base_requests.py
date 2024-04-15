@@ -209,6 +209,8 @@ def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/universe/regions/!/?datasource=tranquility&language=en"
     elif entity == "constellation":
         base_url = "https://esi.evetech.net/latest/universe/constellations/!/?datasource=tranquility&language=en"
+    elif entity == "system":
+        base_url = "https://esi.evetech.net/latest/universe/systems/!/?datasource=tranquility&language=en"
     else:
         raise_entity_not_processed(entity)
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key

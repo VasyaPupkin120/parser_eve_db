@@ -31,7 +31,9 @@ def parse_constellations(request):
 def parse_systems(request):
     if request.method == "POST":
         try:
-            asyncio.run(parser_universe.create_all_systems("add_missing"))
+            # asyncio.run(base_parser.create_all_entities("add_missing", "system"))
+            asyncio.run(base_parser.create_all_entities("update_all", "system"))
+            # asyncio.run(parser_universe.create_all_systems("add_missing"))
             # asyncio.run(parser_universe.create_all_systems("update_all"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_systems.html", {"exception": e})
