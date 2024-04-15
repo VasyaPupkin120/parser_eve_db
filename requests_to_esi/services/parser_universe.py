@@ -11,7 +11,7 @@ from .async_base_requests import several_async_requests
 from .enter_entitys_to_db import enter_entitys_to_db
 from .asynctimer import async_timed
 from .conf import NUMBER_OF_REQUEST, action_list_type, entity_list_type
-from .linker_universe import link_constellations
+from .linker_universe import *
 
 from dbeve_universe.models import *
 
@@ -29,22 +29,21 @@ from dbeve_universe.models import *
 
 
 
-def create_chunks(all_id:tuple):
+def create_chunks(all_id:list):
     """
-    принимает большой кортеж id, возвращает кортеж разбитый на чанки - тоже кортежи.
+    принимает большой список all_id, возвращает список разбитый на чанки - тоже списки.
     Размер чанка определяется NUMBER_OF_REQUEST.
     В последнем чанке остатки.
     """
-    all_id = all_id[:]
     all_id_chunks = []
     temp = []
     for count, id_key in enumerate(all_id):
         if count % NUMBER_OF_REQUEST == 0 and count != 0:
-            all_id_chunks.append(tuple(temp[:])) 
+            all_id_chunks.append(temp) 
             temp = []
         temp.append(id_key) 
-    all_id_chunks.append(tuple(temp[:])) 
-    return tuple(all_id_chunks)
+    all_id_chunks.append(temp) 
+    return all_id_chunks
 
 
 def check_action(action: action_list_type):
@@ -58,10 +57,10 @@ def check_action(action: action_list_type):
 
 
 @sync_to_async
-def create_list_ids_to_add_to_db(action:action_list_type, entity:entity_list_type, external_ids:tuple):
+def create_list_ids_to_add_to_db(action:action_list_type, entity:entity_list_type, external_ids):
     """
     Получает действие, сущность для указания модели 
-    и кортеж с внешними id по которым нужно внести данные. 
+    и список с внешними id по которым нужно внести данные. 
     Запрашивает список внутренних (уже имющюихся) id из БД, 
     при необходимости сравнивает и возвращает те id из внешних, 
     которых нет в БД.
@@ -86,6 +85,8 @@ def create_list_ids_to_add_to_db(action:action_list_type, entity:entity_list_typ
         db_records = Regions.objects.values("region_id")
     if entity == "constellation":
         db_records = Constellations.objects.values("constellation_id")
+    if entity == "system":
+        db_records = Systems.objects.values("system_id")
     else:
         raise_entity_not_processed(entity)
     print(f"Succesful load internal id of {entity} model.")
@@ -106,9 +107,8 @@ def create_list_ids_to_add_to_db(action:action_list_type, entity:entity_list_typ
     internal_ids = set(internal_ids)
     # удаляем из внешних id все те id, которые есть среди внутренних
     external_ids.difference_update(internal_ids) 
-    ret = tuple(external_ids)
-    print(f"Successful compare. Need load next id: {ret}")
-    return ret
+    print(f"Successful compare. Need load next id: {external_ids or 'No distinguishing ids'}")
+    return list(external_ids)
 
 
 
@@ -122,10 +122,9 @@ async def create_all_regions(action:action_list_type):
 
     print("\nStart loading all region id of ESI.")
     url_to_load_external_ids  = "https://esi.evetech.net/latest/universe/regions/?datasource=tranquility"
-    external_ids = GET_request_to_esi(url_to_load_external_ids).json()
+    external_ids = list(GET_request_to_esi(url_to_load_external_ids).json())
     print("Successful loading of all region id.")
 
-    external_ids = tuple(external_ids)
     id_for_enter_to_db = await create_list_ids_to_add_to_db(action, "region", external_ids) 
     if not id_for_enter_to_db:
         print("\nThere are no IDs that need to be entered into the database\n")
@@ -156,14 +155,13 @@ async def create_all_constellations(action:action_list_type, forced_linking:bool
     external_ids = GET_request_to_esi(url_to_load_external_ids).json()
     print("Successful loading of all constellation id.")
 
-    external_ids = tuple(external_ids)
     id_for_enter_to_db = await create_list_ids_to_add_to_db(action, "constellation", external_ids)
     if not id_for_enter_to_db:
         print("\nThere are no IDs that need to be entered into the database\n")
         # если изменений не было но нужно почему то перелинковать связи
         if forced_linking:
             print("\nStart forced linking\n")
-            await link_constellations()
+            await linking_constellations()
             print("\nSuccessful forced linking\n")
         return
 
@@ -180,27 +178,49 @@ async def create_all_constellations(action:action_list_type, forced_linking:bool
     print("Successful downloading information by constellation.")
 
     print("\nStart link foreign key for constellations.")
-    await link_constellations()
+    await linking_constellations()
     print("\nSuccessful link foreign key for constellation.")
 
+
 @async_timed()
-def create_all_systems():
+async def create_all_systems(action:action_list_type, forced_linking:bool=False):
     """
     Запрашивает у esi список систем, обрабатывает их.
     """
-    ...
-#     url = "https://esi.evetech.net/latest/universe/systems/?datasource=tranquility"
-#     all_id = GET_request_to_esi(url).json()
-#     all_id = list(all_id)
-#     count = 1
-#     print("\nSuccessful loading of all system id.")
-#     print("Start downloading information by system.")
-#     for system_id in all_id:
-#         print(f"\nLoad: {count}/{len(all_id)}")
-#         create_or_update_one_entity("system", system_id, "create")
-#         count += 1
-#
-#
+    check_action(action)
+
+    print("\nStart loading all systems id of ESI.")
+    url_to_load_external_ids = "https://esi.evetech.net/latest/universe/systems/?datasource=tranquility"
+    external_ids = GET_request_to_esi(url_to_load_external_ids).json()
+    print("Successful loading of all systems id.")
+
+    id_for_enter_to_db = await create_list_ids_to_add_to_db(action, "system", external_ids)
+    if not id_for_enter_to_db:
+        print("\nThere are no IDs that need to be entered into the database\n")
+        # если изменений не было но нужно почему то перелинковать связи
+        if forced_linking:
+            print("\nStart forced linking\n")
+            await linking_systems()
+            print("\nSuccessful forced linking\n")
+        return
+
+    count = 0
+    chunks = create_chunks(id_for_enter_to_db)
+    base_url = "https://esi.evetech.net/latest/universe/systems/!/?datasource=tranquility&language=en"
+    print("\nStart downloading information by systems.")
+    async with aiohttp.ClientSession() as session:
+        for chunk in chunks:
+            print(f"\nLoad {count * NUMBER_OF_REQUEST}/{len(id_for_enter_to_db)} systems")
+            data = await several_async_requests(session, base_url, chunk)
+            await enter_entitys_to_db("system", data)
+            count += 1
+    print("Successful downloading information by systems.")
+
+    print("\nStart link foreign key for systems.")
+    await linking_systems()
+    print("\nSuccessful link foreign key for systems.")
+
+
 @async_timed()
 def create_all_stars():
     """

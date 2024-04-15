@@ -120,37 +120,27 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB constellation: {key}\n")
+
+    # запись данных по системе
+    elif entity == "system":
+        for key in data:
+            Systems.objects.update_or_create(
+                    system_id=key,
+                    defaults={
+                        "name": data[key].get("name"),
+                        "position_x": data[key].get("position")["x"],
+                        "position_y": data[key].get("position")["y"],
+                        "position_z": data[key].get("position")["z"],
+                        "security_class": data[key].get("security_class"),
+                        "security_status": data[key].get("security_status"),
+                        "system_id": key,
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB system: {key}\n")
     else:
         raise_entity_not_processed(entity)
 
-    # # парсер системы
-    # if entity == "system":
-    #     if action == "create":
-    #         try:
-    #             Systems.objects.get(system_id=entity_id)
-    #             print(f"System {entity_id} already exists in DB")
-    #             return
-    #         except ObjectDoesNotExist:
-    #             print(f"Start load system: {entity_id}")
-    #     url = f"https://esi.evetech.net/latest/universe/systems/{entity_id}/?datasource=tranquility&language=en"
-    #     resp = GET_request_to_esi(url).json()
-    #     print(f"Successful load system: {resp['system_id']}")
-    #     constellation = Constellations.objects.get(constellation_id=resp["constellation_id"])
-    #     Systems.objects.update_or_create(
-    #             system_id=resp["system_id"],
-    #             defaults={
-    #                 "constellation": constellation,
-    #                 "name": resp.get("name"),
-    #                 "position_x": resp.get("position")["x"],
-    #                 "position_y": resp.get("position")["y"],
-    #                 "position_z": resp.get("position")["z"],
-    #                 "security_class": resp.get("security_class"),
-    #                 "security_status": resp.get("security_status"),
-    #                 "system_id": resp["system_id"],
-    #                 "response_body": resp,
-    #                 }
-    #             )
-    #     print(f"Successful save to DB system: {resp['system_id']}")
     #
     # # парсер звезды
     # # должен через аргумент функции kwargs["solar_system"] получать ссылку на звезду, с которой будет связан
