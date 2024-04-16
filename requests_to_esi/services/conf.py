@@ -18,5 +18,6 @@ TIME_WAIT_NEXT_REQUEST = 70
 # пока оставлю 10
 NUMBER_OF_REQUEST = 10
 
+# типы начинающиеся с update_field - типы не для полноценной записи в БД а для обновления какого либо поля
 action_list_type = Literal["add_missing", "update_all"]
-entity_list_type = Literal["region", "constellation", "system", "star", "alliance", "corporation", "character"] 
+entity_list_type = Literal["region", "constellation", "system", "star", "alliance", "update_field_id_associated_corporations", "corporation", "character"] 

@@ -162,6 +162,14 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+
+    # запись списка id корпораций в поле response_body для альянса.
+    elif entity == "update_field_id_associated_corporations":
+        for key in data:
+            alliance = Alliances.objects.get(alliance_id = key)
+            alliance.response_body["associated_corp"] = data[key]
+            alliance.save()
+            print(f"Successful save list associated corp in alliance: {key}\n")
     else:
         raise_entity_not_processed(entity)
 

@@ -215,6 +215,8 @@ def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/universe/stars/!/?datasource=tranquility"
     elif entity == "alliance":
         base_url = "https://esi.evetech.net/latest/alliances/!/?datasource=tranquility"
+    elif entity == "update_field_id_associated_corporations":
+        base_url = "https://esi.evetech.net/latest/alliances/!/corporations/?datasource=tranquility"
     else:
         raise_entity_not_processed(entity)
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key

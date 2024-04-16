@@ -11,6 +11,21 @@ from .linker_universe import *
 
 from dbeve_universe.models import *
 from dbeve_social.models import *
+@sync_to_async
+def dict_to_list(db_records):
+    """
+    Вынос обработки результатов Models.objects.values() в отдельную функцию
+    необходим, так как по этому результату нужно итерироваться внутри
+    функции, помеченной как sync_to_async, а помчеать так всю get_internal_ids 
+    не хочется. Я не понимаю почему это не работает без sync_to_async, ведь
+    get_internal_ids является асинхронной специально для этого.
+    """
+    internal_ids = []
+    # превращаем список словарей в обычный список id
+    for dict_record in db_records:
+        for key in dict_record:
+            internal_ids.append(dict_record[key])
+    return internal_ids
 
 
 def create_chunks(all_id:list):
@@ -70,6 +85,9 @@ async def get_external_ids(entity:entity_list_type):
     elif entity == "alliance":
         url = "https://esi.evetech.net/latest/alliances/?datasource=tranquility"
         external_ids = list(GET_request_to_esi(url).json())
+    elif entity == "update_field_id_associated_corporations":
+        db_records = Alliances.objects.values(f"alliance_id")
+        external_ids = await dict_to_list(db_records)
     else:
         base_errors.raise_entity_not_processed(entity)
     print(f"Successful loading of all {entity}s id.")
@@ -80,21 +98,6 @@ async def get_internal_ids(entity:entity_list_type):
     """
     Принимает сущность, запрашивает в БД уже имеющиеся записи и возвращает их.
     """
-    @sync_to_async
-    def dict_to_list(db_records):
-        """
-        Вынос обработки результатов Models.objects.values() в отдельную функцию
-        необходим, так как по этому результату нужно итерироваться внутри
-        функции, помеченной как sync_to_async, а помчеать так всю get_internal_ids 
-        не хочется. Я не понимаю почему это не работает без sync_to_async, ведь
-        get_internal_ids является асинхронной специально для этого.
-        """
-        internal_ids = []
-        # превращаем список словарей в обычный список id
-        for dict_record in db_records:
-            for key in dict_record:
-                internal_ids.append(dict_record[key])
-        return internal_ids
     print(f"\nStart load internal id of {entity} model.")
     if entity == "region":
         db_records = Regions.objects.values(f"{entity}_id")
@@ -106,6 +109,10 @@ async def get_internal_ids(entity:entity_list_type):
         db_records = Stars.objects.values(f"{entity}_id)")
     elif entity == "alliance":
         db_records = Alliances.objects.values(f"{entity}_id")
+    elif entity == "update_field_id_associated_corporations":
+        internal_ids = []
+        print(f"Set internal id of {entity} model in empty list - [].")
+        return internal_ids
     else:
         base_errors.raise_entity_not_processed(entity)
     internal_ids = await dict_to_list(db_records)
@@ -159,7 +166,7 @@ async def linking(entity:entity_list_type):
 @async_timed()
 async def create_all_entities(action:action_list_type, entity:entity_list_type):
     """
-    Главная функция-парсер, все остальные - вспомогательные.
+    Главная функция-парсер, все остальные - вспомогательные или независмые.
     Работает для случая, когда нужно спарсить сразу все записи модели.
     Определяет список id по которым нужно запросить инфу в esi,
     запрашивает инфу по этим id, вносит эту инфу в БД.
@@ -190,3 +197,5 @@ async def create_all_entities(action:action_list_type, entity:entity_list_type):
 
     # запуск линковки
     await linking(entity)
+
+

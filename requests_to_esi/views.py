@@ -74,13 +74,25 @@ def parse_alliances(request):
     return render(request, "requests_to_esi/parse_alliances.html")
 
 
-def parse_associated_corporations(request):
+def parse_id_associated_corporations(request):
     if request.method == "POST":
         try:
-            parser_social.create_all_associated_corporations()
+            asyncio.run(base_parser.create_all_entities("update_all", "update_field_id_associated_corporations"))
         except base_requests.StatusCodeNot200Exception as e:
-            return render(request, "requests_to_esi/parse_associated_corporations.html", {"exception": e})
-        return redirect(reverse("dbeve_social:all_corporations"))
-    return render(request, "requests_to_esi/parse_associated_corporations.html")
+            return render(request, "requests_to_esi/update_field_id_associated_corporations.html", {"exception": e})
+        return redirect(reverse("dbeve_social:all_alliances"))
+    return render(request, "requests_to_esi/update_field_id_associated_corporations.html")
+
+
+
+def parse_corporations(request):
+    ...
+    # if request.method == "POST":
+    #     try:
+    #         parser_social.create_all_associated_corporations()
+    #     except base_requests.StatusCodeNot200Exception as e:
+    #         return render(request, "requests_to_esi/parse_associated_corporations.html", {"exception": e})
+    #     return redirect(reverse("dbeve_social:all_corporations"))
+    # return render(request, "requests_to_esi/parse_associated_corporations.html")
 
 
