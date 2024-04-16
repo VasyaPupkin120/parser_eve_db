@@ -1,9 +1,6 @@
-import asyncio
-import json
 import aiohttp
 
 from asgiref.sync import sync_to_async
-
 
 from . import base_errors
 from .base_requests import GET_request_to_esi, several_async_requests
@@ -32,6 +29,24 @@ def create_chunks(all_id:list):
     return all_id_chunks
 
 
+@sync_to_async
+def get_star_external_ids():
+    """
+    Вспомогательная функция для get_external_ids.
+    Возвращает внешние id для Star.
+    Также почему то нужно использовать sync_to_async (
+    """
+    external_ids = []
+    systems = Systems.objects.all()
+    for system in systems:
+        star_id = system.response_body.get("star_id")
+        if not star_id:
+            print(f"System {system.system_id} has no star")
+            continue
+        external_ids.append(star_id)
+    return external_ids
+
+
 async def get_external_ids(entity:entity_list_type):
     """
     Данные можно получить либо прямым запросом к esi, либо обработкой 
@@ -43,12 +58,14 @@ async def get_external_ids(entity:entity_list_type):
     if entity == "region":
         url = "https://esi.evetech.net/latest/universe/regions/?datasource=tranquility"
         external_ids = list(GET_request_to_esi(url).json())
-    if entity == "constellation":
+    elif entity == "constellation":
         url = "https://esi.evetech.net/latest/universe/constellations/?datasource=tranquility"
         external_ids = list(GET_request_to_esi(url).json())
-    if entity == "system":
+    elif entity == "system":
         url = "https://esi.evetech.net/latest/universe/systems/?datasource=tranquility"
         external_ids = list(GET_request_to_esi(url).json())
+    elif entity == "star":
+        external_ids = await get_star_external_ids()
     else:
         base_errors.raise_entity_not_processed(entity)
     print(f"Successful loading of all {entity}s id.")
@@ -81,6 +98,8 @@ async def get_internal_ids(entity:entity_list_type):
         db_records = Constellations.objects.values("constellation_id")
     elif entity == "system":
         db_records = Systems.objects.values("system_id")
+    elif entity == "star":
+        db_records = Stars.objects.values("star_id")
     else:
         base_errors.raise_entity_not_processed(entity)
     internal_ids = await dict_to_list(db_records)
@@ -124,6 +143,8 @@ async def linking(entity:entity_list_type):
         await linking_constellations()
     elif entity == "system":
         await linking_systems()
+    elif entity == "star":
+        await linking_stars()
     else:
         print(f"Linking for the {entity}s is not needed or the method is not defined.")
 

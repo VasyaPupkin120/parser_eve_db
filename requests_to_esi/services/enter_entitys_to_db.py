@@ -124,38 +124,27 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB system: {key}\n")
+
+    # запись данных по звезде
+    elif entity == "star":
+        for key in data:
+            Stars.objects.update_or_create(
+                    star_id=key,
+                    defaults={
+                        "age": data[key].get("age"),
+                        "luminosity": data[key].get("luminosity"),
+                        "name": data[key].get("name"),
+                        "radius": data[key].get("radius"),
+                        "spectral_class": data[key].get("spectral_class"),
+                        "star_id": key,
+                        "temperature": data[key].get("temperature"),
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB system: {key}\n")
     else:
         raise_entity_not_processed(entity)
 
-    #
-    # # парсер звезды
-    # # должен через аргумент функции kwargs["solar_system"] получать ссылку на звезду, с которой будет связан
-    # if entity == "star":
-    #     if action == "create":
-    #         try:
-    #             Stars.objects.get(star_id=entity_id)
-    #             print(f"Star {entity_id} already exists in DB")
-    #             return
-    #         except ObjectDoesNotExist:
-    #             print(f"Start load star: {entity_id}")
-    #     url = f"https://esi.evetech.net/latest/universe/stars/{entity_id}/?datasource=tranquility"
-    #     resp = GET_request_to_esi(url).json()
-    #     print(f"Successful load star: {entity_id}")
-    #     Stars.objects.update_or_create(star_id=entity_id,
-    #                                    defaults={
-    #                                        "age": resp.get("age"),
-    #                                        "luminosity": resp.get("luminosity"),
-    #                                        "name": resp.get("name"),
-    #                                        "radius": resp.get("radius"),
-    #                                        "solar_system": kwargs["solar_system"],
-    #                                        "spectral_class": resp.get("spectral_class"),
-    #                                        "star_id": entity_id,
-    #                                        "temperature": resp.get("temperature"),
-    #                                        "response_body": resp,
-    #                                        }
-    #                                    )
-    #     print(f"Successful save to DB star: {entity_id}")
-    #
     # # парсер альянса
     # if entity == "alliance":
     #     if action == "create":

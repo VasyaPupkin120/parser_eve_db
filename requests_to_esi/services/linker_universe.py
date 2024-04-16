@@ -40,3 +40,19 @@ def linking_systems():
         print(f"Link {system.system_id} system. {count}/{l}")
         count += 1
 
+
+@sync_to_async
+def linking_stars():
+    """
+    Связи у звезд.
+    """
+    stars = Stars.objects.all()
+    count = 1
+    l = len(stars)
+    for star in stars:
+        system = Systems.objects.get(system_id=star.response_body["solar_system_id"])
+        star.solar_system = system
+        star.save(update_fields=["solar_system",])
+        print(f"Link {star.star_id} star. {count}/{l}")
+        count += 1
+

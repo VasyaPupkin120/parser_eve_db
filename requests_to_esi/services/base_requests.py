@@ -176,10 +176,10 @@ async def async_GET_requrest_to_esi(session: aiohttp.ClientSession, url: str, id
             # нельзя допускать слишком много ошибок - проще уронить сервис чем возиться с блокировкой ip
             # более чем 40 ошибок - это значит где то кривая логика
             # если почему то нет параметра X-ESI-Error-Limit-Remain - счетчика ошибок, то тоже надо ронять
-            limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
-            if not limit_remain or int(limit_remain) < MAX_COUNT_REMAINS:
-                print("ERRORS. TERMINATE.")
-                exit()
+            # limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
+            # if not limit_remain or int(limit_remain) < MAX_COUNT_REMAINS:
+            #     print("ERRORS. TERMINATE.")
+            #     exit()
             # если ошибка в запросе, то нет смысла в повторном запросе
             # поэтому сразу формируем и выбрасываем исключение
             if resp.status not in [500, 501, 502, 503, 504, 505]:
@@ -211,6 +211,8 @@ def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/universe/constellations/!/?datasource=tranquility&language=en"
     elif entity == "system":
         base_url = "https://esi.evetech.net/latest/universe/systems/!/?datasource=tranquility&language=en"
+    elif entity == "star":
+        base_url = "https://esi.evetech.net/latest/universe/stars/!/?datasource=tranquility"
     else:
         raise_entity_not_processed(entity)
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key
