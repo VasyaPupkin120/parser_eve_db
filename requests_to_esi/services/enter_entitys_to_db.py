@@ -68,8 +68,13 @@ def enter_entitys_to_db(
     data - словарь, полученный из функции several_async_requests
 
     Не выполняет связывание записей - линковка выполняется отдельной функцией.
+    В том числе для альянсов не выполняется подгрузка ассоциированных корпораций - 
+    это делать отдельно, в функции внешних id для корпораций.
 
     в начале идут блоки для обработки universe-данных, потом блоки social-данных
+
+    Функция не занимается загрузкой и сохранением изображений. Это нужно как-то
+    отдельно делать.
     """
 
     # LSP ругается, но все работает. Эта проверка нужна, 
@@ -89,7 +94,7 @@ def enter_entitys_to_db(
                         "response_body": data[key], 
                         }
                     )
-            print(f"Successful save to DB region: {key}\n")
+            print(f"Successful save to DB {entity}: {key}\n")
 
     # запись данных по констелляции
     elif entity == "constellation":
@@ -105,7 +110,7 @@ def enter_entitys_to_db(
                         "response_body": data[key], 
                         }
                     )
-            print(f"Successful save to DB constellation: {key}\n")
+            print(f"Successful save to DB {entity}: {key}\n")
 
     # запись данных по системе
     elif entity == "system":
@@ -123,7 +128,7 @@ def enter_entitys_to_db(
                         "response_body": data[key], 
                         }
                     )
-            print(f"Successful save to DB system: {key}\n")
+            print(f"Successful save to DB {entity}: {key}\n")
 
     # запись данных по звезде
     elif entity == "star":
@@ -141,10 +146,26 @@ def enter_entitys_to_db(
                         "response_body": data[key], 
                         }
                     )
-            print(f"Successful save to DB system: {key}\n")
+            print(f"Successful save to DB {entity}: {key}\n")
+
+    # запись данных по альянсу
+    elif entity == "alliance":
+        for key in data:
+            Alliances.objects.update_or_create(
+                    alliance_id=key,
+                    defaults={
+                        "alliance_id": key,
+                        "date_founded": data[key].get("date_founded"),
+                        "name": data[key].get("name"),
+                        "ticker": data[key].get("ticker"),
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
     else:
         raise_entity_not_processed(entity)
 
+    #FIXME пока не удалять код по альянсам - т.к. будет нужно брать код парсинга связанных корпораций.
     # # парсер альянса
     # if entity == "alliance":
     #     if action == "create":

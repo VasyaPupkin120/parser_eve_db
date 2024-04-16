@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests_to_esi.forms import ParseOneSystemForm
-from .services import base_requests, parser_social, parser_types, parser_universe, base_parser
+from .services import base_requests, parser_social, parser_types, base_parser
 import asyncio
 
 # Create your views here.
@@ -66,10 +66,11 @@ def parse_stars(request):
 def parse_alliances(request):
     if request.method == "POST":
         try:
-            parser_social.create_all_alliances()
+            # asyncio.run(base_parser.create_all_entities("add_missing", "alliance"))
+            asyncio.run(base_parser.create_all_entities("update_all", "alliance"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/parse_alliances.html", {"exception": e})
-        return redirect(reverse("dbeve_social:alliances"))
+        return redirect(reverse("dbeve_social:all_alliances"))
     return render(request, "requests_to_esi/parse_alliances.html")
 
 

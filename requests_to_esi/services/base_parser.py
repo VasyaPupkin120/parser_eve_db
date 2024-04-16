@@ -10,6 +10,7 @@ from .conf import NUMBER_OF_REQUEST, action_list_type, entity_list_type
 from .linker_universe import *
 
 from dbeve_universe.models import *
+from dbeve_social.models import *
 
 
 def create_chunks(all_id:list):
@@ -66,6 +67,9 @@ async def get_external_ids(entity:entity_list_type):
         external_ids = list(GET_request_to_esi(url).json())
     elif entity == "star":
         external_ids = await get_star_external_ids()
+    elif entity == "alliance":
+        url = "https://esi.evetech.net/latest/alliances/?datasource=tranquility"
+        external_ids = list(GET_request_to_esi(url).json())
     else:
         base_errors.raise_entity_not_processed(entity)
     print(f"Successful loading of all {entity}s id.")
@@ -93,13 +97,15 @@ async def get_internal_ids(entity:entity_list_type):
         return internal_ids
     print(f"\nStart load internal id of {entity} model.")
     if entity == "region":
-        db_records = Regions.objects.values("region_id")
+        db_records = Regions.objects.values(f"{entity}_id")
     elif entity == "constellation":
-        db_records = Constellations.objects.values("constellation_id")
+        db_records = Constellations.objects.values(f"{entity}_id")
     elif entity == "system":
-        db_records = Systems.objects.values("system_id")
+        db_records = Systems.objects.values(f"{entity}_id")
     elif entity == "star":
-        db_records = Stars.objects.values("star_id")
+        db_records = Stars.objects.values(f"{entity}_id)")
+    elif entity == "alliance":
+        db_records = Alliances.objects.values(f"{entity}_id")
     else:
         base_errors.raise_entity_not_processed(entity)
     internal_ids = await dict_to_list(db_records)
