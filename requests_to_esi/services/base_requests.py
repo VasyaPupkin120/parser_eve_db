@@ -8,12 +8,11 @@ from typing import Literal
 import requests
 import time
 from django.conf import settings
-from .base_errors import StatusCodeNot200Exception, raise_entity_not_processed
+from .errors import StatusCodeNot200Exception, raise_entity_not_processed
 
 import asyncio
 import aiohttp
 from .asynctimer import async_timed
-from .base_errors import StatusCodeNot200Exception, raise_StatusCodeNot200Exception
 from typing import List
 
 from . import conf
@@ -217,6 +216,8 @@ def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/alliances/!/?datasource=tranquility"
     elif entity == "update_field_id_associated_corporations":
         base_url = "https://esi.evetech.net/latest/alliances/!/corporations/?datasource=tranquility"
+    elif entity == "corporation":
+        base_url = "https://esi.evetech.net/latest/corporations/!/?datasource=tranquility"
     else:
         raise_entity_not_processed(entity)
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key

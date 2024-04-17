@@ -1,6 +1,6 @@
 from asgiref.sync import sync_to_async
 
-from .base_errors import raise_entity_not_processed, raise_action_not_allowed
+from .errors import raise_entity_not_processed, raise_action_not_allowed
 from .base_requests import GET_request_to_esi, load_and_save_icon
 from .conf import entity_list_type
 
@@ -170,6 +170,27 @@ def enter_entitys_to_db(
             alliance.response_body["associated_corp"] = data[key]
             alliance.save()
             print(f"Successful save list associated corp in alliance: {key}\n")
+
+    # запись данных по корпорации
+    elif entity == "corporation":
+        for key in data:
+            Corporations.objects.update_or_create(
+                    corporation_id=key,
+                    defaults={
+                        "corporation_id": key,
+                        "date_founded": data[key].get("date_founded"),
+                        "description": data[key].get("description"),
+                        "member_count": data[key].get("member_count"),
+                        "name": data[key].get("name"),
+                        "shares": data[key].get("shares"),
+                        "ticker": data[key].get("ticker"),
+                        "tax_rate": data[key].get("tax_rate"),
+                        "url": data[key].get("url"),
+                        "war_eligible": data[key].get("war_eligible"),
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
     else:
         raise_entity_not_processed(entity)
 

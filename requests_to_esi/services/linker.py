@@ -5,6 +5,7 @@
 """
 from asgiref.sync import sync_to_async
 from dbeve_universe.models import *
+from dbeve_social.models import *
 
 # у регионов нет внешних ключей, это что то вроде корневой модели.
 
@@ -54,5 +55,25 @@ def linking_stars():
         star.solar_system = system
         star.save(update_fields=["solar_system",])
         print(f"Link {star.star_id} star. {count}/{l}")
+        count += 1
+
+
+@sync_to_async
+def linking_corporations():
+    """
+    Связи у корпораций. Возможно сначала не все.
+    """
+    corporations = Corporations.objects.all()
+    count = 1
+    l = len(corporations)
+    for corporation in corporations:
+        alliance_id=corporation.response_body.get("alliance_id")
+        if not alliance_id:
+            print(f"Corporation {corporation.corporation_id} not in alliance.")
+            continue
+        alliance = Alliances.objects.get(alliance_id=alliance_id)
+        corporation.alliance = alliance
+        corporation.save(update_fields=["alliance",])
+        print(f"Link {corporation.corporation_id} corporation. {count}/{l}")
         count += 1
 

@@ -7,20 +7,6 @@ from dbeve_social.models import Alliances, Corporations
 from .enter_entitys_to_db import enter_entitys_to_db
 
 
-def create_all_alliances():
-    """
-    """
-    url = "https://esi.evetech.net/latest/alliances/?datasource=tranquility"
-    alliances_id = GET_request_to_esi(url).json()
-    len_alliances = len(alliances_id)
-    count = 1
-    print("\nSuccessful loading of all alliances id.")
-    print("Start downloading information by alliance.")
-    for alliance_id in alliances_id:
-        print(f"\nLoad: {count}/{len_alliances}")
-        # enter_one_entity_to_DB("alliance", alliance_id, "create")
-        count += 1
-
 # временная фунцкия-парсер для поиска всех ассоциированных с алли корпороаций.
 def create_only_id_all_associated_corporations():
     """

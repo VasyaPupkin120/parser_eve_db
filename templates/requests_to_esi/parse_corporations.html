@@ -8,9 +8,9 @@
         {{ exception }}
         {{ exception.extra_info }}
     {% else %}
-        <form method="post" action={% url "requests_to_esi:parse_associated_corporations" %}>
+        <form method="post" action={% url "requests_to_esi:parse_corporations" %}>
             {% csrf_token %}
-            <input type="submit" value="Parse associated corporations">
+            <input type="submit" value="Parse corporations">
         </form>
     {% endif %}
 {% endblock content %}
