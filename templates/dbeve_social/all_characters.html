@@ -1,0 +1,11 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}All characters{% endblock title %}
+
+{% block content %}
+    {% for character in characters %}
+            <img src="https://images.evetech.net/characters/{{ character.character_id }}/portrait?size=128" height="40" width="40"/>
+            <a class="p-2 text-dark" href="https://zkillboard.com/character/{{ character.character_id }}/">{{ character.character_id }}</a>
+    {% endfor %}
+{% endblock content %}

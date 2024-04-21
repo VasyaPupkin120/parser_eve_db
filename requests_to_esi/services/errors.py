@@ -6,16 +6,17 @@ from .conf import entity_list_type, action_list_type
 
 
 class StatusCodeNot200Exception(Exception):
-    def __init__(self, message, status_code, limit_remain, limit_reset, error_limited, url, resp):
+    def __init__(self, message, status_code, limit_remain, limit_reset, error_limited, url, full_body_response, content):
         super().__init__(message)
         self.status_code = status_code
         self.limit_remain = limit_remain
         self.limit_reset = limit_reset
         self.error_limited = error_limited
         self.url = url
-        self.resp = resp
+        self.full_body_response = full_body_response
+        self.content = content
 
-def raise_StatusCodeNot200Exception(url:str, resp:aiohttp.ClientResponse|requests.Response):
+def raise_StatusCodeNot200Exception(url:str, resp:aiohttp.ClientResponse|requests.Response, content):
     """
     Принимает url и результат запроса на этот url, выбрасывает исключение.
     """
@@ -28,7 +29,8 @@ def raise_StatusCodeNot200Exception(url:str, resp:aiohttp.ClientResponse|request
     limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
     limit_reset = resp.headers.get("X-ESI-Error-Limit-Reset")
     error_limited = resp.headers.get("X-ESI-Error-Limited")
-    error_message = f"Status code: {status_code}\nLimit-Remain: {limit_remain}\nLimit-Reset: {limit_reset}\nError-Limited:{error_limited}\nURL: {url}" 
+
+    error_message = f"Status code: {status_code}\nLimit-Remain: {limit_remain}\nLimit-Reset: {limit_reset}\nError-Limited:{error_limited}\nURL: {url}\n\nFull body response: {resp}\nContent: {content}" 
     raise StatusCodeNot200Exception(
             error_message,
             status_code=status_code,
@@ -36,7 +38,8 @@ def raise_StatusCodeNot200Exception(url:str, resp:aiohttp.ClientResponse|request
             limit_reset=limit_reset,
             error_limited=error_limited,
             url=url,
-            resp=resp,
+            full_body_response=resp,
+            content=content
             )
 
 def raise_entity_not_processed(entity):

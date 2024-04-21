@@ -9,6 +9,8 @@ urlpatterns = [
     path('', social, name="social"),
     path('one_alliance/<int:alliance_id>/', one_alliance, name="one_alliance"),
     path('all_alliances/', all_alliances, name="all_alliances"),
+    path('all_corporations/', all_corporations, name="all_corporations"),
+    path('all_characters/', all_characters, name="all_characters"),
 ]
 
 if settings.DEBUG:

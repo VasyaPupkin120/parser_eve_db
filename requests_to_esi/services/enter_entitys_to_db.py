@@ -191,71 +191,28 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+
+    # запись данных по корпорации
+    elif entity == "character":
+        for key in data:
+            Characters.objects.update_or_create(
+                    character_id=key,
+                    defaults={
+                        "character_id": key,
+                        "birthday": data[key].get("birthday"),
+                        "description": data[key].get("description"),
+                        "is_deleted": data[key].get("is_deleted"),
+                        "gender": data[key].get("gender"),
+                        "name": data[key].get("name"),
+                        "security_status": data[key].get("security_status"),
+                        "title": data[key].get("title"),
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
     else:
         raise_entity_not_processed(entity)
 
-    #FIXME пока не удалять код по альянсам - т.к. будет нужно брать код парсинга связанных корпораций.
-    # # парсер альянса
-    # if entity == "alliance":
-    #     if action == "create":
-    #         try:
-    #             Alliances.objects.get(alliance_id=entity_id)
-    #             print(f"Alliance {entity_id} already exists in DB")
-    #             return
-    #         except ObjectDoesNotExist:
-    #             print(f"Start load alliance: {entity_id}")
-    #     url = f"https://esi.evetech.net/latest/alliances/{entity_id}/?datasource=tranquility"
-    #     resp = GET_request_to_esi(url).json()
-    #     associated_corp = get_associated_corp(entity_id, resp.get("creator_corporation_id"), resp.get("executor_corporation_id"))
-    #     # вносим корпорации в response_body, в котором этой инфы не было - чтобы не создавать дополнительные поля модели
-    #     resp["associated_corp"] = associated_corp
-    #     nameicon = load_and_save_icon(entity, entity_id)
-    #     print(f"Successful load alliance: {entity_id}")
-    #     Alliances.objects.update_or_create(
-    #             alliance_id=entity_id,
-    #             defaults={
-    #                 "alliance_id": entity_id,
-    #                 "date_founded": resp.get("date_founded"),
-    #                 "name": resp.get("name"),
-    #                 "ticker": resp.get("ticker"),
-    #                 "response_body": resp,
-    #                 "nameicon": nameicon,
-    #                 }
-    #             )
-    #     print(f"Successful save to DB alliance: {entity_id}")
-    #
-    # # парсер корпорации
-    # if entity == "corporation":
-    #     if action == "create":
-    #         try:
-    #             Corporations.objects.get(corporation_id=entity_id)
-    #             print(f"Corporation {entity_id} already exists in DB")
-    #             return
-    #         except ObjectDoesNotExist:
-    #             print(f"Start load corporation: {entity_id}")
-    #     url = f"https://esi.evetech.net/latest/corporations/{entity_id}/?datasource=tranquility"
-    #     resp = GET_request_to_esi(url).json()
-    #     nameicon = load_and_save_icon(entity, entity_id)
-    #     print(f"Successful load corporation: {entity_id}")
-    #     Corporations.objects.update_or_create(
-    #             corporation_id=entity_id,
-    #             defaults={
-    #                 "corporation_id": entity_id,
-    #                 "date_founded": resp.get("date_founded"),
-    #                 "description": resp.get("description"),
-    #                 "member_count": resp.get("member_count"),
-    #                 "name": resp.get("name"),
-    #                 "nameicon": nameicon,
-    #                 "shares": resp.get("shares"),
-    #                 "ticker": resp.get("ticker"),
-    #                 "tax_rate": resp.get("tax_rate"),
-    #                 "url": resp.get("url"),
-    #                 "war_eligible": resp.get("war_eligible"),
-    #                 "response_body": resp,
-    #                 }
-    #             )
-    #     print(f"Successful save to DB corporation: {entity_id}")
-    #
     # # парсер отдельного персонажа
     # if entity == "character":
     #     if action == "create":

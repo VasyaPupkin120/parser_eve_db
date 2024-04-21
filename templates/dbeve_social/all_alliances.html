@@ -5,7 +5,7 @@
 
 {% block content %}
     {% for alliance in alliances %}
-            <img src="{% static 'img/alliances/'%}{{ alliance.nameicon }}" height="40" width="40"/>
+            <img src="https://images.evetech.net/alliances/{{ alliance.alliance_id }}/logo?size=128" height="40" width="40"/>
             <a class="p-2 text-dark" href="https://zkillboard.com/alliance/{{ alliance.alliance_id }}/">{{ alliance.alliance_id }}</a>
     {% endfor %}
 {% endblock content %}

@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests_to_esi.forms import ParseOneSystemForm
-from .services import base_requests, parser_social, parser_types, main_parser
+from .services import base_requests, parser_social, main_parser
 import asyncio
 
 # Create your views here.
@@ -104,3 +104,11 @@ def parse_corporations(request):
     return render(request, "requests_to_esi/parse_corporations.html")
 
 
+def parse_characters(request):
+    if request.method == "POST":
+        try:
+            asyncio.run(main_parser.create_all_entities("only_missing", "character"))
+        except base_requests.StatusCodeNot200Exception as e:
+            return render(request, "requests_to_esi/parse_characters.html", {"exception": e})
+        return redirect(reverse("dbeve_social:all_characters"))
+    return render(request, "requests_to_esi/parse_characters.html")

@@ -1,0 +1,11 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}All corporations{% endblock title %}
+
+{% block content %}
+    {% for corporation in corporations %}
+            <img src="https://images.evetech.net/corporations/{{ corporation.corporation_id }}/logo?size=128" height="40" width="40"/>
+            <a class="p-2 text-dark" href="https://zkillboard.com/corporation/{{ corporation.corporation_id }}/">{{ corporation.corporation_id }}</a>
+    {% endfor %}
+{% endblock content %}

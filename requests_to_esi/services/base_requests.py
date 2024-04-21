@@ -8,7 +8,7 @@ from typing import Literal
 import requests
 import time
 from django.conf import settings
-from .errors import StatusCodeNot200Exception, raise_entity_not_processed
+from .errors import StatusCodeNot200Exception, raise_entity_not_processed, raise_StatusCodeNot200Exception
 
 import asyncio
 import aiohttp
@@ -56,7 +56,7 @@ def GET_request_to_esi(url):
         limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
         limit_reset = resp.headers.get("X-ESI-Error-Limit-Reset")
         error_limited = resp.headers.get("X-ESI-Error-Limited")
-        error_message = f"Status code: {resp.status_code}\n Limit-Remain: {limit_remain}\n Limit-Reset: {limit_reset}\n Error-Limited:{error_limited}\n URL: {url}\n Response: {resp}" 
+        error_message = f"Status code: {resp.status_code}\n Limit-Remain: {limit_remain}\n Limit-Reset: {limit_reset}\n Error-Limited:{error_limited}\n URL: {url}\nFull body response: {resp}\nContent: {resp.content}" 
         raise StatusCodeNot200Exception(
                 error_message,
                 status_code=resp.status_code,
@@ -64,7 +64,8 @@ def GET_request_to_esi(url):
                 limit_reset=limit_reset,
                 error_limited=error_limited,
                 url=url,
-                resp=resp,
+                full_body_response=resp,
+                content=resp.content
                 )
 
     # нельзя допускать более чем одну ошибку - проще уронить сервис чем возиться с блокировкой ip
@@ -91,7 +92,8 @@ def GET_request_to_esi(url):
             limit_reset=limit_reset,
             error_limited=error_limited,
             url=url,
-            resp=resp,
+            full_body_response=resp,
+            content=resp.content
             )
 
 
@@ -166,38 +168,55 @@ async def async_GET_requrest_to_esi(session: aiohttp.ClientSession, url: str, id
     Логика защиты от ошибочных запросов должна быть выше по вызовам - т.к. 
     асинхронно в текущем запросе не получится остановить выполнение остальных запросов.
     """
-    MAX_COUNT_REMAINS = 90
+    MAX_COUNT_REMAINS = conf.MAX_COUNT_REMAINS
     async with session.get(url) as resp:
+        content = await resp.json()
         if resp.status == 200:
-            return {id_key: await resp.json()}
+            return {id_key: content}
         else:
-            print("Ошибка запроса")
-            # нельзя допускать слишком много ошибок - проще уронить сервис чем возиться с блокировкой ip
-            # более чем 40 ошибок - это значит где то кривая логика
-            # если почему то нет параметра X-ESI-Error-Limit-Remain - счетчика ошибок, то тоже надо ронять
-            # limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
-            # if not limit_remain or int(limit_remain) < MAX_COUNT_REMAINS:
-            #     print("ERRORS. TERMINATE.")
-            #     exit()
+            print("Error request.")
+            print(f"Error url: {url}")
+            # возможны два варианта ошибок 404 - либо ошибочный url, либо персонаж удален
+            # нужно различать на основе содержимого ответа. Для удаленных персонажей исклюение
+            # не выбрасывается, просто выполняется ожидание без последующего повторного запроса.
             # если ошибка в запросе, то нет смысла в повторном запросе
             # поэтому сразу формируем и выбрасываем исключение
             if resp.status not in [500, 501, 502, 503, 504, 505]:
-                raise_StatusCodeNot200Exception(url, resp)
+                # нельзя допускать слишком много ошибок - проще уронить сервис чем возиться с блокировкой ip
+                # более чем 40 ошибок - это значит где то кривая логика
+                # если почему то нет параметра X-ESI-Error-Limit-Remain - счетчика ошибок, то тоже надо ронять
+                limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
+                if not limit_remain or int(limit_remain) < MAX_COUNT_REMAINS:
+                    print(f"TOO MANY ERRORS! X-ESI-Error-Limit-Remain: {limit_remain}. PARSER TERMINATED!")
+                    exit()
+                if content["error"] == "Character has been deleted!":
+                    print("This error is caused by a request for information on a deleted character..")
+                    # запуск ожидания отката окна не на каждой ошибке а скажем если ошибок совершено не более чем 20 
+                    if int(limit_remain) < 80:
+                        print("Wait until the error timer is cleared.")
+                        await asyncio.sleep(conf.TIME_WAIT_NEXT_REQUEST)
+                    else:
+                        print("Information about this has been sent to the database. The error limit has not been exceeded, the next request will be executed.")
+                    return {id_key: {"is_deleted": True}}
+                # для случаев когда такой странички не существует - просто выброс исключения.
+                raise_StatusCodeNot200Exception(url, resp, content)
 
     # повторный запрос только в случае ошибок сервера
     # ожидание отката окна запроса с небольшим запасом и повторный запрос
     # ожидание должно быть асинхронным  но не таской, т.е. asyncio.sleep без оборачивания таской
     # - чтобы оно блокировало исключительно ту корутину в которой выполняется 
-    # текущий запрос
+    # текущий запрос. 
+    #FIXME Иногда бывает, что 500ошибка на запрос удаленного чара - тогда выполняется повторный запрос этого чара.
     print("Повторный запрос")
     await asyncio.sleep(conf.TIME_WAIT_NEXT_REQUEST)
     async with session.get(url) as resp:
+        content = await resp.json()
         if resp.status == 200:
             # return {id_key: {"headers": resp.headers, "content": await resp.json()}}
-            return {id_key: await resp.json()}
+            return {id_key: content}
         else:
             # в случае повторной ошибки - выброс исключения
-            raise_StatusCodeNot200Exception(url, resp)
+            raise_StatusCodeNot200Exception(url, resp, content)
 
 
 def get_urls(entity, id_keys):
@@ -218,6 +237,8 @@ def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/alliances/!/corporations/?datasource=tranquility"
     elif entity == "corporation":
         base_url = "https://esi.evetech.net/latest/corporations/!/?datasource=tranquility"
+    elif entity == "character":
+        base_url = "https://esi.evetech.net/latest/characters/!/?datasource=tranquility"
     else:
         raise_entity_not_processed(entity)
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key
@@ -247,9 +268,12 @@ async def several_async_requests(session:aiohttp.ClientSession, id_keys:List[str
             # если не исключение - дополняем словарь с данными для ответа
             if done_task.exception() is None:
                 out_responses.update(done_task.result())
-            # если исключение - то отчет, снятие всех остальных задач
+            # если исключение - то отчет, снятие всех остальных задач и выброс исключения
             else:
-                print("Возникло исключение")
+                print("Исключение: ", done_task)
+                print("Возникло исключение. Запуск снятия остальных задач.")
                 for pending_task in pending:
                     pending_task.cancel()
+                print("Задачи сняты. Запуск выброса исключения.")
+                await done_task
     return out_responses

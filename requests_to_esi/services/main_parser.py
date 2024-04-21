@@ -50,7 +50,7 @@ async def linking(entity:entity_list_type):
 
 
 @async_timed()
-async def create_all_entities(action:action_list_type, entity:entity_list_type):
+async def create_all_entities(action:action_list_type, entity:entity_list_type, list_of_entities:list|None=None):
     """
     Главная функция-парсер, все остальные - вспомогательные или независмые.
 
@@ -62,13 +62,20 @@ async def create_all_entities(action:action_list_type, entity:entity_list_type):
     определить нужные действия в функции enter_entitys_to_db() - т.е. не сохранять 
     все поля, а обновить только одно. Внутренние id для этой цели можно 
     выставлять пустыми - [] в функции управляющей выделением внутренних id.
+
+    если нужно выполнить парсинг не всех сущностей, а только ограниченного набора,
+    то набор их id можно передать в list_of_entites - он будет считаться внешними
+    id.
     """
     # проверка сущностей и действий
     errors.check_action(action)
     errors.check_entity(entity)
 
     # формирование списка id, по которым нужно обращаться в esi и запрашивать инфу
-    id_for_enter_to_db = await formed_list_ids_to_enter_in_DB(action, entity)
+    if list_of_entities:
+        id_for_enter_to_db = list_of_entities
+    else:
+        id_for_enter_to_db = await formed_list_ids_to_enter_in_DB(action, entity)
     if not id_for_enter_to_db:
         print("\nThere are no IDs that need to be entered into the database\n")
         return

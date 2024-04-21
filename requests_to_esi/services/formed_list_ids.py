@@ -47,9 +47,6 @@ def get_corporation_external_ids():
     Вспомогательная для get_external_ids.
     Формирует список всех корпораций, связанных с альянсами. Т.е.
     входящих в алли, являющихся создателем и управляющим.
-
-    Возможно сюда можно передавать параметр battlereport, чтобы из него
-    получать список корпораций, которые нужно парсить.
     """
     external_corp_id = []
     for alliance in Alliances.objects.values("response_body"):
@@ -61,6 +58,35 @@ def get_corporation_external_ids():
         external_corp_id.extend(temp)
     return external_corp_id
 
+
+@sync_to_async
+def get_character_external_ids():
+    """
+    Вспомогательная для get_external_ids.
+    Формирует список id чаров, в частности - это сео корпораций, 
+    creator альянса, creator корпорации.
+    """
+    external_ids = []
+    for alliance in Alliances.objects.values("response_body"):
+        external_ids.append(alliance["response_body"]["creator_id"])
+    for corporation in Corporations.objects.values("corporation_id", "response_body"):
+        external_ids.append(corporation["response_body"]["creator_id"])
+        ceo_id = corporation["response_body"]["ceo_id"]
+        if ceo_id == 1:
+            print(f"Corporation {corporation['corporation_id']} closed. Nothing CEO.")
+            continue
+        else:
+            external_ids.append(ceo_id)
+    external_ids = set(external_ids)
+    # удаляем из списка загружаемых те, которые есть в БД и помечены как удаленные
+    deleted_chars = Characters.objects.filter(is_deleted=True).values("character_id")
+    deleted_chars_ids = []
+    for deleted_char in deleted_chars:
+        deleted_chars_ids.append(deleted_char["character_id"])
+    deleted_chars_id = set(deleted_chars_ids)
+    external_ids.difference_update(deleted_chars_id) 
+    return external_ids
+    
 
 async def get_external_ids(entity:entity_list_type):
     """
@@ -90,6 +116,8 @@ async def get_external_ids(entity:entity_list_type):
         external_ids = await dict_to_list(db_records)
     elif entity == "corporation":
         external_ids = await get_corporation_external_ids()
+    elif entity == "character":
+        external_ids = await get_character_external_ids()
     else:
         errors.raise_entity_not_processed(entity)
     print(f"Successful loading of all {entity}s id.")
@@ -117,8 +145,11 @@ async def get_internal_ids(entity:entity_list_type):
         return internal_ids
     elif entity == "corporation":
         db_records = Corporations.objects.values(f"{entity}_id")
+    elif entity == "character":
+        db_records = Characters.objects.values(f"{entity}_id")
     else:
         errors.raise_entity_not_processed(entity)
+    # метод Models.objects.values() возвращает словарь словарей, это нужно преобразовать в список.
     internal_ids = await dict_to_list(db_records)
     print(f"Succesful load internal id of {entity} model.")
     return internal_ids

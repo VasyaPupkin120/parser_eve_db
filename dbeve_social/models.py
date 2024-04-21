@@ -50,6 +50,7 @@ class Characters(models.Model):
     birthday = models.DateTimeField(null=True)
     description = models.TextField(null=True)
     gender = models.CharField(null=True)
+    is_deleted = models.BooleanField(null=True)
     name = models.CharField(null=True)
     nameicon = models.CharField(null=True)
     security_status = models.FloatField(null=True)

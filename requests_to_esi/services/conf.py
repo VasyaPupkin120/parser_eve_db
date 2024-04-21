@@ -5,7 +5,7 @@
 from typing import Literal
 
 # запас по ошибкам - для сравнения с параметром X-ESI-Error-Limit-Remain
-MAX_COUNT_REMAINS = 90
+MAX_COUNT_REMAINS = 70
 
 # время ожидания для повторного запроса после 500х результатов
 # 70 - стандартное время окна + 10 секунд на запас

@@ -2,7 +2,9 @@ from django.urls import include, path
 from .views import *
 app_name = "requests_to_esi"
 urlpatterns = [
+
     path('', main_request, name="main_request"),
+
     # dbeve_universe
     path('parse_regions/', parse_regions, name="parse_regions"),
     path('parse_constellations/', parse_constellations, name="parse_constellations"),
@@ -14,4 +16,5 @@ urlpatterns = [
     path('parse_alliances/', parse_alliances, name="parse_alliances"),
     path('parse_id_associated_corporations/', parse_id_associated_corporations, name="parse_id_associated_corporations"),
     path('parse_corporations/', parse_corporations, name="parse_corporations"),
+    path('parse_characters/', parse_characters, name="parse_characters"),
 ]
