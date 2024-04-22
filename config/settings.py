@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'pages',
     'dbeve_universe',
     'dbeve_social',
+    'dbeve_items',
     'requests_to_esi',
 ]
 
