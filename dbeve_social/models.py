@@ -1,8 +1,9 @@
 from django.db import models
+from config.models import BaseEntity
 from dbeve_universe.models import Stations, Bloodlines, Races, Factions
 
 
-class Alliances(models.Model):
+class Alliances(BaseEntity):
     """
     Изображение хранится в static/img/alliances, без связи через БД. Находить изображение
     по id и разрешению.
@@ -18,10 +19,8 @@ class Alliances(models.Model):
     creator_corporation = models.ForeignKey("Corporations", on_delete=models.SET_NULL, null=True, related_name="creator_corporation")
     executor_corporation = models.OneToOneField("Corporations", on_delete=models.SET_NULL, null=True, related_name="executor_corporation")
 
-    response_body = models.JSONField(null=True)
 
-
-class Corporations(models.Model):
+class Corporations(BaseEntity):
     """
     """
     corporation_id = models.BigIntegerField(primary_key=True)
@@ -42,10 +41,8 @@ class Corporations(models.Model):
     faction = models.ForeignKey(Factions, on_delete=models.SET_NULL, null=True)
     home_station = models.ForeignKey(Stations, on_delete=models.SET_NULL, null=True)
 
-    response_body = models.JSONField(null=True)
 
-
-class Characters(models.Model):
+class Characters(BaseEntity):
     character_id = models.BigIntegerField(primary_key=True)
     birthday = models.DateTimeField(null=True)
     description = models.TextField(null=True)
@@ -61,7 +58,3 @@ class Characters(models.Model):
     corporation = models.ForeignKey("Corporations", on_delete=models.SET_NULL, null=True)
     faction = models.ForeignKey(Factions, on_delete=models.SET_NULL, null=True)
     race = models.ForeignKey(Races, on_delete=models.SET_NULL, null=True)
-
-    response_body = models.JSONField(null=True)
-
-

@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models.deletion import CASCADE
+from config.models import BaseEntity
 # вообще все списки в моделях с внешими ссылками -
 # должны быть просто менедеждеры обратной связи
 
@@ -25,15 +26,14 @@ from django.db.models.deletion import CASCADE
 #     Types
 
 
-class Regions(models.Model):
+class Regions(BaseEntity):
     # вместо поля constellations - менеджер обратной связи на модель Constellations
     description = models.TextField(null=True)
     name = models.CharField(null=True)
     region_id = models.IntegerField(primary_key=True)
-    response_body = models.JSONField(null=True)
 
 
-class Constellations(models.Model):
+class Constellations(BaseEntity):
     # вместо поля systems - менеджер обратной связи на модель Systems
     constellation_id = models.IntegerField(primary_key=True)
     name = models.CharField(null=True)
@@ -41,10 +41,9 @@ class Constellations(models.Model):
     position_y = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     position_z = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     region = models.ForeignKey("Regions",on_delete=models.CASCADE, null=True)
-    response_body = models.JSONField(null=True)
 
 
-class Systems(models.Model):
+class Systems(BaseEntity):
     # вместо поля celestials(planets) - менеджер обратной связи на модель Celestials
     # вместо поля star - менеджер обратной связи на модель Star
     # вместо поля stargates - менеджер обратной связи на Stargates
@@ -57,9 +56,9 @@ class Systems(models.Model):
     security_class = models.CharField(null=True)
     security_status = models.FloatField(null=True)
     system_id = models.IntegerField(primary_key=True)
-    response_body = models.JSONField(null=True)
 
-class Stars(models.Model):
+
+class Stars(BaseEntity):
     """
     Связана с Systems
     Связана с Type
@@ -74,19 +73,19 @@ class Stars(models.Model):
     spectral_class = models.CharField(null=True)
     star_id = models.IntegerField(primary_key=True)
     temperature = models.IntegerField(null=True)
-    response_body = models.JSONField(null=True)
-#
-# class Celestials(models.Model):
+
+
+# class Celestials(BaseEntity):
 #     """
 #     Вторична для Systems
 #     Объединяет группу из планеты, лун, белтов
 #     """
 #     ...
-# class Plantes(models.Model):
+# class Plantes(BaseEntity):
 #     """
 #     Вторична для Celestials.
 #     """
-# class Moons(models.Model):
+# class Moons(BaseEntity):
 #     """
 #     Вторична для Celestials
 #     """
@@ -96,20 +95,21 @@ class Stars(models.Model):
 #     position_y = models.IntegerField(null=True)
 #     position_z = models.IntegerField(null=True)
 #     system_id = models.ForeignKey("Celestials", on_delete=models.CASCADE, null=True)
-# class Asteroid_belts(models.Model):
+#
+# class Asteroid_belts(BaseEntity):
 #     """
 #     Вторична для Celestials
 #     """
 #     ...
 #
 #
-# class Groups(models.Model):
+# class Groups(BaseEntity):
 #     """
 #     Группы типов
 #     """
 #     ...
 #
-# class Types(models.Model):
+# class Types(BaseEntity):
 #     """
 #     вторичная для Groups
 #     содержит судя по всему все итемы
@@ -117,22 +117,22 @@ class Stars(models.Model):
 #     group_id = models.ForeignKey("Groups", on_delete=CASCADE, null=True)
 #     ...
 
-class Stations(models.Model):
+class Stations(BaseEntity):
     """
     """
     station_id = models.BigIntegerField(primary_key=True)
 
-class Bloodlines(models.Model):
+class Bloodlines(BaseEntity):
     """
     """
     bloodline_id = models.BigIntegerField(primary_key=True)
 
-class Races(models.Model):
+class Races(BaseEntity):
     """
     """
     race_id = models.BigIntegerField(primary_key=True)
 
-class Factions(models.Model):
+class Factions(BaseEntity):
     """
     Модель государства, нужна для указания принадлежности стороны 
     в фрак войнах.
