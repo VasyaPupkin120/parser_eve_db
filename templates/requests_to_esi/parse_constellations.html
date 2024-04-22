@@ -5,7 +5,7 @@
 {% block content %}
     <h1>Parse all constellations</h1>
     {% if exception %}
-        {{ exception }}
+        {{ exception|linebreaks }}
         {{ exception.extra_info }}
     {% else %}
         <form method="post" action={% url "requests_to_esi:parse_constellations" %}>

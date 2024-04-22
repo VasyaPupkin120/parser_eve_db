@@ -14,7 +14,8 @@ urlpatterns = [
     
     # dbeve_social
     path('parse_alliances/', parse_alliances, name="parse_alliances"),
-    path('parse_id_associated_corporations/', parse_id_associated_corporations, name="parse_id_associated_corporations"),
+    path('load_id_associated_corporations/', load_id_associated_corporations, name="load_id_associated_corporations"),
     path('parse_corporations/', parse_corporations, name="parse_corporations"),
     path('parse_characters/', parse_characters, name="parse_characters"),
+    path('load_corporation_history/', load_corporation_history, name="load_corporation_history"),
 ]

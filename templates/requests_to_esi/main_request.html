@@ -18,10 +18,12 @@
     <h2>Social</h2>
     <a href='{% url "requests_to_esi:parse_alliances"%}'>Parse alliances</a>
     <br>
-    <a href='{% url "requests_to_esi:parse_id_associated_corporations"%}'>Parse id associated corporations</a>
+    <a href='{% url "requests_to_esi:load_id_associated_corporations"%}'>Update response body - load id associated corporations for alliances</a>
     <br>
     <a href='{% url "requests_to_esi:parse_corporations"%}'>Parse corporations</a>
     <br>
     <a href='{% url "requests_to_esi:parse_characters"%}'>Parse characters</a>
+    <br>
+    <a href='{% url "requests_to_esi:load_corporation_history"%}'>Update response body - load corporation history characters</a>
     <br>
 {% endblock content %}

@@ -16,14 +16,17 @@ def dict_to_list(db_records):
     не хочется. Я не понимаю почему это не работает без sync_to_async, ведь
     все объемлющие функии являются асинхронными специально для этого.
     """
-    internal_ids = []
+    temp_ids = []
     # превращаем список словарей в обычный список id
     for dict_record in db_records:
         for key in dict_record:
-            internal_ids.append(dict_record[key])
-    return internal_ids
+            temp_ids.append(dict_record[key])
+    return temp_ids
 
 
+################################################################################
+#                            Блок внешних id.                                  #  
+################################################################################
 @sync_to_async
 def get_star_external_ids():
     """
@@ -49,12 +52,27 @@ def get_corporation_external_ids():
     входящих в алли, являющихся создателем и управляющим.
     """
     external_corp_id = []
+    # id корп из инфы об альянсах
     for alliance in Alliances.objects.values("response_body"):
         temp = []
         temp.extend(alliance["response_body"]["associated_corp"])
         temp.append(alliance["response_body"]["creator_corporation_id"])
         temp.append(alliance["response_body"]["executor_corporation_id"])
-        temp = set(temp)
+        # temp = set(temp)
+        external_corp_id.extend(temp)
+    # id корп из истории чаров и текущей корпорации чара
+    characters = Characters.objects.values("corporation_id", "response_body", "is_deleted")
+    for character in characters:
+        if character["is_deleted"]:
+            continue
+        corporation_history = character["response_body"].get("corporation_history")
+        if not corporation_history:
+            continue
+        temp = []
+        for record in corporation_history:
+            temp.append(record["corporation_id"])
+        if character["corporation_id"]:
+            temp.append(character["corporation_id"])
         external_corp_id.extend(temp)
     return external_corp_id
 
@@ -110,18 +128,39 @@ async def get_external_ids(entity:entity_list_type):
     elif entity == "alliance":
         url = "https://esi.evetech.net/latest/alliances/?datasource=tranquility"
         external_ids = list(GET_request_to_esi(url).json())
-    elif entity == "update_field_id_associated_corporations":
+    elif entity == "load_id_associated_corporations":
         # для сохранения списка ассоциированных корпораций нужно знать id альянсов, которым это нужно сохранять.
-        db_records = Alliances.objects.values(f"alliance_id")
+        db_records = Alliances.objects.values("alliance_id")
         external_ids = await dict_to_list(db_records)
     elif entity == "corporation":
         external_ids = await get_corporation_external_ids()
     elif entity == "character":
         external_ids = await get_character_external_ids()
+    elif entity == "load_corporation_history":
+        # для сохранения списка истории корпораций у чаров нужно знать id чаров, причем тех, которые не являются удаленными
+        db_records = Characters.objects.filter(is_deleted__isnull=True).values("character_id")
+        external_ids = await dict_to_list(db_records)
     else:
         errors.raise_entity_not_processed(entity)
     print(f"Successful loading of all {entity}s id.")
     return external_ids
+
+
+################################################################################
+#                         Блок внутренних id.                                  #
+################################################################################
+@sync_to_async
+def get_corporation_history_internal_ids():
+    """
+    Возвращаем id только тех чаров, у которых уже есть запись истории корпораций
+    и эти чары не должны быть удалены.
+    """
+    characters = Characters.objects.filter(is_deleted__isnull=True).values("character_id", "response_body")
+    internal_ids = []
+    for character in characters:
+        if character["response_body"].get("corporation_history"):
+            internal_ids.append(character["character_id"])
+    return internal_ids
 
 
 async def get_internal_ids(entity:entity_list_type):
@@ -139,7 +178,7 @@ async def get_internal_ids(entity:entity_list_type):
         db_records = Stars.objects.values(f"{entity}_id)")
     elif entity == "alliance":
         db_records = Alliances.objects.values(f"{entity}_id")
-    elif entity == "update_field_id_associated_corporations":
+    elif entity == "load_id_associated_corporations":
         internal_ids = []
         print(f"Set internal id of this entity {entity} in empty list - [].")
         return internal_ids
@@ -147,6 +186,9 @@ async def get_internal_ids(entity:entity_list_type):
         db_records = Corporations.objects.values(f"{entity}_id")
     elif entity == "character":
         db_records = Characters.objects.values(f"{entity}_id")
+    elif entity == "load_corporation_history":
+        internal_ids = await get_corporation_history_internal_ids()
+        return internal_ids
     else:
         errors.raise_entity_not_processed(entity)
     # метод Models.objects.values() возвращает словарь словарей, это нужно преобразовать в список.
@@ -155,6 +197,9 @@ async def get_internal_ids(entity:entity_list_type):
     return internal_ids
 
 
+################################################################################
+#                       Блок сравнения id и возврат.                           #  
+################################################################################
 async def formed_list_ids_to_enter_in_DB(action:action_list_type, entity:entity_list_type):
     """
     Принимает сущность, запрашивает внутренние и внешние id для этой сущности,

@@ -58,3 +58,10 @@ class Characters(BaseEntity):
     corporation = models.ForeignKey("Corporations", on_delete=models.SET_NULL, null=True)
     faction = models.ForeignKey(Factions, on_delete=models.SET_NULL, null=True)
     race = models.ForeignKey(Races, on_delete=models.SET_NULL, null=True)
+
+
+class Killmails(BaseEntity):
+    """
+    Класс одиночного киллмыла.
+    """
+    ...

@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests_to_esi.forms import ParseOneSystemForm
-from .services import base_requests, parser_social, main_parser
+from .services import base_requests, main_parser
 import asyncio
 
 # Create your views here.
@@ -74,7 +74,7 @@ def parse_alliances(request):
         они могут вступать в алли и выходить.
         """
         await main_parser.create_all_entities("only_missing", "alliance")
-        await main_parser.create_all_entities("update_all", "update_field_id_associated_corporations")
+        await main_parser.create_all_entities("update_all", "load_id_associated_corporations")
     if request.method == "POST":
         try:
             asyncio.run(first_alliance_second_associated_corp())
@@ -84,14 +84,17 @@ def parse_alliances(request):
     return render(request, "requests_to_esi/parse_alliances.html")
 
 
-def parse_id_associated_corporations(request):
+def load_id_associated_corporations(request):
+    """
+    Для сохранения id корпораций в поле response_body альянсов, в которые входят эти корпорации.
+    """
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("update_all", "update_field_id_associated_corporations"))
+            asyncio.run(main_parser.create_all_entities("update_all", "load_id_associated_corporations"))
         except base_requests.StatusCodeNot200Exception as e:
-            return render(request, "requests_to_esi/update_field_id_associated_corporations.html", {"exception": e})
+            return render(request, "requests_to_esi/load_id_associated_corporations.html", {"exception": e})
         return redirect(reverse("dbeve_social:all_alliances"))
-    return render(request, "requests_to_esi/update_field_id_associated_corporations.html")
+    return render(request, "requests_to_esi/load_id_associated_corporations.html")
 
 
 def parse_corporations(request):
@@ -112,3 +115,16 @@ def parse_characters(request):
             return render(request, "requests_to_esi/parse_characters.html", {"exception": e})
         return redirect(reverse("dbeve_social:all_characters"))
     return render(request, "requests_to_esi/parse_characters.html")
+
+
+def load_corporation_history(request):
+    """
+    Для сохранения истории корпораций у чаров.
+    """
+    if request.method == "POST":
+        try:
+            asyncio.run(main_parser.create_all_entities("only_missing", "load_corporation_history"))
+        except base_requests.StatusCodeNot200Exception as e:
+            return render(request, "requests_to_esi/load_corporation_history.html", {"exception": e})
+        return redirect(reverse("dbeve_social:all_characters"))
+    return render(request, "requests_to_esi/load_corporation_history.html")

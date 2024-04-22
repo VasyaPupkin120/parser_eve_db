@@ -3,9 +3,9 @@
 {% block title %}Parse corporations{% endblock title %}
 
 {% block content %}
-    <h1>Parsing corporations associated with alliances</h1>
+    <h1>Parsing corporations</h1>
     {% if exception %}
-        {{ exception }}
+        {{ exception|linebreaks }}
         {{ exception.extra_info }}
     {% else %}
         <form method="post" action={% url "requests_to_esi:parse_corporations" %}>

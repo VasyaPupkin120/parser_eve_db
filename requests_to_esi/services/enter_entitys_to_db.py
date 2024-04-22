@@ -164,7 +164,7 @@ def enter_entitys_to_db(
             print(f"Successful save to DB {entity}: {key}\n")
 
     # запись списка id корпораций в поле response_body для альянса.
-    elif entity == "update_field_id_associated_corporations":
+    elif entity == "load_id_associated_corporations":
         for key in data:
             alliance = Alliances.objects.get(alliance_id = key)
             alliance.response_body["associated_corp"] = data[key]
@@ -192,7 +192,7 @@ def enter_entitys_to_db(
                     )
             print(f"Successful save to DB {entity}: {key}\n")
 
-    # запись данных по корпорации
+    # запись отдельного персонажа, без истории корпораций пока
     elif entity == "character":
         for key in data:
             Characters.objects.update_or_create(
@@ -210,37 +210,13 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+
+    # запись истории корпораций для персонажа
+    elif entity == "load_corporation_history":
+        for key in data:
+            character = Characters.objects.get(character_id = key)
+            character.response_body["corporation_history"] = data[key]
+            character.save()
+            print(f"Successful save corporation history for character: {key}\n")
     else:
         raise_entity_not_processed(entity)
-
-    # # парсер отдельного персонажа
-    # if entity == "character":
-    #     if action == "create":
-    #         try:
-    #             Characters.objects.get(character_id=entity_id)
-    #             print(f"Character {entity_id} already exists in DB")
-    #             return
-    #         except ObjectDoesNotExist:
-    #             print(f"Start load character: {entity_id}")
-    #     url = f"https://esi.evetech.net/latest/characters/{entity_id}/?datasource=tranquility"
-    #     resp = GET_request_to_esi(url).json()
-    #     # изображение пока не грузить, не особо нужно
-    #     # nameicon = load_and_save_icon(entity, entity_id)
-    #     corporation_history = get_corporationhistory(entity_id)
-    #     resp["corporation_history"] = corporation_history
-    #     print(f"Successful load character: {entity_id}")
-    #     Characters.objects.update_or_create(
-    #             character_id=entity_id,
-    #             defaults={
-    #                 "character_id": entity_id,
-    #                 "birthday": resp.get("birthday"),
-    #                 "description": resp.get("description"),
-    #                 "gender": resp.get("gender"),
-    #                 "name": resp.get("name"),
-    #                 # "nameicon": nameicon,
-    #                 "security_status": resp.get("security_status"),
-    #                 "title": resp.get("title"),
-    #                 "response_body": resp,
-    #                 }
-    #             )
-    #     print(f"Successful save to DB character: {entity_id}")

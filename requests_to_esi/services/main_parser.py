@@ -1,4 +1,6 @@
+import asyncio
 import aiohttp
+
 
 from asgiref.sync import sync_to_async
 
@@ -91,6 +93,8 @@ async def create_all_entities(action:action_list_type, entity:entity_list_type, 
             print(f"\nLoad {count * NUMBER_OF_REQUEST}/{len(id_for_enter_to_db)} {entity}s")
             data = await several_async_requests(session, chunk, entity)
             await enter_entitys_to_db(entity, data)
+            # задержка не особо чет помогает от множества ошибок сервера esi при загрузке истории нахождения чара в корпорациях.
+            # await asyncio.sleep(0.5)
             count += 1
     print("Successful downloading and saving information by {entity}.")
 

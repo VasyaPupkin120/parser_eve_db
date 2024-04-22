@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+
+{% block title %}Load corporation history for all characters.{% endblock title %}
+
+{% block content %}
+    <h1>Load corporation history</h1>
+    {% if exception %}
+        {{ exception|linebreaks }}
+        {{ exception.extra_info }}
+    {% else %}
+        <form method="post" action={% url "requests_to_esi:load_corporation_history" %}>
+            {% csrf_token %}
+            <input type="submit" value="Load history">
+        </form>
+    {% endif %}
+{% endblock content %}
