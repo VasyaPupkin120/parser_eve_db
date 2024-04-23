@@ -1,7 +1,7 @@
 from django.db import models
 from config.models import BaseEntity
 from dbeve_universe.models import Systems, Stations, Bloodlines, Races, Factions
-from dbeve_items.models import Items, ShipTypes, WeaponTypes
+from dbeve_items.models import Types
 
 
 class Alliances(BaseEntity):
@@ -72,7 +72,7 @@ class VictimItems(models.Model):
     status = models.CharField(choices=(("destroyed", "Итем уничтожен"), ("dropped", "Итем выпал")),null=True)
     quantity = models.BigIntegerField(null=True)
 
-    item_type = models.ForeignKey(Items, on_delete=models.SET_NULL, null=True)
+    item_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True)
     victim = models.ForeignKey("Victim", on_delete=models.CASCADE, related_name="items")
 
 class Victim(models.Model):
@@ -99,8 +99,8 @@ class Attackers(models.Model):
     character = models.OneToOneField("Characters", on_delete=models.CASCADE, null=True)
     corporation = models.OneToOneField("Corporations", on_delete=models.SET_NULL, null=True)
     killmail = models.ForeignKey("Killmails", on_delete=models.CASCADE, related_name="attackers")
-    ship_type = models.ForeignKey(ShipTypes, on_delete=models.SET_NULL, null=True)
-    weapon_type = models.ForeignKey(WeaponTypes, on_delete=models.SET_NULL, null=True)
+    ship_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_ship_type")
+    weapon_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_weapon_type")
 
 class Killmails(BaseEntity):
     """
@@ -125,4 +125,4 @@ class Killmails(BaseEntity):
     awox = models.BooleanField(null=True)
 
     solar_system = models.ForeignKey(Systems, on_delete=models.SET_NULL, null=True)
-    ship_type = models.ForeignKey(ShipTypes, on_delete=models.SET_NULL, null=True)
+    ship_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True)

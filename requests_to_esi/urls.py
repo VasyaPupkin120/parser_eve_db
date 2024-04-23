@@ -18,4 +18,9 @@ urlpatterns = [
     path('parse_corporations/', parse_corporations, name="parse_corporations"),
     path('parse_characters/', parse_characters, name="parse_characters"),
     path('load_corporation_history/', load_corporation_history, name="load_corporation_history"),
+
+    #dbeve_items
+    path('parse_categories/', parse_categories, name="parse_categories"),
+    path('parse_groups/', parse_groups, name="parse_groups"),
+    path('parse_types/', parse_types, name="parse_types"),
 ]

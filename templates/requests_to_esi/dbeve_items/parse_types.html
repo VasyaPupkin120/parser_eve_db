@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+
+{% block title %}Parse types{% endblock title %}
+
+{% block content %}
+    <h1>Parse all types</h1>
+    {% if exception %}
+        {{ exception|linebreaks }}
+        {{ exception.extra_info }}
+    {% else %}
+        <form method="post" action={% url "requests_to_esi:parse_types" %}>
+            {% csrf_token %}
+            <input type="submit" value="Parse all types">
+        </form>
+    {% endif %}
+{% endblock content %}

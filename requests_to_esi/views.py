@@ -8,6 +8,9 @@ import asyncio
 def main_request(request):
     return render(request, "requests_to_esi/main_request.html")
 
+###############################################################################
+#                   Парсинг по приложению dbeve_universe.                     #
+###############################################################################
 def parse_regions(request):
     if request.method == "POST":
         try:
@@ -64,6 +67,9 @@ def parse_stars(request):
     return render(request, "requests_to_esi/parse_stars.html")
 
 
+###############################################################################
+#                     Парсинг по приложению dbeve_social.                     #
+###############################################################################
 def parse_alliances(request):
     async def first_alliance_second_associated_corp():
         """
@@ -128,3 +134,38 @@ def load_corporation_history(request):
             return render(request, "requests_to_esi/load_corporation_history.html", {"exception": e})
         return redirect(reverse("dbeve_social:all_characters"))
     return render(request, "requests_to_esi/load_corporation_history.html")
+
+
+###############################################################################
+#                     Парсинг по приложению dbeve_items.                      #
+###############################################################################
+def parse_categories(request):
+    if request.method == "POST":
+        try:
+            asyncio.run(main_parser.create_all_entities("only_missing", "category"))
+        except base_requests.StatusCodeNot200Exception as e:
+            return render(request, "requests_to_esi/dbeve_items/parse_categories.html", {"exception": e})
+        return redirect(reverse("dbeve_items:all_categories"))
+    return render(request, "requests_to_esi/dbeve_items/parse_categories.html")
+
+
+def parse_groups(request):
+    if request.method == "POST":
+        try:
+            asyncio.run(main_parser.create_all_entities("only_missing", "group"))
+        except base_requests.StatusCodeNot200Exception as e:
+            return render(request, "requests_to_esi/dbeve_items/parse_groups.html", {"exception": e})
+        return redirect(reverse("dbeve_items:all_groups"))
+    return render(request, "requests_to_esi/dbeve_items/parse_groups.html")
+
+
+def parse_types(request):
+    if request.method == "POST":
+        try:
+            asyncio.run(main_parser.create_all_entities("only_missing", "type"))
+        except base_requests.StatusCodeNot200Exception as e:
+            return render(request, "requests_to_esi/dbeve_items/parse_types.html", {"exception": e})
+        return redirect(reverse("dbeve_items:all_types"))
+    return render(request, "requests_to_esi/dbeve_items/parse_types.html")
+
+

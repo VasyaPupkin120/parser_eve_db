@@ -1,0 +1,12 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}All types{% endblock title %}
+
+{% block content %}
+    {% for type in types %}
+            <img src="https://images.evetech.net/types/{{ type.type_id }}/render?size=128" height="128" width="128"/>
+            <a class="p-2 text-dark" href="https://zkillboard.com/item/{{ type.type_id }}/">{{ type.name }}</a>
+    {% endfor %}
+{% endblock content %}
+

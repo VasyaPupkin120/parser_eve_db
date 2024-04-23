@@ -1,11 +1,13 @@
 from asgiref.sync import sync_to_async
 
+
 from .errors import raise_entity_not_processed, raise_action_not_allowed
-from .base_requests import GET_request_to_esi, load_and_save_icon
+from .base_requests import GET_request_to_esi
 from .conf import entity_list_type
 
 from dbeve_social.models import Alliances, Characters, Corporations
 from dbeve_universe.models import Constellations, Regions, Stars, Systems
+from dbeve_items.models import Categories
 
 
 ###############################################################################
@@ -218,5 +220,19 @@ def enter_entitys_to_db(
             character.response_body["corporation_history"] = data[key]
             character.save()
             print(f"Successful save corporation history for character: {key}\n")
+
+    # запись категории
+    elif entity == "category":
+        for key in data:
+            Categories.objects.update_or_create(
+                    category_id=key,
+                    defaults={
+                        "category_id": key,
+                        "name": data[key].get("name"),
+                        "published": data[key].get("published"),
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
     else:
         raise_entity_not_processed(entity)

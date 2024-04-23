@@ -1,21 +1,28 @@
 from django.db import models
 from config.models import BaseEntity
 
-class Items(BaseEntity):
+class Categories(BaseEntity):
     """
-    Класс-итем, заглушка для других моделей
+    Категории итемов.
     """
-    ...
+    category_id = models.BigIntegerField(primary_key=True)
+    name = models.CharField(null=True)
+    published = models.BooleanField(null=True)
 
 
-class WeaponTypes(BaseEntity):
+class Groups(BaseEntity):
     """
-    Класс-итем, заглушка для других моделей
+    Группы итемов.
     """
-    ...
+    group_id = models.BigIntegerField(primary_key=True)
+    name = models.CharField(null=True)
+    published = models.BooleanField(null=True)
 
-class ShipTypes(BaseEntity):
+    category = models.ForeignKey(Categories, on_delete=models.CASCADE, null=True)
+
+
+class Types(BaseEntity):
     """
-    Класс-итем, заглушка для других моделей
+    Типы итемов.
     """
-    ...
+    type_id = models.BigIntegerField(primary_key=True)

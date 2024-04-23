@@ -25,134 +25,30 @@ from . import conf
 
 def GET_request_to_esi(url):
     """
-    Единичный синхронный запрос к esi, в случае не 200 ответа необходима нормальная логика обработки
-
-    Может выполняться в два подхода - если в первый раз пришла ошибка, то ожидаем
-    конца окна и выполняем повторно запрос. Если во второй запрос также не 200 ответ, то выброс исключения.
-
-    ОЧЕНЬ ВАЖНО - обработка исключения должна происходить на самом верхнем уровне - в контроллере.
-    Иначе оно будет перехвачено не там и циклы из предыдущих функций продолжат обращение к esi.
-
-    Логика в приципе позволяет переждать лимит, поэтому исключение должно приводить к остановке всей работы.
-    Если оставить обработку где нибудь в функциях систем, то следующим циклом произойдет повтороное обращение
-    к GET_request_to_esi и уменьшение счетчика на единицу. То есть блокировка.
+    Единичный синхронный запрос к esi, в случае не 200 ответа сразу выброс исключения - 
+    это разовые запросы, 500е ошибки крайне маловероятны, и можно будет при нужде
+    запустить заново.
     """
-    MAX_COUNT_REMAINS = conf.MAX_COUNT_REMAINS
+    #FIXME внести сюда обращение к модели-логу для записи всей инфы об неудачном коде. Логирование удачного запроса будет в рабочих функциях - та где запрос вернул результат
     resp = requests.get(url)
     if resp.status_code == 200:
         return resp
-
-    #FIXME внести сюда обращение к модели-логу для записи всей инфы об неудачном коде. Логирование удачного запроса будет в рабочих функциях - там где запрос вернул результат
-
-    #FIXME на самом деле не нужно выполнять повторный запрос при ответе 404 так как уже точно ничего не поможет
-
-    # определяем параметры ошибок
-    limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
-    limit_reset = resp.headers.get("X-ESI-Error-Limit-Reset")
-
-    # ингда в ответе нет заголовков Remain или Reset, хз почему, но лучше сразу тогда выбросить исключение
-    # это бывает когда вылетает 5хх ошибка, например 502
-    if not limit_remain or not limit_reset:
-        limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
-        limit_reset = resp.headers.get("X-ESI-Error-Limit-Reset")
-        error_limited = resp.headers.get("X-ESI-Error-Limited")
-        error_message = f"Status code: {resp.status_code}\n Limit-Remain: {limit_remain}\n Limit-Reset: {limit_reset}\n Error-Limited:{error_limited}\n URL: {url}\nFull body response: {resp}\nContent: {resp.content}" 
-        raise StatusCodeNot200Exception(
-                error_message,
-                status_code=resp.status_code,
-                limit_remain=limit_remain,
-                limit_reset=limit_reset,
-                error_limited=error_limited,
-                url=url,
-                full_body_response=resp,
-                content=resp.content
-                )
-
-    # нельзя допускать более чем одну ошибку - проще уронить сервис чем возиться с блокировкой ip
-    # более чем одна ошибка - это значит где то кривая логика
-    if int(limit_remain) < MAX_COUNT_REMAINS:
-        exit()
-
-    # ожидание отката окна запроса и повторный запрос
-    time.sleep(int(limit_reset) + 10)
-
-    resp = requests.get(url)
-    if resp.status_code == 200:
-        return resp
-
-    # в случае повторной ошибки - выброс исключения
-    limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
-    limit_reset = resp.headers.get("X-ESI-Error-Limit-Reset")
-    error_limited = resp.headers.get("X-ESI-Error-Limited")
-    error_message = f"Status code: {resp.status_code}\nLimit-Remain: {limit_remain}\nLimit-Reset: {limit_reset}\nError-Limited:{error_limited}\nURL: {url}" 
-    raise StatusCodeNot200Exception(
-            error_message,
-            status_code=resp.status_code,
-            limit_remain=limit_remain,
-            limit_reset=limit_reset,
-            error_limited=error_limited,
-            url=url,
-            full_body_response=resp,
-            content=resp.content
-            )
-
-
-###############################################################################
-#                           Загрузка изображения.                             #
-###############################################################################
-
-
-def load_and_save_icon(entity: Literal["alliance", "corporation", "character"], entity_id):
-    """
-    получает название сущности (alliance, corporation, char), id сущности, 
-    загружается изображение 128х128 (оно вроде есть и у чаров
-    и у корпораций и у алли). 
-
-    Возвращает имя файла изображения (нужно для загрузки из статических файлов,
-    т.к. заранее неизвестно какое расширение), его нужно сохранять в модель альянса,
-    корпорации и т.д.
-
-    Расширение (jpeg, png) определяется на основе заголовков ответа.
-
-    Нужно помнить, что парсинг изображений идет не с esi а с некоего файлового
-    сервера, поэтому нужно как то поаккуратней, там могут быть другие лимиты запросов
-    и могут блочить парсинг изображений.
-    """
-
-    if entity == "alliance":
-        url_images = f"https://images.evetech.net/Alliance/{entity_id}_128.png"
-        path = settings.STATICFILES_DIRS[0].joinpath("img/alliances")
-    elif entity == "corporation":
-        url_images = f"https://images.evetech.net/corporations/{entity_id}/logo?tenant=tranquility&size=128"
-        path = settings.STATICFILES_DIRS[0].joinpath("img/corporations")
-    elif entity == "character":
-        url_images = f"https://images.evetech.net/characters/{entity_id}/portrait?tenant=tranquility&size=128"
-        path = settings.STATICFILES_DIRS[0].joinpath("img/characters")
     else:
-        raise_entity_not_processed(entity)
-
-    # пробуем использовать ту же функцию загрузки, что и все esi-запросы
-    # несмотря на то, что это запрос не к esi а к images.evetech.net
-    # в приципе запросы к esi занимают 300-400 мс
-    # и на одну сущность - только один запрос изображения,
-    # поэтому не буду ставить какие то временные задержки запросов изображений.
-    # посмотрим, не будут ли блочить.
-    print("start load image")
-    resp = GET_request_to_esi(url_images)
-    print("succeful load image")
-
-    file_extension = resp.headers["Content-Type"].split("/")[-1]
-    filename = f"{entity_id}_128.{file_extension}"
-    full_filename = path.joinpath(filename)
-
-    print(f"start save image to {full_filename}")
-    with open(full_filename, "wb") as file:
-        file.write(resp.content)
-    print("succeful save image")
-
-    return filename
-
-
+        raise_StatusCodeNot200Exception(url, resp, resp.content)
+    # limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
+    # limit_reset = resp.headers.get("X-ESI-Error-Limit-Reset")
+    # error_limited = resp.headers.get("X-ESI-Error-Limited")
+    # error_message = f"Status code: {resp.status_code}\nLimit-Remain: {limit_remain}\nLimit-Reset: {limit_reset}\nError-Limited:{error_limited}\nURL: {url}" 
+    # raise StatusCodeNot200Exception(
+    #         error_message,
+    #         status_code=resp.status_code,
+    #         limit_remain=limit_remain,
+    #         limit_reset=limit_reset,
+    #         error_limited=error_limited,
+    #         url=url,
+    #         full_body_response=resp,
+    #         content=resp.content
+    #         )
 
 
 ################################################################################
@@ -182,13 +78,14 @@ async def async_GET_requrest_to_esi(session: aiohttp.ClientSession, url: str, id
             # если ошибка в запросе, то нет смысла в повторном запросе
             # поэтому сразу формируем и выбрасываем исключение
             if resp.status not in [500, 501, 502, 503, 504, 505]:
+
                 # нельзя допускать слишком много ошибок - проще уронить сервис чем возиться с блокировкой ip
-                # более чем 40 ошибок - это значит где то кривая логика
                 # если почему то нет параметра X-ESI-Error-Limit-Remain - счетчика ошибок, то тоже надо ронять
                 limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
                 if not limit_remain or int(limit_remain) < MAX_COUNT_REMAINS:
                     print(f"TOO MANY ERRORS! X-ESI-Error-Limit-Remain: {limit_remain}. PARSER TERMINATED!")
                     exit()
+
                 if content["error"] == "Character has been deleted!":
                     print("This error is caused by a request for information on a deleted character..")
                     # запуск ожидания отката окна не на каждой ошибке а скажем если ошибок совершено не более чем 20 
@@ -241,6 +138,8 @@ def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/characters/!/?datasource=tranquility"
     elif entity == "load_corporation_history":
         base_url = "https://esi.evetech.net/latest/characters/!/corporationhistory/?datasource=tranquility"
+    elif entity == "category":
+        base_url = "https://esi.evetech.net/latest/universe/categories/!/?datasource=tranquility&language=en"
     else:
         raise_entity_not_processed(entity)
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key

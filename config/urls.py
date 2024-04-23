@@ -21,8 +21,11 @@ from pages.views import index, db_overview
 urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('admin/', admin.site.urls),
+
+    # приложения-обзорщики БД
     path('dbeve/universe/', include("dbeve_universe.urls", namespace="dbeve_universe")),
     path('dbeve/social/', include("dbeve_social.urls", namespace="dbeve_social")),
+    path('dbeve/items/', include("dbeve_items.urls", namespace="dbeve_items")),
 
     # app requests to esi 
     path("requests_to_esi/", include("requests_to_esi.urls", namespace="requests_to_esi")),

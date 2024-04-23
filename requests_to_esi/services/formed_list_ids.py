@@ -5,6 +5,7 @@ from .conf import action_list_type, entity_list_type
 from . import errors
 from dbeve_universe.models import *
 from dbeve_social.models import *
+from dbeve_items.models import *
 
 
 @sync_to_async
@@ -104,6 +105,43 @@ def get_character_external_ids():
     deleted_chars_id = set(deleted_chars_ids)
     external_ids.difference_update(deleted_chars_id) 
     return external_ids
+
+
+# @sync_to_async
+def get_group_external_ids():
+    page = 3
+    external_ids = []
+    url = f"https://esi.evetech.net/latest/universe/groups/?datasource=tranquility&page={page}"
+    try:
+        temp = GET_request_to_esi(url)
+        print("temp: ", temp)
+    except errors.StatusCodeNot200Exception as e:
+        if e.content["error"] == "Undefined 404 response. Original message: Requested page does not exist!":
+            print("Load all group id")
+            print(external_ids)
+            return external_ids
+        else:
+            print("Error in url.")
+            raise e
+    # while True:
+    #     url = f"https://esi.evetech.net/latest/universe/groups/?datasource=tranquility&page={page}"
+    #     try:
+    #         temp = list(GET_request_to_esi(url).json())
+    #         print(temp)
+    #         external_ids.extend(temp)
+    #         page += 1
+    #     except errors.StatusCodeNot200Exception as e:
+    #         if e.content["error"] == "Undefined 404 response. Original message: Requested page does not exist!":
+    #             print("Load all group id")
+    #             print(external_ids)
+    #             return external_ids
+    #         else:
+    #             print("Error in url.")
+    #             break
+    #            raise e
+
+
+
     
 
 async def get_external_ids(entity:entity_list_type):
@@ -140,6 +178,12 @@ async def get_external_ids(entity:entity_list_type):
         # для сохранения списка истории корпораций у чаров нужно знать id чаров, причем тех, которые не являются удаленными
         db_records = Characters.objects.filter(is_deleted__isnull=True).values("character_id")
         external_ids = await dict_to_list(db_records)
+    elif entity == "category":
+        url = "https://esi.evetech.net/latest/universe/categories/?datasource=tranquility"
+        external_ids = list(GET_request_to_esi(url).json())
+    elif entity == "group":
+        ...
+        # external_ids = await get_group_external_ids()
     else:
         errors.raise_entity_not_processed(entity)
     print(f"Successful loading of all {entity}s id.")
@@ -189,6 +233,10 @@ async def get_internal_ids(entity:entity_list_type):
     elif entity == "load_corporation_history":
         internal_ids = await get_corporation_history_internal_ids()
         return internal_ids
+    elif entity == "category":
+        db_records = Categories.objects.values(f"{entity}_id")
+    elif entity == "group":
+        db_records = Groups.objects.values(f"{entity}_id")
     else:
         errors.raise_entity_not_processed(entity)
     # метод Models.objects.values() возвращает словарь словарей, это нужно преобразовать в список.

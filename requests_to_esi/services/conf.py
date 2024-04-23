@@ -21,4 +21,17 @@ NUMBER_OF_REQUEST = 10
 
 # типы начинающиеся с load - типы не для полноценной записи в БД а для обновления какого либо поля
 action_list_type = Literal["only_missing", "update_all"]
-entity_list_type = Literal["region", "constellation", "system", "star", "alliance", "load_id_associated_corporations", "corporation", "character", "load_corporation_history"] 
+entity_list_type = Literal[
+        "region",
+        "constellation",
+        "system",
+        "star",
+        "alliance",
+        "load_id_associated_corporations",
+        "corporation",
+        "character",
+        "load_corporation_history",
+        "category",
+        "group",
+        "type",
+        ] 
