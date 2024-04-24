@@ -1,4 +1,5 @@
 from asgiref.sync import sync_to_async
+import json
 
 from .base_requests import GET_request_to_esi
 from .conf import action_list_type, entity_list_type
@@ -35,6 +36,10 @@ def get_some_pages_external_ids(entity:entity_list_type):
     В нормальном режиме приходит 500 ответ, если где то косяк, то GET_request_to_esi
     сгенерирует и выбросит ошибку а здесь она будет перехвачена и повторно выброшена.
     """
+    # временная заглушка ,чтобы не грузить по несколько раз с esi
+    # with open(f"{entity}_external_ids.json", "r") as file:
+    #     external_ids = json.load(file)
+    # return external_ids
 
     if entity == "group":
         base_url = "https://esi.evetech.net/latest/universe/groups/?datasource=tranquility&page="
@@ -55,6 +60,10 @@ def get_some_pages_external_ids(entity:entity_list_type):
         except errors.StatusCodeNot200Exception as e:
             if e.full_body_response.json()["error"] == "Undefined 404 response. Original message: Requested page does not exist!":
                 print(f"Succesful load all {entity} ids. Total {len(external_ids)} ids. ")
+                # этот блок - на случай отладки сущностей с множестовм id - чтобы не грузить их повторно с esi
+                # with open(f"{entity}_external_ids.json", "w") as file:
+                #     json.dump(external_ids, file)
+                # print(f"Write in file {entity}_external_ids.json")
                 return external_ids
             else:
                 print("\nSome unknown error.\n")
@@ -238,6 +247,8 @@ async def get_internal_ids(entity:entity_list_type):
         db_records = Categories.objects.values(f"{entity}_id")
     elif entity == "group":
         db_records = Groups.objects.values(f"{entity}_id")
+    elif entity == "type":
+        db_records = Types.objects.values(f"{entity}_id")
     else:
         errors.raise_entity_not_processed(entity)
     # метод Models.objects.values() возвращает словарь словарей, это нужно преобразовать в список.

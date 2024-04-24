@@ -90,6 +90,22 @@ def linking_groups():
     for group in groups:
         category = Categories.objects.get(category_id=group.response_body["category_id"])
         group.category = category
-        group.save(update_fields=["category"])
+        group.save(update_fields=["category",])
         print(f"Link {group.group_id} group. {count}/{l}")
+        count += 1
+
+
+@sync_to_async
+def linking_types():
+    """
+    Связи у типов итемов.
+    """
+    types = Types.objects.all()
+    count = 1
+    l = len(types)
+    for type_item in types:
+        group = Groups.objects.get(group_id=type_item.response_body["group_id"])
+        type_item.group = group
+        type_item.save(update_fields=["group",])
+        print(f"Link {type_item.type_id} type. {count}/{l}")
         count += 1

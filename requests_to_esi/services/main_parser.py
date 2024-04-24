@@ -48,6 +48,8 @@ async def linking(entity:entity_list_type):
         await linking_corporations()
     elif entity == "group":
         await linking_groups()
+    elif entity == "type":
+        await linking_types()
     else:
         print(f"Linking for the {entity}s is not needed or the method is not defined.")
 

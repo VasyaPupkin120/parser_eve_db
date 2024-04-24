@@ -212,5 +212,27 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+
+    # запись типа итемов
+    elif entity == "type":
+        for key in data:
+            Types.objects.update_or_create(
+                    type_id=key,
+                    defaults={
+                        "capacity": data[key].get("capacity"),
+                        "description": data[key].get("description"),
+                        "mass": data[key].get("mass"),
+                        "name": data[key].get("name"),
+                        "packaged_volume": data[key].get("packaged_volume"),
+                        "portion_size": data[key].get("portion_size"),
+                        "published": data[key].get("published"),
+                        "radius": data[key].get("radius"),
+                        "response_body": data[key], 
+                        "type_id": key,
+                        "volume": data[key].get("volume"),
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
     else:
         raise_entity_not_processed(entity)
+
