@@ -6,8 +6,9 @@
 from asgiref.sync import sync_to_async
 from dbeve_universe.models import *
 from dbeve_social.models import *
+from dbeve_items.models import *
 
-# у регионов нет внешних ключей, это что то вроде корневой модели.
+# у регионов, у категорий итемов нет внешних ключей, это что то вроде корневой модели.
 
 @sync_to_async
 def linking_constellations():
@@ -77,3 +78,18 @@ def linking_corporations():
         print(f"Link {corporation.corporation_id} corporation. {count}/{l}")
         count += 1
 
+
+@sync_to_async
+def linking_groups():
+    """
+    Связи у групп итемов.
+    """
+    groups = Groups.objects.all()
+    count = 1
+    l = len(groups)
+    for group in groups:
+        category = Categories.objects.get(category_id=group.response_body["category_id"])
+        group.category = category
+        group.save(update_fields=["category"])
+        print(f"Link {group.group_id} group. {count}/{l}")
+        count += 1

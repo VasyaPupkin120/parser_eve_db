@@ -7,43 +7,7 @@ from .conf import entity_list_type
 
 from dbeve_social.models import Alliances, Characters, Corporations
 from dbeve_universe.models import Constellations, Regions, Stars, Systems
-from dbeve_items.models import Categories
-
-
-###############################################################################
-#                          Парсинг одной сущности.                            #
-###############################################################################
-
-def get_associated_corp(alliance_id, corp_creator_id, corp_executor_id):
-    """
-    Вспомогательная функция для create_or_update_one_entity()
-    Получает id алли, id корпы-экзекутора, id корпы-основателя, 
-    выполняет запрос, возвращает кортеж с всеми ассоциированными корпорациями.
-    """
-    ...
-    # url = f"https://esi.evetech.net/latest/alliances/{alliance_id}/corporations/?datasource=tranquility"
-    # print(f"Start load list associated corporation for alliance {alliance_id}")
-    # corporations = GET_request_to_esi(url).json()
-    # if corp_creator_id:
-    #     corporations.append(corp_creator_id)
-    # if corp_executor_id:
-    #     corporations.append(corp_executor_id)
-    # print(f"Successful load list associated corporation for alliance {alliance_id}")
-    # # убираем дублирующиеся - creator и executor могут повторяться в общем списке корп
-    # return tuple(set(corporations))
-
-
-def get_corporationhistory(character_id):
-    """
-    Вспомогательная для create_or_update_one_entity().
-    Получает id персонажа, выполняет запрос, возвращает json-ответ.
-    """
-    ...
-    # url = f"https://esi.evetech.net/latest/characters/{character_id}/corporationhistory/?datasource=tranquility"
-    # print(f"Start load corporation history for character {character_id}")
-    # resp = GET_request_to_esi(url).json()
-    # print(f"Successful load corporation history")
-    # return resp
+from dbeve_items.models import Categories, Groups, Types
 
 
 
@@ -221,13 +185,27 @@ def enter_entitys_to_db(
             character.save()
             print(f"Successful save corporation history for character: {key}\n")
 
-    # запись категории
+    # запись категории итемов
     elif entity == "category":
         for key in data:
             Categories.objects.update_or_create(
                     category_id=key,
                     defaults={
                         "category_id": key,
+                        "name": data[key].get("name"),
+                        "published": data[key].get("published"),
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
+
+    # запись группы итемов
+    elif entity == "group":
+        for key in data:
+            Groups.objects.update_or_create(
+                    group_id=key,
+                    defaults={
+                        "group_id": key,
                         "name": data[key].get("name"),
                         "published": data[key].get("published"),
                         "response_body": data[key], 

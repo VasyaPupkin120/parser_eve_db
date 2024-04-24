@@ -6,7 +6,7 @@ from .conf import entity_list_type, action_list_type
 
 
 class StatusCodeNot200Exception(Exception):
-    def __init__(self, message, status_code, limit_remain, limit_reset, error_limited, url, full_body_response, content):
+    def __init__(self, message, status_code, limit_remain, limit_reset, error_limited, url, full_body_response):
         super().__init__(message)
         self.status_code = status_code
         self.limit_remain = limit_remain
@@ -14,9 +14,8 @@ class StatusCodeNot200Exception(Exception):
         self.error_limited = error_limited
         self.url = url
         self.full_body_response = full_body_response
-        self.content = content
 
-def raise_StatusCodeNot200Exception(url:str, resp:aiohttp.ClientResponse|requests.Response, content):
+def raise_StatusCodeNot200Exception(url:str, resp:aiohttp.ClientResponse|requests.Response):
     """
     Принимает url и результат запроса на этот url, выбрасывает исключение.
     """
@@ -30,7 +29,7 @@ def raise_StatusCodeNot200Exception(url:str, resp:aiohttp.ClientResponse|request
     limit_reset = resp.headers.get("X-ESI-Error-Limit-Reset")
     error_limited = resp.headers.get("X-ESI-Error-Limited")
 
-    error_message = f"Status code: {status_code}\nLimit-Remain: {limit_remain}\nLimit-Reset: {limit_reset}\nError-Limited:{error_limited}\nURL: {url}\n\nFull body response: {resp}\nContent: {content}" 
+    error_message = f"Status code: {status_code}\nLimit-Remain: {limit_remain}\nLimit-Reset: {limit_reset}\nError-Limited:{error_limited}\nURL: {url}\n\nFull body response: {resp}" 
     raise StatusCodeNot200Exception(
             error_message,
             status_code=status_code,
@@ -39,7 +38,6 @@ def raise_StatusCodeNot200Exception(url:str, resp:aiohttp.ClientResponse|request
             error_limited=error_limited,
             url=url,
             full_body_response=resp,
-            content=content
             )
 
 def raise_entity_not_processed(entity):

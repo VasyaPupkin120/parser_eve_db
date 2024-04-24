@@ -8,6 +8,8 @@ from typing import Literal
 import requests
 import time
 from django.conf import settings
+
+from . import errors
 from .errors import StatusCodeNot200Exception, raise_entity_not_processed, raise_StatusCodeNot200Exception
 
 import asyncio
@@ -16,13 +18,13 @@ from .asynctimer import async_timed
 from typing import List
 
 from . import conf
+from .conf import entity_list_type
 
 
 
 ################################################################################
 #                         Блок синхронных запросов.                            #
 ################################################################################
-
 def GET_request_to_esi(url):
     """
     Единичный синхронный запрос к esi, в случае не 200 ответа сразу выброс исключения - 
@@ -34,21 +36,7 @@ def GET_request_to_esi(url):
     if resp.status_code == 200:
         return resp
     else:
-        raise_StatusCodeNot200Exception(url, resp, resp.content)
-    # limit_remain = resp.headers.get("X-ESI-Error-Limit-Remain")
-    # limit_reset = resp.headers.get("X-ESI-Error-Limit-Reset")
-    # error_limited = resp.headers.get("X-ESI-Error-Limited")
-    # error_message = f"Status code: {resp.status_code}\nLimit-Remain: {limit_remain}\nLimit-Reset: {limit_reset}\nError-Limited:{error_limited}\nURL: {url}" 
-    # raise StatusCodeNot200Exception(
-    #         error_message,
-    #         status_code=resp.status_code,
-    #         limit_remain=limit_remain,
-    #         limit_reset=limit_reset,
-    #         error_limited=error_limited,
-    #         url=url,
-    #         full_body_response=resp,
-    #         content=resp.content
-    #         )
+        raise_StatusCodeNot200Exception(url, resp)
 
 
 ################################################################################
@@ -140,6 +128,8 @@ def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/characters/!/corporationhistory/?datasource=tranquility"
     elif entity == "category":
         base_url = "https://esi.evetech.net/latest/universe/categories/!/?datasource=tranquility&language=en"
+    elif entity == "group":
+        base_url = "https://esi.evetech.net/latest/universe/groups/!/?datasource=tranquility&language=en"
     else:
         raise_entity_not_processed(entity)
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key

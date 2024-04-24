@@ -25,6 +25,42 @@ def dict_to_list(db_records):
     return temp_ids
 
 
+@sync_to_async
+def get_some_pages_external_ids(entity:entity_list_type):
+    """
+    Некоторых сущностей слишком много - например Groups, Types
+    и список с их id нужно получать с нескольких страниц одного запроса. 
+    Прчем заранее неизвестно, сколько страниц есть, поэтому 
+    выполняются запросы до тех пор, пока не придет какая нибудь ошибка.
+    В нормальном режиме приходит 500 ответ, если где то косяк, то GET_request_to_esi
+    сгенерирует и выбросит ошибку а здесь она будет перехвачена и повторно выброшена.
+    """
+
+    if entity == "group":
+        base_url = "https://esi.evetech.net/latest/universe/groups/?datasource=tranquility&page="
+    elif entity == "type":
+        base_url = "https://esi.evetech.net/latest/universe/types/?datasource=tranquility&page="
+    else:
+        errors.raise_entity_not_processed(entity)
+
+    page = 1
+    external_ids = []
+    while True:
+        url = base_url + str(page)
+        try:
+            temp = GET_request_to_esi(url).json()
+            print(f"Successful load page: {str(page)}. Load {len(temp)} ids")
+            external_ids.extend(temp)
+            page += 1
+        except errors.StatusCodeNot200Exception as e:
+            if e.full_body_response.json()["error"] == "Undefined 404 response. Original message: Requested page does not exist!":
+                print(f"Succesful load all {entity} ids. Total {len(external_ids)} ids. ")
+                return external_ids
+            else:
+                print("\nSome unknown error.\n")
+                raise e
+
+
 ################################################################################
 #                            Блок внешних id.                                  #  
 ################################################################################
@@ -107,43 +143,6 @@ def get_character_external_ids():
     return external_ids
 
 
-# @sync_to_async
-def get_group_external_ids():
-    page = 3
-    external_ids = []
-    url = f"https://esi.evetech.net/latest/universe/groups/?datasource=tranquility&page={page}"
-    try:
-        temp = GET_request_to_esi(url)
-        print("temp: ", temp)
-    except errors.StatusCodeNot200Exception as e:
-        if e.content["error"] == "Undefined 404 response. Original message: Requested page does not exist!":
-            print("Load all group id")
-            print(external_ids)
-            return external_ids
-        else:
-            print("Error in url.")
-            raise e
-    # while True:
-    #     url = f"https://esi.evetech.net/latest/universe/groups/?datasource=tranquility&page={page}"
-    #     try:
-    #         temp = list(GET_request_to_esi(url).json())
-    #         print(temp)
-    #         external_ids.extend(temp)
-    #         page += 1
-    #     except errors.StatusCodeNot200Exception as e:
-    #         if e.content["error"] == "Undefined 404 response. Original message: Requested page does not exist!":
-    #             print("Load all group id")
-    #             print(external_ids)
-    #             return external_ids
-    #         else:
-    #             print("Error in url.")
-    #             break
-    #            raise e
-
-
-
-    
-
 async def get_external_ids(entity:entity_list_type):
     """
     Данные можно получить либо прямым запросом к esi, либо обработкой 
@@ -182,12 +181,14 @@ async def get_external_ids(entity:entity_list_type):
         url = "https://esi.evetech.net/latest/universe/categories/?datasource=tranquility"
         external_ids = list(GET_request_to_esi(url).json())
     elif entity == "group":
-        ...
-        # external_ids = await get_group_external_ids()
+        external_ids = await get_some_pages_external_ids(entity)
+    elif entity == "type":
+        external_ids = await get_some_pages_external_ids(entity)
     else:
         errors.raise_entity_not_processed(entity)
     print(f"Successful loading of all {entity}s id.")
     return external_ids
+
 
 
 ################################################################################
