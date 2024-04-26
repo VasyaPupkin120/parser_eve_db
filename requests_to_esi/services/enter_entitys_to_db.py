@@ -1,11 +1,12 @@
 from asgiref.sync import sync_to_async
+import datetime
 
 
 from .errors import raise_entity_not_processed, raise_action_not_allowed
 from .base_requests import GET_request_to_esi
 from .conf import entity_list_type
 
-from dbeve_social.models import Alliances, Characters, Corporations
+from dbeve_social.models import Alliances, Characters, Corporations, Killmails, Relates
 from dbeve_universe.models import Constellations, Regions, Stars, Systems
 from dbeve_items.models import Categories, Groups, Types
 
@@ -25,6 +26,7 @@ from dbeve_items.models import Categories, Groups, Types
 def enter_entitys_to_db(
         entity: entity_list_type,
         data:dict,
+        **kwargs
         ):
     """
     Исключительно для сохранения данных в БД. Получает словарь и сохраняет данные из него в БД.
@@ -32,6 +34,12 @@ def enter_entitys_to_db(
     Функция получает тип сущности и словарь с данными и вносит данные по 
     значению в БД. Количество записей в словаре зависит от размера чанка.
     data - словарь, полученный из функции several_async_requests
+
+    словарь вида:
+    {
+        entity_id1: {name_field1: data, name_field2: data, ...},
+        entity_id2: {name_field1: data, name_field2: data, ...}
+    }
 
     Не выполняет связывание записей - линковка выполняется отдельной функцией.
     В том числе для альянсов не выполняется подгрузка ассоциированных корпораций - 
@@ -233,6 +241,47 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+
+    # запись релейта
+    elif entity == "related":
+        for key in data:
+            Relates.objects.update_or_create(
+                    related_id=key,
+                    defaults={
+                        "related_id": key,
+                        "url": data[key].get("url"),
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
+
+    # запись данных по киллмылу, полученных с evetools
+    # структура ответа отличается от структуры ответа esi, чтобы привести к одному виду - формирую новый response_body
+    elif entity == "killmail_evetools":
+        for key in data:
+            response_body = {}
+            # дополняем ответ значением related_id, который обязательно должен быть для сохранения запросов к zkb
+            # данные с этого запроса будут храниться под ключом evetools
+            response_body["related_id"] = kwargs["related_id"]
+            response_body["evetools_data"] = data[key]
+
+            Killmails.objects.update_or_create(
+                    killmail_id=data[key]["_id"],
+                    defaults={
+                        "killmail_id": key,
+                        "killmail_hash": data[key].get("hash"),
+                        "sumV": data[key].get("sumV"),
+                        "time": datetime.datetime.fromtimestamp(data[key].get("time")),
+                        "day": datetime.datetime.fromtimestamp(data[key].get("day")),
+                        "pts": data[key].get("pts"),
+                        "npc": data[key].get("npc"),
+                        "solo": data[key].get("solo"),
+                        "awox": data[key].get("awox"),
+                        "response_body": response_body, 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
+
     else:
         raise_entity_not_processed(entity)
 

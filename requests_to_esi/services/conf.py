@@ -34,4 +34,7 @@ entity_list_type = Literal[
         "category",
         "group",
         "type",
+        "related",
+        "killmail_evetools",
+        "killmail_esi",
         ] 

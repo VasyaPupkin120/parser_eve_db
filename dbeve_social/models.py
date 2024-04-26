@@ -105,6 +105,13 @@ class Attackers(models.Model):
 class Killmails(BaseEntity):
     """
     Модель одиночного киллмыла.
+
+    почему то количество потерянных исок в evetools в релейте берется
+    с zkb, а в отдельном киллмыле - хз откуда. Типа на сайте evetools в бр-е и 
+    в отдельном киллмыле - разное количество потерянных иск. В бр-е совпадает с киллмылом zkb,
+    а в отдельном релейте вообще хз откуда взято. В итоге, буду в киллмыло записывать данные 
+    с отдельного киллмыла, а при выводе странички компенсов - с бр-а, все равно все данные в основном
+    оттуда будут браться.
     """
     # поля из esi-запроса
     killmail_id = models.BigIntegerField(primary_key=True)
@@ -112,17 +119,30 @@ class Killmails(BaseEntity):
     position_x = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     position_y = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     position_z = models.DecimalField(max_digits=32, decimal_places=0, null=True)
-    # поля из zkb-запроса
-    locationID = models.CharField(null=True)
+    # поля из evetools-запроса
     killmail_hash = models.CharField(null=True)
-    fittedValue = models.DecimalField(max_digits=32, decimal_places=2, null=True)
-    droppedValue = models.DecimalField(max_digits=32, decimal_places=2, null=True)
-    destroyedValue = models.DecimalField(max_digits=32, decimal_places=2, null=True)
-    totalValue = models.DecimalField(max_digits=32, decimal_places=2, null=True)
-    points = models.BigIntegerField(null=True)
+    sumv = models.DecimalField(max_digits=32, decimal_places=2, null=True)
+    time = models.DateTimeField(null=True)
+    day = models.DateTimeField(null=True)
+    pts = models.BigIntegerField(null=True)
     npc = models.BooleanField(null=True)
     solo = models.BooleanField(null=True)
     awox = models.BooleanField(null=True)
 
     solar_system = models.ForeignKey(Systems, on_delete=models.SET_NULL, null=True)
     ship_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True)
+
+
+class Relates(BaseEntity):
+    """
+    Класс релейта. Содержит информацию по участникам и киллымылам.
+    Основан на запросе к api br.evetools.org.
+    Все поля релейта не очень то нужны, пусть будут храниться в response_body.
+    
+    Чтобы не делать два варианта релейтов, всегда буду исползовать формат
+    https://br.evetools.org/br/662a4db83c2f030012351f0c - как вид бр на сайте
+    https://br.evetools.org/api/v1/composition/get/662a4db83c2f030012351f0c - как ссылка для запроса на api
+    """
+    related_id = models.CharField(primary_key=True)
+    url = models.URLField(null=True)
+    killmails = models.ManyToManyField(Killmails, blank=True, related_name="relates")

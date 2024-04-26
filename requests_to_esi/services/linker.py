@@ -109,3 +109,14 @@ def linking_types():
         type_item.save(update_fields=["group",])
         print(f"Link {type_item.type_id} type. {count}/{l}")
         count += 1
+
+
+@sync_to_async
+def linking_relates(killmails_ids, related_id):
+    """
+    Линковка киллмыл к релейту
+    """
+    related = Relates.objects.get(related_id=related_id)
+    for killmail_id in killmails_ids:
+        killmail = Killmails.objects.get(killmail_id=killmail_id)
+        related.killmails.add(killmail)

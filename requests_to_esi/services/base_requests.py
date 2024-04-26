@@ -34,6 +34,7 @@ def GET_request_to_esi(url):
     #FIXME внести сюда обращение к модели-логу для записи всей инфы об неудачном коде. Логирование удачного запроса будет в рабочих функциях - та где запрос вернул результат
     resp = requests.get(url)
     if resp.status_code == 200:
+        print(resp.json())
         return resp
     else:
         raise_StatusCodeNot200Exception(url, resp)
@@ -132,6 +133,8 @@ def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/universe/groups/!/?datasource=tranquility&language=en"
     elif entity == "type":
         base_url = "https://esi.evetech.net/latest/universe/types/!/?datasource=tranquility&language=en"
+    elif entity == "killmail_evetools":
+        base_url = "https://kb.evetools.org/api/v1/killmails/!/"
     else:
         raise_entity_not_processed(entity)
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key

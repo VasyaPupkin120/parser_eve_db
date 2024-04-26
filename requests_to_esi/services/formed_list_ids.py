@@ -33,8 +33,10 @@ def get_some_pages_external_ids(entity:entity_list_type):
     и список с их id нужно получать с нескольких страниц одного запроса. 
     Прчем заранее неизвестно, сколько страниц есть, поэтому 
     выполняются запросы до тех пор, пока не придет какая нибудь ошибка.
-    В нормальном режиме приходит 500 ответ, если где то косяк, то GET_request_to_esi
-    сгенерирует и выбросит ошибку а здесь она будет перехвачена и повторно выброшена.
+    В случае несуществующей странички приходит 500 ответ.
+    При всяком не 200м коде ошибка будет здесь сначала перехвачена,  
+    и на оснве тела ошибки либо шатно обработана здесь (если странички закончились)
+    либо будет повторно выброшена (в случае других ошибочных ситуаций, например странички почему то нет).
     """
     # временная заглушка ,чтобы не грузить по несколько раз с esi
     # with open(f"{entity}_external_ids.json", "r") as file:
@@ -249,6 +251,9 @@ async def get_internal_ids(entity:entity_list_type):
         db_records = Groups.objects.values(f"{entity}_id")
     elif entity == "type":
         db_records = Types.objects.values(f"{entity}_id")
+    elif entity == "killmail_evetools":
+        # проверка внутренних для избежания повторных запросов - только для запросов в evetools, запрашивать esi придется всегда
+        db_records = Killmails.objects.values(f"killmail_id")
     else:
         errors.raise_entity_not_processed(entity)
     # метод Models.objects.values() возвращает словарь словарей, это нужно преобразовать в список.
@@ -260,7 +265,7 @@ async def get_internal_ids(entity:entity_list_type):
 ################################################################################
 #                       Блок сравнения id и возврат.                           #  
 ################################################################################
-async def formed_list_ids_to_enter_in_DB(action:action_list_type, entity:entity_list_type):
+async def formed_list_ids_to_enter_in_DB(action:action_list_type, entity:entity_list_type, list_of_entities):
     """
     Принимает сущность, запрашивает внутренние и внешние id для этой сущности,
     сравнивает их и возвращает те, для которых нужно выполнять запросы к esi.
@@ -269,19 +274,29 @@ async def formed_list_ids_to_enter_in_DB(action:action_list_type, entity:entity_
     Внешние id - это те, по которым неизвестно, есть ли они в базе, нужно их 
     найти все, сравнить с внутренними и выяснить каких точно нет в БД.
     """
+    # для режима update_all нет необходимости проверять уже имеющиеся записи
     if action == "update_all":
         print(f"\nUsed mode 'update_all'. Need load all external {entity} id.")
-        external_ids = await get_external_ids(entity)
+        if list_of_entities:
+            external_ids = list_of_entities
+        else:
+            external_ids = await get_external_ids(entity)
         print(f"External ids: {external_ids}.")
         return external_ids
 
-    external_ids = await get_external_ids(entity)
+    # получаем внутренние и внешние id
+    if list_of_entities:
+        print(f"\nReceived list of IDs.")
+        external_ids = list_of_entities
+    else:
+        external_ids = await get_external_ids(entity)
+    print(f"External ids: {external_ids}.")
     internal_ids = await get_internal_ids(entity)
-
     if not internal_ids:
         print(f"\nThere are no records in {entity} model. Need load all external {entity} id.")
-        print(f"External ids: {external_ids}.")
         return external_ids
+    else:
+        print(f"Internal ids: {internal_ids}.")
 
     print(f"\nStart compare external and internal {entity} id.")
     external_ids = set(external_ids)

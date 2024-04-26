@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Alliances, Characters, Corporations
+from .models import Alliances, Characters, Corporations, Relates
 
 # Create your views here.
 
@@ -24,3 +24,11 @@ def all_corporations(request):
 def all_characters(request):
     characters = Characters.objects.all()[:100]
     return render(request, "dbeve_social/all_characters.html", context={"characters": characters,})
+
+def all_relates(request):
+    relates = Relates.objects.all()[:100]
+    return render(request, "dbeve_social/all_relates.html", context={"relates": relates,})
+
+def one_related(request, related_id):
+    related = Relates.objects.get(related_id=related_id)
+    return render(request, "dbeve_social/one_related.html", context={"related": related,})

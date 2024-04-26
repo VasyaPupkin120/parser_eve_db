@@ -11,6 +11,8 @@ urlpatterns = [
     path('all_alliances/', all_alliances, name="all_alliances"),
     path('all_corporations/', all_corporations, name="all_corporations"),
     path('all_characters/', all_characters, name="all_characters"),
+    path('all_relates/', all_relates, name="all_relates"),
+    path('one_related/<str:related_id>/', one_related, name="one_related"),
 ]
 
 if settings.DEBUG:
