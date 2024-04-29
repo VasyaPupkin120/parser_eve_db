@@ -195,6 +195,10 @@ async def get_external_ids(entity:entity_list_type):
         external_ids = await get_some_pages_external_ids(entity)
     elif entity == "type":
         external_ids = await get_some_pages_external_ids(entity)
+    elif entity == "killmail_evetools":
+        print("\nThere is no way for killmail to check anything other than a list of entities.\n")
+    elif entity == "killmail_esi":
+        print("\nThere is no way for killmail to check anything other than a list of entities.\n")
     else:
         errors.raise_entity_not_processed(entity)
     print(f"Successful loading of all {entity}s id.")
@@ -254,6 +258,9 @@ async def get_internal_ids(entity:entity_list_type):
     elif entity == "killmail_evetools":
         # проверка внутренних для избежания повторных запросов - только для запросов в evetools, запрашивать esi придется всегда
         db_records = Killmails.objects.values(f"killmail_id")
+    elif entity == "killmail_esi":
+        # в этом случае нужно проверять все киллмыла - чтобы довнести в уже имеющиеся записи отсутствующие данные
+        return
     else:
         errors.raise_entity_not_processed(entity)
     # метод Models.objects.values() возвращает словарь словарей, это нужно преобразовать в список.
@@ -286,7 +293,7 @@ async def formed_list_ids_to_enter_in_DB(action:action_list_type, entity:entity_
 
     # получаем внутренние и внешние id
     if list_of_entities:
-        print(f"\nReceived list of IDs.")
+        print(f"\nReceived list of external IDs.")
         external_ids = list_of_entities
     else:
         external_ids = await get_external_ids(entity)

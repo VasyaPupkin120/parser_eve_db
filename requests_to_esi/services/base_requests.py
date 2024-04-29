@@ -4,10 +4,15 @@
 Остальные фукнции переделать под асинхронные запросы.
 
 """
+from asgiref.sync import sync_to_async
+
+
 from typing import Literal
 import requests
 import time
 from django.conf import settings
+
+from dbeve_social.models import Killmails
 
 from . import errors
 from .errors import StatusCodeNot200Exception, raise_entity_not_processed, raise_StatusCodeNot200Exception
@@ -85,7 +90,7 @@ async def async_GET_requrest_to_esi(session: aiohttp.ClientSession, url: str, id
                         print("Information about this has been sent to the database. The error limit has not been exceeded, the next request will be executed.")
                     return {id_key: {"is_deleted": True}}
                 # для случаев когда такой странички не существует - просто выброс исключения.
-                raise_StatusCodeNot200Exception(url, resp, content)
+                raise_StatusCodeNot200Exception(url, resp)
 
     # повторный запрос только в случае ошибок сервера
     # ожидание отката окна запроса с небольшим запасом и повторный запрос
@@ -102,10 +107,29 @@ async def async_GET_requrest_to_esi(session: aiohttp.ClientSession, url: str, id
             return {id_key: content}
         else:
             # в случае повторной ошибки - выброс исключения
-            raise_StatusCodeNot200Exception(url, resp, content)
+            raise_StatusCodeNot200Exception(url, resp)
 
 
-def get_urls(entity, id_keys):
+@sync_to_async
+def killmail_esi_urls(id_keys):
+    """
+    Формирует список url для запроса к esi - запрашивает в БД
+    хэш киллмыл и формирует url. 
+    Отдельная функция - т.к. url у киллмыла формируется из двух 
+    изменяющихся частей а get_url работает с url-ами у которых 
+    только один изменяющийся параметр.
+    """
+    urls_and_ids = []
+    killmails = Killmails.objects.filter(killmail_id__in=id_keys).values("killmail_id", "killmail_hash")
+    for killmail in killmails:
+        killmail_id = killmail["killmail_id"]
+        killmail_hash = killmail["killmail_hash"]
+        url = f"https://esi.evetech.net/latest/killmails/{killmail_id}/{killmail_hash}/?datasource=tranquility"
+        urls_and_ids.append((url, killmail_id))
+    return urls_and_ids
+
+
+async def get_urls(entity, id_keys):
     """
     Принимает сущность и набор id, формирует урлы для запросов в esi.
     """
@@ -135,6 +159,9 @@ def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/universe/types/!/?datasource=tranquility&language=en"
     elif entity == "killmail_evetools":
         base_url = "https://kb.evetools.org/api/v1/killmails/!/"
+    elif entity == "killmail_esi":
+        urls = await killmail_esi_urls(id_keys)
+        return urls
     else:
         raise_entity_not_processed(entity)
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key
@@ -143,7 +170,11 @@ def get_urls(entity, id_keys):
     return urls_and_ids
 
 @async_timed()
-async def several_async_requests(session:aiohttp.ClientSession, id_keys:List[str], entity:conf.entity_list_type):
+async def several_async_requests(
+        session:aiohttp.ClientSession,
+        id_keys:List[str],
+        entity:conf.entity_list_type,
+        ):
     """
     Принимает сессию, список подставляемых в урл id, сущность, 
     с помощью get_url на основе сущности формирует список урлов для запроса, выполняет запросы,
@@ -151,8 +182,12 @@ async def several_async_requests(session:aiohttp.ClientSession, id_keys:List[str
     Обращается к функции-одиночному запросу, получает из нее словарь с результатами
     одного запроса, объединяет все результаты в один возвращаемый словарь.
     Выполняет конкурентные запросы одновременно для всех полученных урл-ов.
+
+    для некоторых сущностей недостаточно id и нужны еще параметры, например для killmaill_esi.
     """
-    urls_and_ids = get_urls(entity, id_keys)
+    # внутри urls_and_ids есть запросы в БД, нужно сделать эту функцию асинхронной 
+    # чтобы внутри можно было вызывать sync_to_async функции. Криво, но пофиг.
+    urls_and_ids = await get_urls(entity, id_keys)
     out_responses = {}
     pending = []
     for url, id_key in urls_and_ids:

@@ -45,10 +45,11 @@ def enter_entitys_to_db(
     В том числе для альянсов не выполняется подгрузка ассоциированных корпораций - 
     это делать отдельно, в функции внешних id для корпораций.
 
-    в начале идут блоки для обработки universe-данных, потом блоки social-данных
-
     Функция не занимается загрузкой и сохранением изображений. Это нужно как-то
     отдельно делать.
+
+    **kwargs используется для каких то частных случаев, например передает id релейта
+    для каждого киллмыла - исключительно для дополнения поля response_body.
     """
 
     # LSP ругается, но все работает. Эта проверка нужна, 
@@ -185,7 +186,7 @@ def enter_entitys_to_db(
                     )
             print(f"Successful save to DB {entity}: {key}\n")
 
-    # запись истории корпораций для персонажа
+    # запись истории корпораций для персонажа. Только дополнение поля response_body
     elif entity == "load_corporation_history":
         for key in data:
             character = Characters.objects.get(character_id = key)
@@ -256,7 +257,8 @@ def enter_entitys_to_db(
             print(f"Successful save to DB {entity}: {key}\n")
 
     # запись данных по киллмылу, полученных с evetools
-    # структура ответа отличается от структуры ответа esi, чтобы привести к одному виду - формирую новый response_body
+    # структура ответа отличается от структуры ответа esi но не сильно
+    # обязательно через **kwargs должен передаваться id релейта - для дополнения в response_body
     elif entity == "killmail_evetools":
         for key in data:
             response_body = {}
@@ -266,7 +268,7 @@ def enter_entitys_to_db(
             response_body["evetools_data"] = data[key]
 
             Killmails.objects.update_or_create(
-                    killmail_id=data[key]["_id"],
+                    killmail_id=key,
                     defaults={
                         "killmail_id": key,
                         "killmail_hash": data[key].get("hash"),
@@ -282,6 +284,26 @@ def enter_entitys_to_db(
                     )
             print(f"Successful save to DB {entity}: {key}\n")
 
+    # запись данных по киллмылу, полученных с esi
+    elif entity == "killmail_esi":
+        for key in data:
+            # запрашиваем старое значение поля reponse_body из БД и 
+            # дополняем response_body данными этого запроса - дополняем по новому ключу esi_data
+            response_body = Killmails.objects.get(killmail_id=key).response_body
+            response_body["esi_data"] = data[key]
+
+            Killmails.objects.update_or_create(
+                    killmail_id=key,
+                    defaults={
+                        "killmail_id": key,
+                        "killmail_time": datetime.datetime.strptime(data[key].get("killmail_time"), "%Y-%m-%dT%H:%M:%SZ"),
+                        "position_x": data[key].get("victim").get("position")["x"],
+                        "position_y": data[key].get("victim").get("position")["y"],
+                        "position_z": data[key].get("victim").get("position")["z"],
+                        "response_body": response_body, 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
+
     else:
         raise_entity_not_processed(entity)
-

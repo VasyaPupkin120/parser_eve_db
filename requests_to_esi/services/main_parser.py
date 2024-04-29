@@ -117,7 +117,7 @@ async def create_all_entities(
     await linking(entity)
 
 
-async def killmails_parser(killmails_ids, related_id):
+async def create_killmails(killmails_ids, related_id):
     """
     Киллмыло зависит от множества подзапросов - в частности запросы по 
     персонажам, по их корпам и алли.
@@ -138,15 +138,20 @@ async def killmails_parser(killmails_ids, related_id):
     # zkb не хочет отдавать запросы параллельно
     # вместо zkb буду использовать api от evetools
     # запрашиваем хэш киллмыла и что нибудь дополнительное 
+    print(f"Start load base information killmails from br.evetools.com.")
     await create_all_entities("only_missing", "killmail_evetools", killmails_ids, related_id=related_id)
+    print(f"Successful load base information killmails from br.evetools.com.")
+
     # связываем килмыла с релейтом
+    print(f"Start linking related and killmails.")
     await linking_relates(killmails_ids, related_id)
+    print(f"Successful linking related and killmails.")
 
+    # запрашиваем полную инфу от esi. Обновлять все записи принудительно.
+    print(f"Start load full information killmails from ESI.")
+    await create_all_entities("update_all", "killmail_esi", killmails_ids)
+    print(f"Successful load full information killmails from ESI.")
 
-
-    # # запрашиваем полную инфу от esi. Обновлять все записи принудительно.
-    # await create_all_entities("update_all", "killmail_esi", killmails_ids)
-    #
     # # создаем список всех альянсов, корпораций и чаров упомянутых в киллмыле
     # alliances_ids = []
     # corporations_ids = []
@@ -173,11 +178,15 @@ async def create_related(related_id):
     """
     url = "https://br.evetools.org/api/v1/composition/get/" + related_id
 
+    print(f"Start load related {related_id}")
     compose_related = GET_request_to_esi(url).json()
+    print(f"Successfull load related {related_id}")
+
     compose_related["url"] = url
     response = {f"{related_id}": compose_related}
     await enter_entitys_to_db("related", response)
 
+    # ключи основаны на json-ответах от br.evetools.com
     killmails = []
     relateds = compose_related["relateds"]
     for related in relateds:
@@ -187,7 +196,6 @@ async def create_related(related_id):
     for killmail in killmails:
         killmails_ids.append(killmail["id"])
 
-    print(killmails_ids)
-    print(len(killmails_ids))
-
-    await killmails_parser(killmails_ids, related_id)
+    print(f"Start load killmails in related.")
+    await create_killmails(killmails_ids, related_id)
+    print(f"Successfull load killmails in related.")
