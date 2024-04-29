@@ -1,5 +1,6 @@
 from asgiref.sync import sync_to_async
 import json
+from django.db.models import Q
 
 from .base_requests import GET_request_to_esi
 from .conf import action_list_type, entity_list_type
@@ -223,9 +224,13 @@ def get_corporation_history_internal_ids():
     return internal_ids
 
 
-async def get_internal_ids(entity:entity_list_type):
+async def get_internal_ids(entity:entity_list_type, list_ids=None):
     """
     Принимает сущность, запрашивает в БД уже имеющиеся записи и возвращает их.
+
+    Для случаев, когда нужно определить внутренние id не просто по факту существования
+    а по параметру какого нибудь поля или еще почему то, но  при этом не хочется 
+    запрашивать всю таблицу, то можно ограничить проверяемые id теми, кторые в списке.
     """
     print(f"\nStart load internal id of {entity} model.")
     if entity == "region":
@@ -256,15 +261,19 @@ async def get_internal_ids(entity:entity_list_type):
     elif entity == "type":
         db_records = Types.objects.values(f"{entity}_id")
     elif entity == "killmail_evetools":
-        # проверка внутренних для избежания повторных запросов - только для запросов в evetools, запрашивать esi придется всегда
-        db_records = Killmails.objects.values(f"killmail_id")
+        db_records = Killmails.objects.values("killmail_id")
     elif entity == "killmail_esi":
-        # в этом случае нужно проверять все киллмыла - чтобы довнести в уже имеющиеся записи отсутствующие данные
-        return
+        # в этом случае внутренними будут те, у которых И заполнено поле killmail_time - 
+        # оно заполняется при запросе к esi И они в списке для проверки 
+        # поле должно быть именно заполненым - ведь мы хотим внутренними id показать те, которые не нужно загружать
+        id_in_list_ids = Q(killmail_id__in=list_ids)
+        time_not_set = Q(killmail_time__isnull=False)
+        db_records = Killmails.objects.filter(id_in_list_ids & time_not_set).values("killmail_id")
     else:
         errors.raise_entity_not_processed(entity)
     # метод Models.objects.values() возвращает словарь словарей, это нужно преобразовать в список.
     internal_ids = await dict_to_list(db_records)
+    print("\ninternal ids: \n", internal_ids)
     print(f"Succesful load internal id of {entity} model.")
     return internal_ids
 
@@ -295,15 +304,15 @@ async def formed_list_ids_to_enter_in_DB(action:action_list_type, entity:entity_
     if list_of_entities:
         print(f"\nReceived list of external IDs.")
         external_ids = list_of_entities
+        internal_ids = await get_internal_ids(entity, list_of_entities)
     else:
         external_ids = await get_external_ids(entity)
-    print(f"External ids: {external_ids}.")
-    internal_ids = await get_internal_ids(entity)
+        internal_ids = await get_internal_ids(entity)
     if not internal_ids:
-        print(f"\nThere are no records in {entity} model. Need load all external {entity} id.")
+        print(f"\nNothing internal id for {entity} model. Need load all external {entity} id.")
         return external_ids
-    else:
-        print(f"Internal ids: {internal_ids}.")
+    print(f"External ids: {external_ids}.")
+    print(f"Internal ids: {internal_ids}.")
 
     print(f"\nStart compare external and internal {entity} id.")
     external_ids = set(external_ids)

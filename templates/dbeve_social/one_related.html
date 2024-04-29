@@ -4,7 +4,13 @@
 {% block title %}One relate{% endblock title %}
 
 {% block content %}
+            <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ related.related_id }}/">br.evetools.org</a>
     <div>
-        <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ related.related_id }}/">br.evetools.org</a>
+        {% for killmail in related.killmails.all %}
+            <a class="p-2 text-dark" href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/">{{ killmail.killmail_id }}</a>
+            {{ killmail.time }}
+            {{ killmail.sumv }} ISK
+            <br/>
+        {% endfor %}
     </div>
 {% endblock content %}

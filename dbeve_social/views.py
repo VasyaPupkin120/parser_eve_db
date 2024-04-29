@@ -31,4 +31,5 @@ def all_relates(request):
 
 def one_related(request, related_id):
     related = Relates.objects.get(related_id=related_id)
-    return render(request, "dbeve_social/one_related.html", context={"related": related,})
+    killmails = related.killmails.all()
+    return render(request, "dbeve_social/one_related.html", context={"related": related , "killmails": killmails})

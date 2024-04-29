@@ -272,19 +272,14 @@ def enter_entitys_to_db(
                     defaults={
                         "killmail_id": key,
                         "killmail_hash": data[key].get("hash"),
-                        "sumV": data[key].get("sumV"),
-                        "time": datetime.datetime.fromtimestamp(data[key].get("time")),
-                        "day": datetime.datetime.fromtimestamp(data[key].get("day")),
-                        "pts": data[key].get("pts"),
-                        "npc": data[key].get("npc"),
-                        "solo": data[key].get("solo"),
-                        "awox": data[key].get("awox"),
+                        "sumv": data[key].get("sumV"),
                         "response_body": response_body, 
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
 
     # запись данных по киллмылу, полученных с esi
+    #FIXME в поле response_body слишком много дублирующейся информации ,вероятно нужно объединить ключи esi_data и evetools_data.
     elif entity == "killmail_esi":
         for key in data:
             # запрашиваем старое значение поля reponse_body из БД и 
@@ -296,7 +291,7 @@ def enter_entitys_to_db(
                     killmail_id=key,
                     defaults={
                         "killmail_id": key,
-                        "killmail_time": datetime.datetime.strptime(data[key].get("killmail_time"), "%Y-%m-%dT%H:%M:%SZ"),
+                        "killmail_time": datetime.datetime.strptime(data[key]["killmail_time"], "%Y-%m-%dT%H:%M:%SZ"),
                         "position_x": data[key].get("victim").get("position")["x"],
                         "position_y": data[key].get("victim").get("position")["y"],
                         "position_z": data[key].get("victim").get("position")["z"],

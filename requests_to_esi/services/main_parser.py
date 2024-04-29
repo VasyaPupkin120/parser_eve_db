@@ -147,24 +147,59 @@ async def create_killmails(killmails_ids, related_id):
     await linking_relates(killmails_ids, related_id)
     print(f"Successful linking related and killmails.")
 
-    # запрашиваем полную инфу от esi. Обновлять все записи принудительно.
+    # запрашиваем полную инфу от esi. Внутренними будут считаться те записи,
+    # в которых заполнено поле killmail_time - оно заполняется именно при запросе к esi
     print(f"Start load full information killmails from ESI.")
-    await create_all_entities("update_all", "killmail_esi", killmails_ids)
+    await create_all_entities("only_missing", "killmail_esi", killmails_ids)
     print(f"Successful load full information killmails from ESI.")
 
-    # # создаем список всех альянсов, корпораций и чаров упомянутых в киллмыле
-    # alliances_ids = []
-    # corporations_ids = []
-    # characters_ids = []
-    # for killmail_id in killmails_ids:
-    #     alliances_ids = None
-    #     corporations_ids = None
-    #     characters_ids_ids = None
+
+@sync_to_async
+def create_linking_entities(related_id):
+    """
+    После создания киллмыл, создаем все упомянутые в релейте корпы, альянсы, чары 
+    все они создаются с флагом create_missing - чтобы не гонять лишние запросы
+    """
+    alliances_ids = []
+    corporations_ids = []
+    characters_ids = []
+
+    killmails = Relates.objects.get(related_id=related_id).killmails.all()
+
+    for killmail in killmails:
+        attackers = killmail.response_body["esi_data"]["attackers"]
+        victim = killmail.response_body["esi_data"]["victim"]
+        print("victim: ", victim)
+        print("attackers: ", attackers)
+
+        # не забыать, что в киллмыле могут быть неписи - похоже что исключительно на стороне атакующих
+        # если атакющие - непись, то у них нет ни альянса ни корпы ни id чара
+
+        # альянсы атакующих и жертвы
+        attackers_alliances_ids = [attacker.get("alliance_id") for attacker in attackers if attacker.get("alliance_id")]
+        alliances_ids.append(victim["alliance_id"])
+        alliances_ids.extend(attackers_alliances_ids)
+
+        # корпорации атакующих и жертвы
+        attackers_corporations_ids = [attacker.get("corporation_id") for attacker in attackers if attacker.get("corporation_id")]
+        corporations_ids.append(victim["corporation_id"])
+        corporations_ids.extend(attackers_corporations_ids)
+
+        # чары атакующих и жертвы
+        attackers_characters_ids = [attacker.get("character_id") for attacker in attackers if attacker.get("character_id")]
+        characters_ids.append(victim["character_id"])
+        characters_ids.extend(attackers_characters_ids)
+
+    alliances_ids = list(set(alliances_ids))
+    corporations_ids = list(set(corporations_ids))
+    characters_ids = list(set(characters_ids))
+
     # # первоначальное задание 
     # await create_all_entities("update_all", "alliance", alliances_ids)
     # await create_all_entities("update_all", "corporation", corporations_ids)
     # await create_all_entities("update_all", "character", characters_ids)
     # linking_killmails()
+
 
 
 @transaction.atomic
@@ -182,11 +217,13 @@ async def create_related(related_id):
     compose_related = GET_request_to_esi(url).json()
     print(f"Successfull load related {related_id}")
 
+    # дополянем релейт ссылкой и формируем стандартный вид данных для сохранения - ключ_id_сущности:результат запроса
     compose_related["url"] = url
     response = {f"{related_id}": compose_related}
     await enter_entitys_to_db("related", response)
 
-    # ключи основаны на json-ответах от br.evetools.com
+    # ключи прочитал в на json-ответах от br.evetools.com
+    # в сборном релейте отдельные релейты по системам лежат в общем списке
     killmails = []
     relateds = compose_related["relateds"]
     for related in relateds:
@@ -196,6 +233,13 @@ async def create_related(related_id):
     for killmail in killmails:
         killmails_ids.append(killmail["id"])
 
+    # создание всех киллмыл, связанных с релейтом
     print(f"Start load killmails in related.")
     await create_killmails(killmails_ids, related_id)
     print(f"Successfull load killmails in related.")
+
+    # загрузка с esi всех связанных с релейтом дополнитеьных данных
+    print("Start of loading alliances, corporations, and characters associated with this related.")
+    await create_linking_entities(related_id)
+    print(f"Successfull load associated data.")
+

@@ -119,18 +119,16 @@ class Killmails(BaseEntity):
     position_x = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     position_y = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     position_z = models.DecimalField(max_digits=32, decimal_places=0, null=True)
+
     # поля из evetools-запроса
     killmail_hash = models.CharField(null=True)
     sumv = models.DecimalField(max_digits=32, decimal_places=2, null=True)
-    time = models.DateTimeField(null=True)
-    day = models.DateTimeField(null=True)
-    pts = models.BigIntegerField(null=True)
-    npc = models.BooleanField(null=True)
-    solo = models.BooleanField(null=True)
-    awox = models.BooleanField(null=True)
 
     solar_system = models.ForeignKey(Systems, on_delete=models.SET_NULL, null=True)
-    ship_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True)
+    victim_ship_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True)
+    victim_allinace = models.ForeignKey(Alliances, on_delete=models.SET_NULL, null=True)
+    victim_corporation = models.ForeignKey(Corporations, on_delete=models.SET_NULL, null=True)
+    victim_character = models.ForeignKey(Characters, on_delete=models.SET_NULL, null=True)
 
 
 class Relates(BaseEntity):
