@@ -40,22 +40,22 @@ def create_chunks(ids:list, entity:entity_list_type):
 
 
 
-async def linking(entity:entity_list_type):
+async def linking(entity:entity_list_type, list_of_entities):
     """
     Линковка для тех сущностей, которым она нужна.
     """
     if entity == "constellation":
-        await linking_constellations()
+        await linking_constellations(list_of_entities)
     elif entity == "system":
-        await linking_systems()
+        await linking_systems(list_of_entities)
     elif entity == "star":
         await linking_stars()
     elif entity == "corporation":
-        await linking_corporations()
+        await linking_corporations(list_of_entities)
     elif entity == "group":
-        await linking_groups()
+        await linking_groups(list_of_entities)
     elif entity == "type":
-        await linking_types()
+        await linking_types(list_of_entities)
     else:
         print(f"Linking for the {entity}s is not needed or the method is not defined.")
 
@@ -114,7 +114,7 @@ async def create_all_entities(
     print("Successful downloading and saving information by {entity}.")
 
     # запуск линковки
-    await linking(entity)
+    await linking(entity, list_of_entities)
 
 
 async def create_killmails(killmails_ids, related_id):
@@ -154,51 +154,70 @@ async def create_killmails(killmails_ids, related_id):
     print(f"Successful load full information killmails from ESI.")
 
 
-@sync_to_async
-def create_linking_entities(related_id):
+async def create_linking_entities(related_id):
     """
     После создания киллмыл, создаем все упомянутые в релейте корпы, альянсы, чары 
     все они создаются с флагом create_missing - чтобы не гонять лишние запросы
+
+    Также после создания этих сущностей, они подлинковываются к киллмылу. Внутренние 
+    связи сущностей (корпа к альянсу или чар к корпе - они выполняются внутри их парсеров)
     """
+
+    @sync_to_async
+    def get_killmails(related_id):
+        """
+        Для изоляции запроса в бд внтури функции sync_to_async
+        """
+        killmails = Relates.objects.get(related_id=related_id).killmails.all()
+        # в этом месте выполняется собственно запрос в БД
+        killmails = list(killmails)
+        return killmails
+
     alliances_ids = []
     corporations_ids = []
     characters_ids = []
-
-    killmails = Relates.objects.get(related_id=related_id).killmails.all()
+    
+    killmails = await get_killmails(related_id)
 
     for killmail in killmails:
         attackers = killmail.response_body["esi_data"]["attackers"]
         victim = killmail.response_body["esi_data"]["victim"]
-        print("victim: ", victim)
-        print("attackers: ", attackers)
-
         # не забыать, что в киллмыле могут быть неписи - похоже что исключительно на стороне атакующих
-        # если атакющие - непись, то у них нет ни альянса ни корпы ни id чара
+        # не забывать что кто нибудь может не быть в альянсе
+        # не забывать, что среди жертв и атакующих могут быть структуры - тогда у них не будет чара
 
         # альянсы атакующих и жертвы
-        attackers_alliances_ids = [attacker.get("alliance_id") for attacker in attackers if attacker.get("alliance_id")]
-        alliances_ids.append(victim["alliance_id"])
+        attackers_alliances_ids = [attacker.get("alliance_id") for attacker in attackers]
+        alliances_ids.append(victim.get("alliance_id"))
         alliances_ids.extend(attackers_alliances_ids)
 
         # корпорации атакующих и жертвы
-        attackers_corporations_ids = [attacker.get("corporation_id") for attacker in attackers if attacker.get("corporation_id")]
-        corporations_ids.append(victim["corporation_id"])
+        attackers_corporations_ids = [attacker.get("corporation_id") for attacker in attackers]
+        corporations_ids.append(victim.get("corporation_id"))
         corporations_ids.extend(attackers_corporations_ids)
 
         # чары атакующих и жертвы
-        attackers_characters_ids = [attacker.get("character_id") for attacker in attackers if attacker.get("character_id")]
-        characters_ids.append(victim["character_id"])
+        attackers_characters_ids = [attacker.get("character_id") for attacker in attackers]
+        characters_ids.append(victim.get("character_id"))
         characters_ids.extend(attackers_characters_ids)
 
     alliances_ids = list(set(alliances_ids))
     corporations_ids = list(set(corporations_ids))
     characters_ids = list(set(characters_ids))
+    # избавляемся от None - они встречаются достаточно часто
+    alliances_ids = [alliance_id for alliance_id in alliances_ids if alliance_id ]
+    corporations_ids = [corporation_id for corporation_id in corporations_ids if corporation_id ]
+    characters_ids = [character_id for character_id in characters_ids if character_id ]
 
-    # # первоначальное задание 
-    # await create_all_entities("update_all", "alliance", alliances_ids)
-    # await create_all_entities("update_all", "corporation", corporations_ids)
-    # await create_all_entities("update_all", "character", characters_ids)
-    # linking_killmails()
+    # создаем связанные записи
+    await create_all_entities("only_missing", "alliance", alliances_ids)
+    await create_all_entities("only_missing", "corporation", corporations_ids)
+    await create_all_entities("only_missing", "character", characters_ids)
+    
+    # линковка киллмыл с вновь созданными сопуствующими сущностями
+    print(f"Start linking killmails")
+    await linking_killmails(killmails)
+    print(f"Successful linking killmails")
 
 
 

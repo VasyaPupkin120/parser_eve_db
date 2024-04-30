@@ -126,7 +126,7 @@ class Killmails(BaseEntity):
 
     solar_system = models.ForeignKey(Systems, on_delete=models.SET_NULL, null=True)
     victim_ship_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True)
-    victim_allinace = models.ForeignKey(Alliances, on_delete=models.SET_NULL, null=True)
+    victim_alliance = models.ForeignKey(Alliances, on_delete=models.SET_NULL, null=True)
     victim_corporation = models.ForeignKey(Corporations, on_delete=models.SET_NULL, null=True)
     victim_character = models.ForeignKey(Characters, on_delete=models.SET_NULL, null=True)
 

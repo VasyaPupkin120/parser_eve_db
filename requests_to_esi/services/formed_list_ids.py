@@ -211,12 +211,19 @@ async def get_external_ids(entity:entity_list_type):
 #                         Блок внутренних id.                                  #
 ################################################################################
 @sync_to_async
-def get_corporation_history_internal_ids():
+def get_corporation_history_internal_ids(list_of_entities=None):
     """
     Возвращаем id только тех чаров, у которых уже есть запись истории корпораций
-    и эти чары не должны быть удалены.
+    и эти чары не должны быть удалены и эти чары.
+
+    Если есть ограничение списком чаров, то нужно выбирать только те чары, кторые есть в списке.
     """
-    characters = Characters.objects.filter(is_deleted__isnull=True).values("character_id", "response_body")
+    char_not_deleted = Q(is_deleted__isnull=True)
+    if list_of_entities:
+        char_in_list_ids = Q(character_id__in=list_of_entities)
+        characters = Characters.objects.filter(char_not_deleted & char_in_list_ids).values("character_id", "response_body")
+    else:
+        characters = Characters.objects.filter(char_not_deleted).values("character_id", "response_body")
     internal_ids = []
     for character in characters:
         if character["response_body"].get("corporation_history"):
@@ -224,7 +231,7 @@ def get_corporation_history_internal_ids():
     return internal_ids
 
 
-async def get_internal_ids(entity:entity_list_type, list_ids=None):
+async def get_internal_ids(entity:entity_list_type, list_of_entities=None):
     """
     Принимает сущность, запрашивает в БД уже имеющиеся записи и возвращает их.
 
@@ -233,47 +240,99 @@ async def get_internal_ids(entity:entity_list_type, list_ids=None):
     запрашивать всю таблицу, то можно ограничить проверяемые id теми, кторые в списке.
     """
     print(f"\nStart load internal id of {entity} model.")
+
     if entity == "region":
-        db_records = Regions.objects.values(f"{entity}_id")
+        if list_of_entities:
+            db_records = Regions.objects.filter(regions_id__in=list_of_entities).values(f"{entity}_id")
+        else:
+            db_records = Regions.objects.values(f"{entity}_id")
+
     elif entity == "constellation":
-        db_records = Constellations.objects.values(f"{entity}_id")
+        if list_of_entities:
+            db_records = Constellations.objects.filter(constellation_id__in=list_of_entities).values(f"{entity}_id")
+        else:
+            db_records = Constellations.objects.values(f"{entity}_id")
+
     elif entity == "system":
-        db_records = Systems.objects.values(f"{entity}_id")
+        if list_of_entities:
+            db_records = Systems.objects.filter(system_id__in=list_of_entities).values(f"{entity}_id")
+        else:
+            db_records = Systems.objects.values(f"{entity}_id")
+
     elif entity == "star":
-        db_records = Stars.objects.values(f"{entity}_id)")
+        if list_of_entities:
+            db_records = Stars.objects.filter(star_id__in=list_of_entities).values(f"{entity}_id)")
+        else:
+            db_records = Stars.objects.values(f"{entity}_id)")
+
     elif entity == "alliance":
-        db_records = Alliances.objects.values(f"{entity}_id")
+        if list_of_entities:
+            db_records = Alliances.objects.filter(alliance_id__in=list_of_entities).values(f"{entity}_id")
+        else:
+            db_records = Alliances.objects.values(f"{entity}_id")
+
     elif entity == "load_id_associated_corporations":
+        # просто заглушка такого вида
         internal_ids = []
         print(f"Set internal id of this entity {entity} in empty list - [].")
         return internal_ids
+
     elif entity == "corporation":
-        db_records = Corporations.objects.values(f"{entity}_id")
+        if list_of_entities:
+            db_records = Corporations.objects.filter(corporation_id__in=list_of_entities).values(f"{entity}_id")
+        else:
+            db_records = Corporations.objects.values(f"{entity}_id")
+
     elif entity == "character":
-        db_records = Characters.objects.values(f"{entity}_id")
+        if list_of_entities:
+            db_records = Characters.objects.filter(character_id__in=list_of_entities).values(f"{entity}_id")
+        else:
+            db_records = Characters.objects.values(f"{entity}_id")
+
     elif entity == "load_corporation_history":
-        internal_ids = await get_corporation_history_internal_ids()
+        internal_ids = await get_corporation_history_internal_ids(list_of_entities)
         return internal_ids
+
     elif entity == "category":
-        db_records = Categories.objects.values(f"{entity}_id")
+        if list_of_entities:
+            db_records = Categories.objects.filter(category_id__in=list_of_entities).values(f"{entity}_id")
+        else:
+            db_records = Categories.objects.values(f"{entity}_id")
+
     elif entity == "group":
-        db_records = Groups.objects.values(f"{entity}_id")
+        if list_of_entities:
+            db_records = Groups.objects.filter(group_id__in=list_of_entities).values(f"{entity}_id")
+        else:
+            db_records = Groups.objects.values(f"{entity}_id")
+
     elif entity == "type":
-        db_records = Types.objects.values(f"{entity}_id")
+        if list_of_entities:
+            db_records = Types.objects.filter(type_id__in=list_of_entities).values(f"{entity}_id")
+        else:
+            db_records = Types.objects.values(f"{entity}_id")
+
     elif entity == "killmail_evetools":
-        db_records = Killmails.objects.values("killmail_id")
+        if list_of_entities:
+            db_records = Killmails.objects.filter(killmail_id__in=list_of_entities).values("killmail_id")
+        else:
+            db_records = Killmails.objects.values("killmail_id")
+
     elif entity == "killmail_esi":
         # в этом случае внутренними будут те, у которых И заполнено поле killmail_time - 
         # оно заполняется при запросе к esi И они в списке для проверки 
         # поле должно быть именно заполненым - ведь мы хотим внутренними id показать те, которые не нужно загружать
-        id_in_list_ids = Q(killmail_id__in=list_ids)
-        time_not_set = Q(killmail_time__isnull=False)
-        db_records = Killmails.objects.filter(id_in_list_ids & time_not_set).values("killmail_id")
+        if list_of_entities:
+            id_in_list_ids = Q(killmail_id__in=list_of_entities)
+            time_not_set = Q(killmail_time__isnull=False)
+            db_records = Killmails.objects.filter(id_in_list_ids & time_not_set).values("killmail_id")
+        else:
+            time_not_set = Q(killmail_time__isnull=False)
+            db_records = Killmails.objects.filter(time_not_set).values("killmail_id")
+
     else:
         errors.raise_entity_not_processed(entity)
     # метод Models.objects.values() возвращает словарь словарей, это нужно преобразовать в список.
     internal_ids = await dict_to_list(db_records)
-    print("\ninternal ids: \n", internal_ids)
     print(f"Succesful load internal id of {entity} model.")
     return internal_ids
 
