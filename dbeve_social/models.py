@@ -130,6 +130,9 @@ class Killmails(BaseEntity):
     victim_corporation = models.ForeignKey(Corporations, on_delete=models.SET_NULL, null=True)
     victim_character = models.ForeignKey(Characters, on_delete=models.SET_NULL, null=True)
 
+    class Meta:
+        ordering = ["victim_alliance", "victim_corporation", "-sumv"]
+
 
 class Relates(BaseEntity):
     """

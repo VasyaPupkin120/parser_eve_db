@@ -7,6 +7,11 @@
             <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ related.related_id }}/">br.evetools.org</a>
     <div>
         {% for killmail in related.killmails.all %}
+            <img src="https://images.evetech.net/alliances/{{ killmail.victim_alliance.alliance_id }}/logo?size=64">
+            <img src="https://images.evetech.net/corporations/{{ killmail.victim_corporation.corporation_id }}/logo?size=64">
+            <img src="https://images.evetech.net/characters/{{ killmail.victim_character.character_id }}/portrait?size=64">
+            <img src="https://images.evetech.net/types/{{ killmail.victim_ship_type.type_id }}/render?size=64">
+            {{ killmail.victim_ship_type.name }}
             <a class="p-2 text-dark" href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/">{{ killmail.killmail_id }}</a>
             {{ killmail.time }}
             {{ killmail.sumv }} ISK

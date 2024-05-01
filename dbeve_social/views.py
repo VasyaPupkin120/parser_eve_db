@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Alliances, Characters, Corporations, Relates
+from .models import Alliances, Characters, Corporations, Relates, Killmails
 
 # Create your views here.
 
@@ -31,5 +31,16 @@ def all_relates(request):
 
 def one_related(request, related_id):
     related = Relates.objects.get(related_id=related_id)
-    killmails = related.killmails.all()
+    killmails_base = related.killmails.all()
+    killmails = []
+    for killmail in killmails_base:
+        killmails.append(Killmails.objects.select_related(
+            "solar_system",
+            "victim_ship_type",
+            "victim_alliance",
+            "victim_corporation",
+            "victim_character",
+            ).get(killmail_id=killmail.killmail_id)
+         )
+    print(killmails[0].victim_character)
     return render(request, "dbeve_social/one_related.html", context={"related": related , "killmails": killmails})

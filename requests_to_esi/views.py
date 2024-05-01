@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests_to_esi.forms import ParseOneSystemForm
-from .services import base_requests, main_parser
+from .services import base_requests, parser_main
 import asyncio
 
 # Create your views here.
@@ -14,7 +14,7 @@ def main_request(request):
 def parse_regions(request):
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("only_missing", "region"))
+            asyncio.run(parser_main.create_all_entities("only_missing", "region"))
             # asyncio.run(base_parser.create_all_entities("update_all", "region"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_universe/parse_regions.html", {"exception": e})
@@ -24,7 +24,7 @@ def parse_regions(request):
 def parse_constellations(request):
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("only_missing", "constellation"))
+            asyncio.run(parser_main.create_all_entities("only_missing", "constellation"))
             # asyncio.run(base_parser.create_all_entities("update_all", "constellation"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_universe/parse_constellations.html", {"exception": e})
@@ -34,7 +34,7 @@ def parse_constellations(request):
 def parse_systems(request):
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("only_missing", "system"))
+            asyncio.run(parser_main.create_all_entities("only_missing", "system"))
             # asyncio.run(base_parser.create_all_entities("update_all", "system"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_universe/parse_systems.html", {"exception": e})
@@ -59,7 +59,7 @@ def parse_one_system(request):
 def parse_stars(request):
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("only_missing", "star"))
+            asyncio.run(parser_main.create_all_entities("only_missing", "star"))
             # asyncio.run(base_parser.create_all_entities("update_all", "star"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_universe/parse_stars.html", {"exception": e})
@@ -79,8 +79,8 @@ def parse_alliances(request):
         Ассоциированные корпы надо парсить всегда (параметр update_all) - т.к. 
         они могут вступать в алли и выходить.
         """
-        await main_parser.create_all_entities("only_missing", "alliance")
-        await main_parser.create_all_entities("update_all", "load_id_associated_corporations")
+        await parser_main.create_all_entities("only_missing", "alliance")
+        await parser_main.create_all_entities("update_all", "load_id_associated_corporations")
     if request.method == "POST":
         try:
             asyncio.run(first_alliance_second_associated_corp())
@@ -96,7 +96,7 @@ def load_id_associated_corporations(request):
     """
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("update_all", "load_id_associated_corporations"))
+            asyncio.run(parser_main.create_all_entities("update_all", "load_id_associated_corporations"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_social/load_id_associated_corporations.html", {"exception": e})
         return redirect(reverse("dbeve_social:all_alliances"))
@@ -106,7 +106,7 @@ def load_id_associated_corporations(request):
 def parse_corporations(request):
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("only_missing", "corporation"))
+            asyncio.run(parser_main.create_all_entities("only_missing", "corporation"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_social/parse_corporations.html", {"exception": e})
         return redirect(reverse("dbeve_social:all_corporations"))
@@ -116,7 +116,7 @@ def parse_corporations(request):
 def parse_characters(request):
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("only_missing", "character"))
+            asyncio.run(parser_main.create_all_entities("only_missing", "character"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_social/parse_characters.html", {"exception": e})
         return redirect(reverse("dbeve_social:all_characters"))
@@ -129,7 +129,7 @@ def load_corporation_history(request):
     """
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("only_missing", "load_corporation_history"))
+            asyncio.run(parser_main.create_all_entities("only_missing", "load_corporation_history"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_social/load_corporation_history.html", {"exception": e})
         return redirect(reverse("dbeve_social:all_characters"))
@@ -139,7 +139,7 @@ def load_corporation_history(request):
 def parse_one_related(request):
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_related(request.POST.get("related_id")))
+            asyncio.run(parser_main.create_related(request.POST.get("related_id")))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_social/parse_one_related.html", {"exception": e})
         return redirect(reverse("dbeve_social:all_relates"))
@@ -152,7 +152,7 @@ def parse_one_related(request):
 def parse_categories(request):
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("only_missing", "category"))
+            asyncio.run(parser_main.create_all_entities("only_missing", "category"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_items/parse_categories.html", {"exception": e})
         return redirect(reverse("dbeve_items:all_categories"))
@@ -162,7 +162,7 @@ def parse_categories(request):
 def parse_groups(request):
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("only_missing", "group"))
+            asyncio.run(parser_main.create_all_entities("only_missing", "group"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_items/parse_groups.html", {"exception": e})
         return redirect(reverse("dbeve_items:all_groups"))
@@ -172,7 +172,7 @@ def parse_groups(request):
 def parse_types(request):
     if request.method == "POST":
         try:
-            asyncio.run(main_parser.create_all_entities("only_missing", "type"))
+            asyncio.run(parser_main.create_all_entities("only_missing", "type"))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_items/parse_types.html", {"exception": e})
         return redirect(reverse("dbeve_items:all_types"))
