@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests_to_esi.forms import ParseOneSystemForm
-from .services import base_requests, parser_main
+from .services import base_requests, parser_main, parser_related
 import asyncio
 
 # Create your views here.
@@ -139,7 +139,7 @@ def load_corporation_history(request):
 def parse_one_related(request):
     if request.method == "POST":
         try:
-            asyncio.run(parser_main.create_related(request.POST.get("related_id")))
+            asyncio.run(parser_related.create_related(request.POST.get("related_id")))
         except base_requests.StatusCodeNot200Exception as e:
             return render(request, "requests_to_esi/dbeve_social/parse_one_related.html", {"exception": e})
         return redirect(reverse("dbeve_social:all_relates"))
