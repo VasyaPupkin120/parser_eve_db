@@ -85,7 +85,7 @@ async def create_all_entities(
     id.
 
     **kwargs может быть нужно для передачи каких то данных в каких то случаях 
-    например, когда нужно передать related_id в функцию enter_entitys_to_db
+    например, когда нужно передать battlereport_id в функцию enter_entitys_to_db
     """
     # проверка сущностей и действий
     errors.check_action(action)

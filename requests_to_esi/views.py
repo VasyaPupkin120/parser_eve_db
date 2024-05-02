@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests_to_esi.forms import ParseOneSystemForm
-from .services import base_requests, parser_main, parser_related
+from .services import base_requests, parser_main, parser_battlereport
 import asyncio
 
 # Create your views here.
@@ -136,14 +136,14 @@ def load_corporation_history(request):
     return render(request, "requests_to_esi/dbeve_social/load_corporation_history.html")
 
 
-def parse_one_related(request):
+def parse_one_battlereport(request):
     if request.method == "POST":
         try:
-            asyncio.run(parser_related.create_related(request.POST.get("related_id")))
+            asyncio.run(parser_battlereport.create_battlereport(request.POST.get("battlereport_id")))
         except base_requests.StatusCodeNot200Exception as e:
-            return render(request, "requests_to_esi/dbeve_social/parse_one_related.html", {"exception": e})
-        return redirect(reverse("dbeve_social:all_relates"))
-    return render(request, "requests_to_esi/dbeve_social/parse_one_related.html")
+            return render(request, "requests_to_esi/dbeve_social/parse_one_battlereport.html", {"exception": e})
+        return redirect(reverse("dbeve_social:all_battlereports"))
+    return render(request, "requests_to_esi/dbeve_social/parse_one_battlereport.html")
 
 
 ###############################################################################

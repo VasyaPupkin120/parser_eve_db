@@ -1,0 +1,15 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}All battlereports{% endblock title %}
+
+{% block content %}
+    {% for battlereport in battlereports %}
+        <div>
+            <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ battlereport.battlereport_id }}/">br.evetools.org</a>
+            <a class="p-2 text-dark" href="{% url 'dbeve_social:one_battlereport' battlereport.battlereport_id %}">{{ battlereport.battlereport_id }}</a>
+            count killmails: {{ battlereport.kmsCount }}
+            count pilots: {{ battlereport.totalPilots }}
+        </div>
+    {% endfor %}
+{% endblock content %}

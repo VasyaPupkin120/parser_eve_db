@@ -6,7 +6,7 @@ from .errors import raise_entity_not_processed, raise_action_not_allowed
 from .base_requests import GET_request_to_esi
 from .conf import entity_list_type
 
-from dbeve_social.models import Alliances, Characters, Corporations, Killmails, Relates
+from dbeve_social.models import Alliances, Characters, Corporations, Killmails, Battlereports
 from dbeve_universe.models import Constellations, Regions, Stars, Systems
 from dbeve_items.models import Categories, Groups, Types
 
@@ -244,12 +244,15 @@ def enter_entitys_to_db(
             print(f"Successful save to DB {entity}: {key}\n")
 
     # запись релейта
-    elif entity == "related":
+    elif entity == "battlereport":
         for key in data:
-            Relates.objects.update_or_create(
-                    related_id=key,
+            Battlereports.objects.update_or_create(
+                    battlereport_id=key,
                     defaults={
-                        "related_id": key,
+                        "battlereport_id": key,
+                        "kmsCount": data[key].get("kmsCount"),
+                        "totalShips": data[key].get("totalShips"),
+                        "totalPilots": data[key].get("totalPilots"),
                         "url": data[key].get("url"),
                         "response_body": data[key], 
                         }
@@ -262,9 +265,9 @@ def enter_entitys_to_db(
     elif entity == "killmail_evetools":
         for key in data:
             response_body = {}
-            # дополняем ответ значением related_id, который обязательно должен быть для сохранения запросов к zkb
+            # дополняем ответ значением battlereport_id, который обязательно должен быть для сохранения запросов к zkb
             # данные с этого запроса будут храниться под ключом evetools
-            response_body["related_id"] = kwargs["related_id"]
+            response_body["battlereport_id"] = kwargs["battlereport_id"]
             response_body["evetools_data"] = data[key]
 
             Killmails.objects.update_or_create(

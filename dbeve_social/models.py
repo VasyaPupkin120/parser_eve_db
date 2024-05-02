@@ -134,16 +134,20 @@ class Killmails(BaseEntity):
         ordering = ["victim_alliance", "victim_corporation", "-sumv"]
 
 
-class Relates(BaseEntity):
+class Battlereports(BaseEntity):
     """
-    Класс релейта. Содержит информацию по участникам и киллымылам.
+    Класс бр-а. Содержит информацию по участникам и киллымылам.
     Основан на запросе к api br.evetools.org.
-    Все поля релейта не очень то нужны, пусть будут храниться в response_body.
+    Все поля бр-а не очень то нужны, пусть будут храниться в response_body.
     
-    Чтобы не делать два варианта релейтов, всегда буду исползовать формат
+    Чтобы не делать два варианта бр-ов, всегда буду исползовать формат
     https://br.evetools.org/br/662a4db83c2f030012351f0c - как вид бр на сайте
     https://br.evetools.org/api/v1/composition/get/662a4db83c2f030012351f0c - как ссылка для запроса на api
     """
-    related_id = models.CharField(primary_key=True)
+    battlereport_id = models.CharField(primary_key=True)
+    kmsCount = models.BigIntegerField(null=True)
+    totalShips = models.BigIntegerField(null=True)
+    totalPilots = models.BigIntegerField(null=True)
     url = models.URLField(null=True)
-    killmails = models.ManyToManyField(Killmails, blank=True, related_name="relates")
+
+    killmails = models.ManyToManyField(Killmails, blank=True, related_name="battlereports")

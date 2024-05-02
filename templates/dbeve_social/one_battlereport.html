@@ -1,12 +1,12 @@
 {% extends "_base.html" %}
 {% load static %}
 
-{% block title %}One relate{% endblock title %}
+{% block title %}One battlereport{% endblock title %}
 
 {% block content %}
-            <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ related.related_id }}/">br.evetools.org</a>
+            <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ battlereport.battlereport_id }}/">br.evetools.org</a>
     <div>
-        {% for killmail in related.killmails.all %}
+        {% for killmail in battlereport.killmails.all %}
             <img src="https://images.evetech.net/alliances/{{ killmail.victim_alliance.alliance_id }}/logo?size=64">
             <img src="https://images.evetech.net/corporations/{{ killmail.victim_corporation.corporation_id }}/logo?size=64">
             <img src="https://images.evetech.net/characters/{{ killmail.victim_character.character_id }}/portrait?size=64">
