@@ -14,8 +14,6 @@ services:
     environment:
       - "DJANGO_SECRET_KEY=django-insecure-t#lsan$$1-a@ci)o2bimd1yez5_9#nau+@nh$$hw%ugaw+oc5^g_"
       - "DJANGO_DEBUG=True"
-      - "DJANGO_EMAIL_HOST_PASSWORD=fadu lcex ynym qksg"
-      - "DJANGO_EMAIL_HOST_USER=eliskrommer390@gmail.com"
       - "DJANGO_SECURE_SSL_REDIRECT=False"
       - "DJANGO_SECURE_HSTS_SECONDS=0"
       - "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=False"
