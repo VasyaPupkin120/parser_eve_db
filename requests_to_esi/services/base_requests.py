@@ -39,7 +39,6 @@ def GET_request_to_esi(url):
     #FIXME внести сюда обращение к модели-логу для записи всей инфы об неудачном коде. Логирование удачного запроса будет в рабочих функциях - та где запрос вернул результат
     resp = requests.get(url)
     if resp.status_code == 200:
-        print(resp.json())
         return resp
     else:
         raise_StatusCodeNot200Exception(url, resp)
@@ -114,7 +113,7 @@ async def async_GET_requrest_to_esi(session: aiohttp.ClientSession, url: str, id
 def killmail_esi_urls(id_keys):
     """
     Формирует список url для запроса к esi - запрашивает в БД
-    хэш киллмыл и формирует url. 
+    хэш киллмыл и формирует url.  Предполагается что хэш каким то образом уже получен.
     Отдельная функция - т.к. url у киллмыла формируется из двух 
     изменяющихся частей а get_url работает с url-ами у которых 
     только один изменяющийся параметр.
@@ -157,9 +156,8 @@ async def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/universe/groups/!/?datasource=tranquility&language=en"
     elif entity == "type":
         base_url = "https://esi.evetech.net/latest/universe/types/!/?datasource=tranquility&language=en"
-    elif entity == "killmail_evetools":
         base_url = "https://kb.evetools.org/api/v1/killmails/!/"
-    elif entity == "killmail_esi":
+    elif entity == "killmail_from_esi":
         urls = await killmail_esi_urls(id_keys)
         return urls
     else:

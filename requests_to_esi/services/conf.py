@@ -35,6 +35,6 @@ entity_list_type = Literal[
         "group",
         "type",
         "battlereport",
-        "killmail_evetools",
-        "killmail_esi",
+        "killmail_from_esi",
+        "killmail_from_br",
         ] 

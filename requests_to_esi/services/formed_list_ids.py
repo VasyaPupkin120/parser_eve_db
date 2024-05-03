@@ -196,8 +196,6 @@ async def get_external_ids(entity:entity_list_type):
         external_ids = await get_some_pages_external_ids(entity)
     elif entity == "type":
         external_ids = await get_some_pages_external_ids(entity)
-    elif entity == "killmail_evetools":
-        print("\nThere is no way for killmail to check anything other than a list of entities.\n")
     elif entity == "killmail_esi":
         print("\nThere is no way for killmail to check anything other than a list of entities.\n")
     else:
@@ -311,23 +309,19 @@ async def get_internal_ids(entity:entity_list_type, list_of_entities=None):
         else:
             db_records = Types.objects.values(f"{entity}_id")
 
-    elif entity == "killmail_evetools":
-        if list_of_entities:
-            db_records = Killmails.objects.filter(killmail_id__in=list_of_entities).values("killmail_id")
-        else:
-            db_records = Killmails.objects.values("killmail_id")
-
-    elif entity == "killmail_esi":
+    elif entity == "killmail_from_esi":
+        ...
         # в этом случае внутренними будут те, у которых И заполнено поле killmail_time - 
         # оно заполняется при запросе к esi И они в списке для проверки 
         # поле должно быть именно заполненым - ведь мы хотим внутренними id показать те, которые не нужно загружать
-        if list_of_entities:
-            id_in_list_ids = Q(killmail_id__in=list_of_entities)
-            time_not_set = Q(killmail_time__isnull=False)
-            db_records = Killmails.objects.filter(id_in_list_ids & time_not_set).values("killmail_id")
-        else:
-            time_not_set = Q(killmail_time__isnull=False)
-            db_records = Killmails.objects.filter(time_not_set).values("killmail_id")
+        #FIXME полностью переписать
+        # if list_of_entities:
+        #     id_in_list_ids = Q(killmail_id__in=list_of_entities)
+        #     time_not_set = Q(killmail_time__isnull=False)
+        #     db_records = Killmails.objects.filter(id_in_list_ids & time_not_set).values("killmail_id")
+        # else:
+        #     time_not_set = Q(killmail_time__isnull=False)
+        #     db_records = Killmails.objects.filter(time_not_set).values("killmail_id")
 
     else:
         errors.raise_entity_not_processed(entity)

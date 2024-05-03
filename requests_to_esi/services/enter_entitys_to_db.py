@@ -259,31 +259,10 @@ def enter_entitys_to_db(
                     )
             print(f"Successful save to DB {entity}: {key}\n")
 
-    # запись данных по киллмылу, полученных с evetools
-    # структура ответа отличается от структуры ответа esi но не сильно
-    # обязательно через **kwargs должен передаваться id релейта - для дополнения в response_body
-    elif entity == "killmail_evetools":
-        for key in data:
-            response_body = {}
-            # дополняем ответ значением battlereport_id, который обязательно должен быть для сохранения запросов к zkb
-            # данные с этого запроса будут храниться под ключом evetools
-            response_body["battlereport_id"] = kwargs["battlereport_id"]
-            response_body["evetools_data"] = data[key]
-
-            Killmails.objects.update_or_create(
-                    killmail_id=key,
-                    defaults={
-                        "killmail_id": key,
-                        "killmail_hash": data[key].get("hash"),
-                        "sumv": data[key].get("sumV"),
-                        "response_body": response_body, 
-                        }
-                    )
-            print(f"Successful save to DB {entity}: {key}\n")
-
     # запись данных по киллмылу, полученных с esi
-    #FIXME в поле response_body слишком много дублирующейся информации ,вероятно нужно объединить ключи esi_data и evetools_data.
-    elif entity == "killmail_esi":
+    #FIXME в поле response_body слишком много дублирующейся информации. Если честно, то выглядит что нет вообще нужды в инфе от esi
+    # - достаточно инфы откуда нибудь из релейта.
+    elif entity == "killmail_from_esi":
         for key in data:
             # запрашиваем старое значение поля reponse_body из БД и 
             # дополняем response_body данными этого запроса - дополняем по новому ключу esi_data
