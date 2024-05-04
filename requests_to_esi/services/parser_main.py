@@ -22,16 +22,10 @@ def create_chunks(ids:list, entity:entity_list_type):
     Размер чанка определяется NUMBER_OF_REQUEST.
     В последнем чанке остатки.
     """
-    if entity == "killmail_evetools":
-        value_chunk = 10
-    else:
-        value_chunk = NUMBER_OF_REQUEST
-        
-
     ids_chunks = []
     temp = []
     for count, id_key in enumerate(ids):
-        if count % value_chunk == 0 and count != 0:
+        if count % NUMBER_OF_REQUEST == 0 and count != 0:
             ids_chunks.append(temp) 
             temp = []
         temp.append(id_key) 

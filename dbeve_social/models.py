@@ -61,7 +61,7 @@ class Characters(BaseEntity):
     race = models.ForeignKey(Races, on_delete=models.SET_NULL, null=True)
 
 
-class VictimItems(models.Model):
+class VictimItems(BaseEntity):
     """
     Вспомогательная модель для пострадавшего - итемы в 
     Для описания итемов, выпавших с пострадавшего.
@@ -73,65 +73,64 @@ class VictimItems(models.Model):
     quantity = models.BigIntegerField(null=True)
 
     item_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True)
-    victim = models.ForeignKey("Victim", on_delete=models.CASCADE, related_name="items")
+    victim = models.ForeignKey("Victims", on_delete=models.CASCADE, related_name="items")
 
-class Victim(models.Model):
+class Victims(BaseEntity):
     """
     Вспомогательная модель для киллмыла - пострадавший. 
     Нет нужды в поле response_body и dt_change.
     """
-    damage_taken = models.BigIntegerField(null=True)
+    victim_id = models.CharField(primary_key=True) # состоит из сочетания id киллмыла и id чара
+
+    dmg = models.BigIntegerField(null=True)
 
     alliance = models.OneToOneField("Alliances", on_delete=models.SET_NULL, null=True)
-    character = models.OneToOneField("Characters", on_delete=models.CASCADE, null=True)
     corporation = models.OneToOneField("Corporations", on_delete=models.SET_NULL, null=True)
-    killmail = models.OneToOneField("Killmails", on_delete=models.CASCADE, related_name="victim")
+    character = models.OneToOneField("Characters", on_delete=models.CASCADE, null=True)
+    ship = models.OneToOneField(Types, on_delete=models.SET_NULL, null=True)
 
-class Attackers(models.Model):
+    killmail = models.OneToOneField("Killmails", on_delete=models.CASCADE, null=True, related_name="victim")
+
+
+class Attackers(BaseEntity):
     """
     Вспомогательная модель для киллмыла - запись об одном атакующем.
     """
+    attacker_id = models.CharField(primary_key=True, max_length=150) # состоит из сочетания id киллмыла, id чара, id фракции, id корпорации, id шипа
+
     damage_done = models.BigIntegerField(null=True)
     final_blow = models.BooleanField(null=True)
     security_status = models.FloatField(null=True)
 
     alliance = models.OneToOneField("Alliances", on_delete=models.SET_NULL, null=True)
-    character = models.OneToOneField("Characters", on_delete=models.CASCADE, null=True)
     corporation = models.OneToOneField("Corporations", on_delete=models.SET_NULL, null=True)
-    killmail = models.ForeignKey("Killmails", on_delete=models.CASCADE, related_name="attackers")
-    ship_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_ship_type")
-    weapon_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_weapon_type")
+    character = models.OneToOneField("Characters", on_delete=models.CASCADE, null=True)
+    ship = models.OneToOneField(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_ship_type")
+    weapon = models.OneToOneField(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_weapon_type")
+
+    killmail = models.ForeignKey("Killmails", on_delete=models.CASCADE, null=True, related_name="attackers")
+
 
 class Killmails(BaseEntity):
     """
     Модель одиночного киллмыла.
 
-    почему то количество потерянных исок в evetools в релейте берется
-    с zkb, а в отдельном киллмыле - хз откуда. Типа на сайте evetools в бр-е и 
-    в отдельном киллмыле - разное количество потерянных иск. В бр-е совпадает с киллмылом zkb,
-    а в отдельном релейте вообще хз откуда взято. В итоге, буду в киллмыло записывать данные 
-    с отдельного киллмыла, а при выводе странички компенсов - с бр-а, все равно все данные в основном
-    оттуда будут браться.
+    количество потерь буду брать с киллмыл бр-а.
+
     """
-    # поля из esi-запроса
+    # поля из br-запроса
     killmail_id = models.BigIntegerField(primary_key=True)
     killmail_time = models.DateTimeField(null=True)
+    sumv = models.DecimalField(max_digits=32, decimal_places=2, null=True)
+    solar_system = models.ForeignKey(Systems, on_delete=models.SET_NULL, null=True, related_name="killmails")
+
+    # поля из esi-запроса. не очень то важны, но пусть пока остаются.
     position_x = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     position_y = models.DecimalField(max_digits=32, decimal_places=0, null=True)
     position_z = models.DecimalField(max_digits=32, decimal_places=0, null=True)
 
-    # поля из evetools-запроса
+    # пока не знаю откуда именно брать хэш, либо постепенно из api zkb, либо из истории киллов через сутки
     killmail_hash = models.CharField(null=True)
-    sumv = models.DecimalField(max_digits=32, decimal_places=2, null=True)
-
-    solar_system = models.ForeignKey(Systems, on_delete=models.SET_NULL, null=True)
-    victim_ship_type = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True)
-    victim_alliance = models.ForeignKey(Alliances, on_delete=models.SET_NULL, null=True)
-    victim_corporation = models.ForeignKey(Corporations, on_delete=models.SET_NULL, null=True)
-    victim_character = models.ForeignKey(Characters, on_delete=models.SET_NULL, null=True)
-
-    class Meta:
-        ordering = ["victim_alliance", "victim_corporation", "-sumv"]
 
 
 class Battlereports(BaseEntity):

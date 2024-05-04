@@ -20,7 +20,7 @@ TIME_WAIT_NEXT_REQUEST = 70
 NUMBER_OF_REQUEST = 10
 
 # типы начинающиеся с load - типы не для полноценной записи в БД а для обновления какого либо поля
-action_list_type = Literal["only_missing", "update_all"]
+action_list_type = Literal["only_missing", "update_all", "linking"]
 entity_list_type = Literal[
         "region",
         "constellation",
@@ -37,4 +37,6 @@ entity_list_type = Literal[
         "battlereport",
         "killmail_from_esi",
         "killmail_from_br",
+        "victim", 
+        "attacker",
         ] 

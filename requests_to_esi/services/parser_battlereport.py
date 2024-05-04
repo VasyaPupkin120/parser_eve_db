@@ -1,27 +1,126 @@
 """
 Отдельный парсер одного релейта и парсер всех связанных с релейтом сущностей.
 """
+import pprint
 from asgiref.sync import sync_to_async
 
 from dbeve_social.models import *
 
 from .parser_main import GET_request_to_esi, create_all_entities
 from .enter_entitys_to_db import enter_entitys_to_db
+from .conf import action_list_type
 
-def get_allinaces_from_battlereport(battlereport):
+@sync_to_async
+def get_ids_associated_entities_from_battlereport(battlereport_id):
     """
-    Получает список словарей-киллмыл, выделяет список всех альянсов, 
-    возвращает его.
+    Получает id бра, выделяет списки всех альянсов, корп, чаров - и жертвы
+    и атакующих, после чего возвращает эти списки вместе с ключом киллмыла - 
+    для последующей удобной линковки.
     """
+    battlereport = Battlereports.objects.get(battlereport_id=battlereport_id)
+    relateds = [related for related in battlereport.response_body["relateds"]]
+    killmails = []
+    for related in relateds:
+        killmails.extend(related["kms"])
+
+    alliances_ids = []
+    corporations_ids = []
+    characters_ids = []
+    for killmail in killmails:
+        alliances_ids.append(killmail["victim"].get("ally"))
+        corporations_ids.append(killmail["victim"].get("corp"))
+        characters_ids.append(killmail["victim"].get("char"))
+        for attacker in killmail["attackers"]:
+            alliances_ids.append(attacker.get("ally"))
+            corporations_ids.append(attacker.get("corp"))
+            characters_ids.append(attacker.get("char"))
+
+    # удаление дублей и значений-заглушек (заглушки - вместо id у нпс-атакующих, структур и подобного)
+    errors_ids = set([0, None])
+
+    alliances_ids = set(alliances_ids)
+    corporations_ids = set(corporations_ids)
+    characters_ids = set(characters_ids)
+
+    alliances_ids.difference_update(errors_ids)
+    corporations_ids.difference_update(errors_ids)
+    characters_ids.difference_update(errors_ids)
+
+    alliances_ids = list(alliances_ids)
+    corporations_ids = list(corporations_ids)
+    characters_ids = list(characters_ids)
+
+    return alliances_ids, corporations_ids, characters_ids
 
 
-async def create_linking_entities(battlereport_id):
+
+@sync_to_async
+def linking_battlereport_and_killmails(battlereport_id, killmails_ids):
     """
+    связывает киллмыла и бр
+    """
+    battlereport = Battlereports.objects.get(battlereport_id=battlereport_id)
+    killmails = Killmails.objects.filter(killmail_id__in=killmails_ids)
+    for killmail in killmails:
+        killmail.battlereports.add(battlereport)
+        killmail.save()
+
+
+async def linking_killmails_and_associated_entities(killmails_ids):
+    """
+    Создаем экземпляры Victim и  Attackers на основе алли, корп, чаров, шипа
+    и линковка киллмыл с ними
+    """
+    @sync_to_async
+    def get_killmails(killmails_ids):
+        """
+        Для изоляции запроса в бд внтури функции sync_to_async
+        """
+        killmails = Killmails.objects.filter(killmail_id__in=killmails_ids)
+        return list(killmails)
+
+    killmails = await get_killmails(killmails_ids)
+
+    victim_data = {}
+    attackers_data = {}
+    for killmail in killmails:
+        br_data = killmail.response_body["br_data"]
+
+        victim = br_data["victim"]
+        # вручную формируем id жертвы из id киллмыла и id чара
+        victim_id = str(killmail.killmail_id) + "_" + str(victim.get("char"))
+        victim["kml_id"] = killmail.killmail_id
+        victim["victim_id"] = victim_id
+        victim_data[victim_id] = victim
+
+        for attacker in br_data["attackers"]:
+            # вручную формируем id атакующего из id киллмыла, id чара, id фракции, id корпорации
+            attacker_id = str(killmail.killmail_id) + "_" + str(attacker.get("char")) + "_" + str(attacker.get("fctn")) + "_" + str(attacker.get("corp")) + "_" + str(attacker.get("ship"))
+            attacker["attacker_id"] = attacker_id
+            attacker["kml_id"] = killmail.killmail_id
+            attackers_data[attacker_id] = attacker
+
+    attackers = await enter_entitys_to_db("attacker", attackers_data)
+    victims = await enter_entitys_to_db("victim", victim_data)
+    # FIXME здеьс нужно напсать линкер атакующих и жертвы с киллмылом. Иначе они просто повиснут в воздухе.
+    print("attackers: ", attackers)
+    print("victims:", victims)
+
+
+
+
+
+async def create_associated_entities(battlereport_id):
+    """
+    Затрагивает киллмыла, алли, корпы, чары упомянутые в бр-е.
+
+    Создаем киллмыла, слинковываем их с релейтом.
+
     После создания киллмыл, создаем все упомянутые в релейте корпы, альянсы, чары 
     все они создаются с флагом create_missing - чтобы не гонять лишние запросы
 
-    Также после создания этих сущностей, они подлинковываются к киллмылу. Внутренние 
-    связи сущностей (корпа к альянсу или чар к корпе - они выполняются внутри их парсеров)
+    Также после создания этих сущностей, создаем экземпляры Victim и Attackers
+    и связываем их с киллмылом.
     """
 
     @sync_to_async
@@ -34,66 +133,56 @@ async def create_linking_entities(battlereport_id):
 
     battlereport = await get_battlereport(battlereport_id)
 
-    relateds = []
-    [relateds.extend(related) for related in battlereport.response_body["relateds"]]
-    killmails = []
-    print(relateds)
+    # создаем киллмыла на основе бр-а
+    relateds = battlereport.response_body["relateds"]
+    temp_killmails = []
+    for related in relateds:
+        temp_killmails.extend(related["kms"])
+    killmails = {killmail["id"]:killmail for killmail in temp_killmails}
+    await enter_entitys_to_db("killmail_from_br", killmails)
 
-    # [killmails.extend(related["kms"]) for related in relateds ]
-    # print("linking entities: ", len(killmails), "br_kmsCount: ", battlereport.kmsCount)
+    # это самый простой способ получить id всех киллмыл релейта, в данном случае конечно
+    killmails_ids = killmails.keys()
+
+    # запускаем линковку киллмыл с бр-ом
+    print("Start linking killmail and battlereport.")
+    await linking_battlereport_and_killmails(battlereport_id, killmails_ids)
+    print("Successful linking killmail and battlereport.")
 
 
-    # alliances_ids = get_allinaces_from_battlereport(battlereport)
-    # corporations_ids = get_corporations_from_battlereport(battlereport)
-    # characters_ids = get_characters_from_battlereport(battlereport)
-    # 
-    #
-    # for killmail in killmails:
-    #     attackers = killmail.response_body["esi_data"]["attackers"]
-    #     victim = killmail.response_body["esi_data"]["victim"]
-    #     # не забыать, что в киллмыле могут быть неписи - похоже что исключительно на стороне атакующих
-    #     # не забывать что кто нибудь может не быть в альянсе
-    #     # не забывать, что среди жертв и атакующих могут быть структуры - тогда у них не будет чара
-    #
-    #     # альянсы атакующих и жертвы
-    #     attackers_alliances_ids = [attacker.get("alliance_id") for attacker in attackers]
-    #     alliances_ids.append(victim.get("alliance_id"))
-    #     alliances_ids.extend(attackers_alliances_ids)
-    #
-    #     # корпорации атакующих и жертвы
-    #     attackers_corporations_ids = [attacker.get("corporation_id") for attacker in attackers]
-    #     corporations_ids.append(victim.get("corporation_id"))
-    #     corporations_ids.extend(attackers_corporations_ids)
-    #
-    #     # чары атакующих и жертвы
-    #     attackers_characters_ids = [attacker.get("character_id") for attacker in attackers]
-    #     characters_ids.append(victim.get("character_id"))
-    #     characters_ids.extend(attackers_characters_ids)
-    #
-    # alliances_ids = list(set(alliances_ids))
-    # corporations_ids = list(set(corporations_ids))
-    # characters_ids = list(set(characters_ids))
-    # # избавляемся от None - они встречаются достаточно часто
-    # alliances_ids = [alliance_id for alliance_id in alliances_ids if alliance_id ]
-    # corporations_ids = [corporation_id for corporation_id in corporations_ids if corporation_id ]
-    # characters_ids = [character_id for character_id in characters_ids if character_id ]
-    #
-    # # создаем связанные записи
-    # await create_all_entities("only_missing", "alliance", alliances_ids)
-    # await create_all_entities("only_missing", "corporation", corporations_ids)
-    # await create_all_entities("only_missing", "character", characters_ids)
-    # 
-    # # линковка киллмыл с вновь созданными сопуствующими сущностями
-    # print(f"Start linking killmails")
-    # await linking_killmails(killmails)
-    # print(f"Successful linking killmails")
+    # получаем id алли, корп, чаров на основе уже записанного в БД бр-а. 
+    alliances_ids, corporations_ids, characters_ids = await get_ids_associated_entities_from_battlereport(battlereport_id)
+
+    # создаем связанные записи
+    await create_all_entities("only_missing", "alliance", alliances_ids)
+    await create_all_entities("only_missing", "corporation", corporations_ids)
+    await create_all_entities("only_missing", "character", characters_ids)
+
+    # линковка киллмыл с вновь созданными сопуствующими сущностями
+    print(f"Start linking killmails")
+    await linking_killmails_and_associated_entities(killmails_ids)
+    print(f"Successful linking killmails")
 
 
 async def create_battlereport(battlereport_id):
     """
-    Парсит один релейт. После сохранения релейта начинает
+    Парсит один бр. После сохранения бр-а создает 
+    ограниченную запись киллмыла (без хэша) и начинет 
     парсить все связанные с ним сущности (алли, корпы, чары).
     """
+    @sync_to_async
+    def check_exists_br(battlereport_id):
+        try:
+            Battlereports.objects.get(battlereport_id=battlereport_id)
+            return True
+        except Battlereports.DoesNotExist:
+            return False
+
+    if await check_exists_br(battlereport_id):
+        print(f"Battlereport {battlereport_id} is exist.")
+        return
+    print(f"Start load battlereport {battlereport_id}.")
+
     url = "https://br.evetools.org/api/v1/composition/get/" + battlereport_id
 
     print(f"Start load battlereport {battlereport_id}")
@@ -107,6 +196,6 @@ async def create_battlereport(battlereport_id):
 
     # загрузка с esi всех связанных с релейтом дополнитеьных данных
     print("Start of loading alliances, corporations, and characters associated with this battlereport.")
-    await create_linking_entities(battlereport_id)
+    await create_associated_entities(battlereport_id)
     print(f"Successfull load associated data.")
 

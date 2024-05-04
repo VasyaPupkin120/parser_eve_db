@@ -6,7 +6,7 @@ from .errors import raise_entity_not_processed, raise_action_not_allowed
 from .base_requests import GET_request_to_esi
 from .conf import entity_list_type
 
-from dbeve_social.models import Alliances, Characters, Corporations, Killmails, Battlereports
+from dbeve_social.models import Alliances, Characters, Corporations, Killmails, Battlereports, Victims, Attackers
 from dbeve_universe.models import Constellations, Regions, Stars, Systems
 from dbeve_items.models import Categories, Groups, Types
 
@@ -48,6 +48,10 @@ def enter_entitys_to_db(
     Функция не занимается загрузкой и сохранением изображений. Это нужно как-то
     отдельно делать.
 
+    Возвращает словарь, в котором ключи совпадают с входными ключами, а значения - объекты 
+    записей БД. Для случаев, когда записи не создаются а только дополняются - то ничего не 
+    возвращается.
+
     **kwargs используется для каких то частных случаев, например передает id релейта
     для каждого киллмыла - исключительно для дополнения поля response_body.
     """
@@ -57,10 +61,13 @@ def enter_entitys_to_db(
     if entity not in entity_list_type.__args__:
         raise_entity_not_processed(entity)
 
+    # словарь для возврата только что созданных записей, может быть нужно или не нужно
+    return_data = {}
+
     # запись данных по региону
     if entity == "region":
         for key in data:
-            Regions.objects.update_or_create(
+            new_entity = Regions.objects.update_or_create(
                     region_id=key,
                     defaults={
                         "region_id": key,
@@ -70,11 +77,13 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись данных по констелляции
     elif entity == "constellation":
         for key in data:
-            Constellations.objects.update_or_create(
+            new_entity = Constellations.objects.update_or_create(
                     constellation_id=key,
                     defaults={
                         "constellation_id": key,
@@ -86,11 +95,13 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись данных по системе
     elif entity == "system":
         for key in data:
-            Systems.objects.update_or_create(
+            new_entity = Systems.objects.update_or_create(
                     system_id=key,
                     defaults={
                         "name": data[key].get("name"),
@@ -104,11 +115,13 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись данных по звезде
     elif entity == "star":
         for key in data:
-            Stars.objects.update_or_create(
+            new_entity = Stars.objects.update_or_create(
                     star_id=key,
                     defaults={
                         "age": data[key].get("age"),
@@ -122,11 +135,13 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись данных по альянсу
     elif entity == "alliance":
         for key in data:
-            Alliances.objects.update_or_create(
+            new_entity = Alliances.objects.update_or_create(
                     alliance_id=key,
                     defaults={
                         "alliance_id": key,
@@ -137,6 +152,8 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись списка id корпораций в поле response_body для альянса.
     elif entity == "load_id_associated_corporations":
@@ -149,7 +166,7 @@ def enter_entitys_to_db(
     # запись данных по корпорации
     elif entity == "corporation":
         for key in data:
-            Corporations.objects.update_or_create(
+            new_entity = Corporations.objects.update_or_create(
                     corporation_id=key,
                     defaults={
                         "corporation_id": key,
@@ -166,11 +183,13 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись отдельного персонажа, без истории корпораций пока
     elif entity == "character":
         for key in data:
-            Characters.objects.update_or_create(
+            new_entity = Characters.objects.update_or_create(
                     character_id=key,
                     defaults={
                         "character_id": key,
@@ -185,6 +204,8 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись истории корпораций для персонажа. Только дополнение поля response_body
     elif entity == "load_corporation_history":
@@ -197,7 +218,7 @@ def enter_entitys_to_db(
     # запись категории итемов
     elif entity == "category":
         for key in data:
-            Categories.objects.update_or_create(
+            new_entity = Categories.objects.update_or_create(
                     category_id=key,
                     defaults={
                         "category_id": key,
@@ -207,11 +228,13 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись группы итемов
     elif entity == "group":
         for key in data:
-            Groups.objects.update_or_create(
+            new_entity = Groups.objects.update_or_create(
                     group_id=key,
                     defaults={
                         "group_id": key,
@@ -221,11 +244,13 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись типа итемов
     elif entity == "type":
         for key in data:
-            Types.objects.update_or_create(
+            new_entity = Types.objects.update_or_create(
                     type_id=key,
                     defaults={
                         "capacity": data[key].get("capacity"),
@@ -242,11 +267,13 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись релейта
     elif entity == "battlereport":
         for key in data:
-            Battlereports.objects.update_or_create(
+            new_entity = Battlereports.objects.update_or_create(
                     battlereport_id=key,
                     defaults={
                         "battlereport_id": key,
@@ -258,6 +285,28 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
+
+    # запись некоторых данных по киллмылу, полученных с баттлрепорта
+    # это первичное создание киллмыла
+    elif entity == "killmail_from_br":
+        for key in data:
+            response_body = {}
+            response_body["br_data"] = data[key]
+            new_entity = Killmails.objects.update_or_create(
+                    killmail_id=key,
+                    defaults={
+                        "killmail_id": key,
+                        # c помощью целочисленного деления избавляемся от лишних нулей в коце, хз зачем они там
+                        "killmail_time": datetime.datetime.fromtimestamp(data[key]["time"] // 1000), 
+                        "sumv": data[key]["totalValue"],
+                        "response_body": response_body, 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     # запись данных по киллмылу, полученных с esi
     #FIXME в поле response_body слишком много дублирующейся информации. Если честно, то выглядит что нет вообще нужды в инфе от esi
@@ -269,7 +318,7 @@ def enter_entitys_to_db(
             response_body = Killmails.objects.get(killmail_id=key).response_body
             response_body["esi_data"] = data[key]
 
-            Killmails.objects.update_or_create(
+            new_entity = Killmails.objects.update_or_create(
                     killmail_id=key,
                     defaults={
                         "killmail_id": key,
@@ -281,6 +330,37 @@ def enter_entitys_to_db(
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
+
+    # пострадавший в киллмыле. id формируется по правилу, указанному рядом с моделью  - из нескольких частей
+    elif entity == "victim":
+        for key in data:
+            new_entity = Victims.objects.update_or_create(
+                    victim_id=key,
+                    defaults={
+                        "dmg": data[key].get("dmg"),
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
+
+    # атакущий в киллмыле
+    elif entity == "attacker":
+        for key in data:
+            print("attacker: ", data)
+            new_entity = Attackers.objects.update_or_create(
+                    attacker_id=key,
+                    defaults={
+                        "damage_done": data[key].get("dmg"),
+                        "response_body": data[key], 
+                        }
+                    )
+            print(f"Successful save to DB {entity}: {key}\n")
+            return_data[key] = new_entity[0]
+        return return_data
 
     else:
         raise_entity_not_processed(entity)
