@@ -1,0 +1,35 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}Compense battlereport{% endblock title %}
+
+{% block content %}
+            <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ battlereport.battlereport_id }}/">br.evetools.org</a>
+    <div>
+        <form method="post" action={% url 'dbeve_social:all_battlereports' %}>
+            {% for killmail in killmails %}
+                <div>
+                    {% if killmail.checked_for_compense %}
+                        <input type="checkbox" checked>
+                    {% else %}
+                        <input type="checkbox">
+                    {% endif %}
+                    <img src="https://images.evetech.net/alliances/{{ killmail.victim.alliance_id }}/logo?size=32">
+                    <img src="https://images.evetech.net/corporations/{{ killmail.victim.corporation_id }}/logo?size=32">
+                    <img src="https://images.evetech.net/characters/{{ killmail.victim.character_id }}/portrait?size=32">
+                    <img src="https://images.evetech.net/types/{{ killmail.victim.ship_id }}/render?size=32">
+                    <a class="p-2 text-dark" href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/">{{ killmail.killmail_id }}</a>
+                    {{ killmail.round_sumv }} kk ISK
+                    <input type="number">
+                </div>
+            {% endfor %}
+        </form>
+        {% for killmail in killmails %}
+            {{ killmail.victim_ship_type.name }}
+            {{ killmail.victim.character.name }}
+            {{ killmail.time }}
+            {{ killmail.sumv }} ISK
+            <br/>
+        {% endfor %}
+    </div>
+{% endblock content %}
