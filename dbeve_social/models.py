@@ -84,10 +84,10 @@ class Victims(BaseEntity):
 
     dmg = models.BigIntegerField(null=True)
 
-    alliance = models.OneToOneField("Alliances", on_delete=models.SET_NULL, null=True)
-    corporation = models.OneToOneField("Corporations", on_delete=models.SET_NULL, null=True)
-    character = models.OneToOneField("Characters", on_delete=models.CASCADE, null=True)
-    ship = models.OneToOneField(Types, on_delete=models.SET_NULL, null=True)
+    alliance = models.ForeignKey("Alliances", on_delete=models.SET_NULL, null=True)
+    corporation = models.ForeignKey("Corporations", on_delete=models.SET_NULL, null=True)
+    character = models.ForeignKey("Characters", on_delete=models.CASCADE, null=True)
+    ship = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True)
 
     killmail = models.OneToOneField("Killmails", on_delete=models.CASCADE, null=True, related_name="victim")
 
@@ -102,11 +102,11 @@ class Attackers(BaseEntity):
     final_blow = models.BooleanField(null=True)
     security_status = models.FloatField(null=True)
 
-    alliance = models.OneToOneField("Alliances", on_delete=models.SET_NULL, null=True)
-    corporation = models.OneToOneField("Corporations", on_delete=models.SET_NULL, null=True)
-    character = models.OneToOneField("Characters", on_delete=models.CASCADE, null=True)
-    ship = models.OneToOneField(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_ship_type")
-    weapon = models.OneToOneField(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_weapon_type")
+    alliance = models.ForeignKey("Alliances", on_delete=models.SET_NULL, null=True)
+    corporation = models.ForeignKey("Corporations", on_delete=models.SET_NULL, null=True)
+    character = models.ForeignKey("Characters", on_delete=models.CASCADE, null=True)
+    ship = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_ship_type")
+    weapon = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_weapon_type")
 
     killmail = models.ForeignKey("Killmails", on_delete=models.CASCADE, null=True, related_name="attackers")
 

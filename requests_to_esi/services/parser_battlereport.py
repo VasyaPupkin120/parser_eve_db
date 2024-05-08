@@ -53,6 +53,59 @@ def get_ids_associated_entities_from_battlereport(battlereport_id):
     return alliances_ids, corporations_ids, characters_ids
 
 
+@sync_to_async
+def linking_killmail_and_attacker(attacker:Attackers):
+    """
+    Получает экземпляр Attackers, выполняет множество линковок
+    """
+    alliance_id = attacker.response_body["ally"]
+    corporation_id = attacker.response_body["corp"]
+    character_id = attacker.response_body["char"]
+    ship_id = attacker.response_body["ship"]
+    weapon_id = attacker.response_body["weap"]
+    killmail_id = attacker.response_body["kml_id"]
+
+    alliance = Alliances.objects.get(alliance_id=alliance_id)
+    corporation = Corporations.objects.get(corporation_id=corporation_id)
+    character = Characters.objects.get(character_id=character_id)
+    ship = Types.objects.get(type_id=ship_id)
+    weapon = Types.objects.get(type_id=weapon_id)
+    killmail = Killmails.objects.get(killmail_id=killmail_id)
+
+    attacker.alliance = alliance
+    attacker.corporation = corporation
+    attacker.character = character
+    attacker.ship = ship
+    attacker.weapon = weapon
+    attacker.killmail = killmail
+
+    attacker.save()
+
+
+@sync_to_async
+def linking_killmail_and_victim(victim:Victims):
+    """
+    Получает экземпляр Attackers, выполняет множество линковок
+    """
+    alliance_id = victim.response_body["ally"]
+    corporation_id = victim.response_body["corp"]
+    character_id = victim.response_body["char"]
+    ship_id = victim.response_body["ship"]
+    killmail_id = victim.response_body["kml_id"]
+
+    alliance = Alliances.objects.get(alliance_id=alliance_id)
+    corporation = Corporations.objects.get(corporation_id=corporation_id)
+    character = Characters.objects.get(character_id=character_id)
+    ship = Types.objects.get(type_id=ship_id)
+    killmail = Killmails.objects.get(killmail_id=killmail_id)
+
+    victim.alliance = alliance
+    victim.corporation = corporation
+    victim.character = character
+    victim.ship = ship
+    victim.killmail = killmail
+
+    victim.save()
 
 @sync_to_async
 def linking_battlereport_and_killmails(battlereport_id, killmails_ids):
@@ -89,6 +142,7 @@ async def linking_killmails_and_associated_entities(killmails_ids):
         victim = br_data["victim"]
         # вручную формируем id жертвы из id киллмыла и id чара
         victim_id = str(killmail.killmail_id) + "_" + str(victim.get("char"))
+        # вручную добавляем id киллмыла в будущий response_body
         victim["kml_id"] = killmail.killmail_id
         victim["victim_id"] = victim_id
         victim_data[victim_id] = victim
@@ -97,14 +151,18 @@ async def linking_killmails_and_associated_entities(killmails_ids):
             # вручную формируем id атакующего из id киллмыла, id чара, id фракции, id корпорации
             attacker_id = str(killmail.killmail_id) + "_" + str(attacker.get("char")) + "_" + str(attacker.get("fctn")) + "_" + str(attacker.get("corp")) + "_" + str(attacker.get("ship"))
             attacker["attacker_id"] = attacker_id
+            # вручную добавляем id киллмыла в будущий response_body
             attacker["kml_id"] = killmail.killmail_id
             attackers_data[attacker_id] = attacker
 
     attackers = await enter_entitys_to_db("attacker", attackers_data)
     victims = await enter_entitys_to_db("victim", victim_data)
-    # FIXME здеьс нужно напсать линкер атакующих и жертвы с киллмылом. Иначе они просто повиснут в воздухе.
-    print("attackers: ", attackers)
-    print("victims:", victims)
+    for attacker_key in attackers.keys():
+        attacker = attackers[attacker_key]
+        await linking_killmail_and_attacker(attacker)
+    for victim_key in victims.keys():
+        victim = victims[victim_key]
+        await linking_killmail_and_victim(victim)
 
 
 
@@ -180,8 +238,11 @@ async def create_battlereport(battlereport_id):
 
     if await check_exists_br(battlereport_id):
         print(f"Battlereport {battlereport_id} is exist.")
+        # загрузка с esi всех связанных с релейтом дополнитеьных данных
+        print("Start of loading alliances, corporations, and characters associated with this battlereport.")
+        await create_associated_entities(battlereport_id)
+        print(f"Successfull load associated data.")
         return
-    print(f"Start load battlereport {battlereport_id}.")
 
     url = "https://br.evetools.org/api/v1/composition/get/" + battlereport_id
 

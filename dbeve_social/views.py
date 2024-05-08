@@ -31,9 +31,5 @@ def all_battlereports(request):
 
 def one_battlereport(request, battlereport_id):
     battlereport = Battlereports.objects.get(battlereport_id=battlereport_id)
-    relateds = battlereport.response_body["relateds"]
-    killmails = []
-    for related in relateds:
-        killmails.extend(related["kms"])
-    print(len(killmails))
-    return render(request, "dbeve_social/one_battlereport.html", context={"battlereport": battlereport})
+    killmails = battlereport.killmails.all().order_by("victim__alliance_id")
+    return render(request, "dbeve_social/one_battlereport.html", context={"killmails": killmails, "battlereport": battlereport})

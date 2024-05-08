@@ -111,3 +111,14 @@ async def create_all_entities(
     await linking(entity, list_of_entities)
 
 
+
+
+def create_null_entities():
+    """
+    При парсинге нпс-алли, корпы, чары бр-а а также структуры
+    заменяются на нулевые значения. Функция создает такие пустые значения.
+    """
+    Alliances.objects.update_or_create(alliance_id=0)
+    Corporations.objects.update_or_create(corporation_id=0)
+    Characters.objects.update_or_create(character_id=0)
+

@@ -350,7 +350,6 @@ def enter_entitys_to_db(
     # атакущий в киллмыле
     elif entity == "attacker":
         for key in data:
-            print("attacker: ", data)
             new_entity = Attackers.objects.update_or_create(
                     attacker_id=key,
                     defaults={
