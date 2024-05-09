@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'dbeve_social',
     'dbeve_items',
     'requests_to_esi',
+    'compensation',
 ]
 
 MIDDLEWARE = [

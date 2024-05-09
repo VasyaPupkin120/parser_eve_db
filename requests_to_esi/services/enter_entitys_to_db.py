@@ -280,6 +280,7 @@ def enter_entitys_to_db(
                         "kmsCount": data[key].get("kmsCount"),
                         "totalShips": data[key].get("totalShips"),
                         "totalPilots": data[key].get("totalPilots"),
+                        "time_end": datetime.datetime.fromtimestamp(data[key]["ended"]), 
                         "url": data[key].get("url"),
                         "response_body": data[key], 
                         }

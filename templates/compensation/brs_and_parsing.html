@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}All battlereports for compensations{% endblock title %}
+
+{% block content %}
+    {% for battlereport in battlereports %}
+        <div>
+            <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ battlereport.battlereport_id }}/">br.evetools.org</a>
+            <a class="p-2 text-dark" href="{% url 'compensation:br_for_compense' battlereport.battlereport_id %}">{{ battlereport.battlereport_id }}</a>
+            count killmails: {{ battlereport.kmsCount }}
+            count pilots: {{ battlereport.totalPilots }}
+            time end br's: {{ battlereport.time_end }}
+        </div>
+    {% endfor %}
+{% endblock content %}

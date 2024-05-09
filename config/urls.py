@@ -30,8 +30,12 @@ urlpatterns = [
     # app requests to esi 
     path("requests_to_esi/", include("requests_to_esi.urls", namespace="requests_to_esi")),
 
-    # app pages
+    # app compensation
+    path("compensation/", include("compensation.urls", namespace="compensation")),
+
+    # app pages - общие для всех странички
     path('dboverview/', db_overview, name="db_overview"),
     path('', index, name="index"),
+
 
 ]

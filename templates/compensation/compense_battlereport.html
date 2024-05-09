@@ -1,0 +1,41 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}Compense battlereport{% endblock title %}
+
+{% block content %}
+    <div>
+        <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ battlereport.battlereport_id }}/">br.evetools.org</a>
+    </div>
+    <br>
+    <div>
+        <form method="post" action={% url 'dbeve_social:all_battlereports' %}>
+            {% csrf_token %}
+            {% for killmail in killmails %}
+                <div>
+                    {% if killmail.checked_for_compense %}
+                        <input type="checkbox" checked class="compense_{{ killmail.killmail_id }}">
+                    {% else %}
+                        <input type="checkbox" class="compense_{{ killmail.killmail_id }}">
+                    {% endif %}
+                    <img src="https://images.evetech.net/alliances/{{ killmail.victim.alliance_id }}/logo?size=32">
+                    <img src="https://images.evetech.net/corporations/{{ killmail.victim.corporation_id }}/logo?size=32">
+                    <img src="https://images.evetech.net/characters/{{ killmail.victim.character_id }}/portrait?size=32">
+                    <img src="https://images.evetech.net/types/{{ killmail.victim.ship_id }}/render?size=32">
+                    <a class="p-2 text-dark" href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/">{{ killmail.victim.ship.name }}</a>
+                    <a class="p-2 text-dark" href="https://zkillboard.com/character/{{ killmail.victim.character_id }}/">{{ killmail.victim.character.name }}</a>
+                    {{ killmail.round_sumv }} kk ISK
+                    {% if killmail.checked_for_compense %}
+                        <input type="number" value="{{ killmail.round_sumv }}" class="compense_{{ killmail.killmail_id }}">
+                    {% else %}
+                        <input type="number" class="compense_{{ killmail.killmail_id }}">
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <br>
+            <div>
+                <input type="submit" value="Create list compenstaions">
+            </div>
+        </form>
+    </div>
+{% endblock content %}

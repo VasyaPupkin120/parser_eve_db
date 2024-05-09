@@ -144,6 +144,7 @@ class Battlereports(BaseEntity):
     https://br.evetools.org/api/v1/composition/get/662a4db83c2f030012351f0c - как ссылка для запроса на api
     """
     battlereport_id = models.CharField(primary_key=True)
+    time_end = models.DateTimeField(null=True)
     kmsCount = models.BigIntegerField(null=True)
     totalShips = models.BigIntegerField(null=True)
     totalPilots = models.BigIntegerField(null=True)

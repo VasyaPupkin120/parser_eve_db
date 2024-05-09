@@ -236,13 +236,13 @@ async def create_battlereport(battlereport_id):
         except Battlereports.DoesNotExist:
             return False
 
-    if await check_exists_br(battlereport_id):
-        print(f"Battlereport {battlereport_id} is exist.")
-        # загрузка с esi всех связанных с релейтом дополнитеьных данных
-        print("Start of loading alliances, corporations, and characters associated with this battlereport.")
-        await create_associated_entities(battlereport_id)
-        print(f"Successfull load associated data.")
-        return
+    # if await check_exists_br(battlereport_id):
+    #     print(f"Battlereport {battlereport_id} is exist.")
+    #     # загрузка с esi всех связанных с релейтом дополнитеьных данных
+    #     print("Start of loading alliances, corporations, and characters associated with this battlereport.")
+    #     await create_associated_entities(battlereport_id)
+    #     print(f"Successfull load associated data.")
+    #     return
 
     url = "https://br.evetools.org/api/v1/composition/get/" + battlereport_id
 
