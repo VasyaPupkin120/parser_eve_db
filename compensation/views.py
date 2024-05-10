@@ -1,8 +1,9 @@
 from django.db.models import F, Q, BooleanField, Case, When
 from django.db.models.functions import Ceil
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from dbeve_social.models import Battlereports
+from dbeve_social.models import Battlereports, Characters, Killmails
 
 # Create your views here.
 
@@ -15,7 +16,7 @@ def brs_and_parsing(request):
     return render(request, "compensation/brs_and_parsing.html", context={"battlereports": battlereports,})
     
 
-def br_for_compense(request, battlereport_id):
+def markup_battlereport(request, battlereport_id):
     """
     Собственно страничка для формирования списка компенсаций.
     """
@@ -45,9 +46,25 @@ def br_for_compense(request, battlereport_id):
             )
     killmails = killmails.order_by("-checked_for_compense","victim__alliance_id", "-round_sumv", )
 
-    return render(request, "compensation/compense_battlereport.html",
+    return render(request, "compensation/markup_battlereport.html",
                   context={
                       "killmails": killmails,
                       "battlereport": battlereport,
                       # "checked_killmails": checked_killmails,
                       })
+
+
+
+def notes_compensations(request:HttpRequest):
+    if request.method == "POST":
+        data = dict(request.POST)
+        compensations = []
+        for key, value in data.items():
+            if len(value) == 2 and value[0] == "on":
+                killmail = Killmails.objects.get(killmail_id=key)
+                char = killmail.victim.character
+                one_compensation = f"<url=showinfo:1375//{key}>{char.name}</url> {value[1]}"
+                compensations.append(one_compensation)
+        print(compensations)
+        return render(request, "compensation/notes_compensations.html", {"compensations": compensations})
+        

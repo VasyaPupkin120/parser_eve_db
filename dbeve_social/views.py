@@ -1,6 +1,5 @@
 from django.shortcuts import render
-from django.urls.resolvers import CheckURLMixin
-from .models import Alliances, Characters, Corporations, Battlereports, Killmails
+from .models import Alliances, Characters, Corporations, Battlereports
 
 # Create your views here.
 

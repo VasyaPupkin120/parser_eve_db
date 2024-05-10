@@ -7,5 +7,6 @@ from .views import *
 app_name = "compensation"
 urlpatterns = [
     path('', brs_and_parsing, name="brs_and_parsing"),
-    path('br_for_compense/<str:battlereport_id>/', br_for_compense, name="br_for_compense"),
+    path('markup_battlereport/<str:battlereport_id>/', markup_battlereport, name="markup_battlereport"),
+    path('notes_compensations/', notes_compensations, name="notes_compensations"),
     ]
