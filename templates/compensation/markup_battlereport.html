@@ -14,9 +14,9 @@
             {% for killmail in killmails %}
                 <div>
                     {% if killmail.checked_for_compense %}
-                        <input type="checkbox" checked name="{{ killmail.killmail_id }}" >
+                        <input type="checkbox" value="on" checked name="{{ killmail.killmail_id }}" >
                     {% else %}
-                        <input type="checkbox" value = "off" name="{{ killmail.killmail_id }}>
+                        <input type="checkbox" value="on" name="{{ killmail.killmail_id }}">
                     {% endif %}
                     <img src="https://images.evetech.net/alliances/{{ killmail.victim.alliance_id }}/logo?size=32">
                     <img src="https://images.evetech.net/corporations/{{ killmail.victim.corporation_id }}/logo?size=32">

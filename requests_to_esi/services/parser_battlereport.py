@@ -196,6 +196,7 @@ async def create_associated_entities(battlereport_id):
     temp_killmails = []
     for related in relateds:
         temp_killmails.extend(related["kms"])
+    print("199 line: ", temp_killmails[0])
     killmails = {killmail["id"]:killmail for killmail in temp_killmails}
     await enter_entitys_to_db("killmail_from_br", killmails)
 
@@ -227,6 +228,10 @@ async def create_battlereport(battlereport_id):
     Парсит один бр. После сохранения бр-а создает 
     ограниченную запись киллмыла (без хэша) и начинет 
     парсить все связанные с ним сущности (алли, корпы, чары).
+
+    так как в api периодически меняются ключи словарей (в частности totalLost-totalValue,
+    attackers-atts, victim-vict) то в enter_entitys_to_db нужно привести response_body к
+    однообразому виду. 
     """
     @sync_to_async
     def check_exists_br(battlereport_id):
@@ -247,12 +252,13 @@ async def create_battlereport(battlereport_id):
     url = "https://br.evetools.org/api/v1/composition/get/" + battlereport_id
 
     print(f"Start load battlereport {battlereport_id}")
-    compose_battlereport = GET_request_to_esi(url).json()
+    battlereport = GET_request_to_esi(url).json()
     print(f"Successfull load battlereport {battlereport_id}")
 
+
     # дополянем релейт ссылкой и формируем стандартный вид данных для сохранения - ключ_id_сущности:результат запроса
-    compose_battlereport["url"] = url
-    response = {f"{battlereport_id}": compose_battlereport}
+    battlereport["url"] = url
+    response = {f"{battlereport_id}": battlereport}
     await enter_entitys_to_db("battlereport", response)
 
     # загрузка с esi всех связанных с релейтом дополнитеьных данных

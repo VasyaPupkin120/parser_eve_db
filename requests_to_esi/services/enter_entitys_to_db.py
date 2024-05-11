@@ -295,6 +295,7 @@ def enter_entitys_to_db(
         for key in data:
             response_body = {}
             response_body["br_data"] = data[key]
+            print(data[key])
             new_entity = Killmails.objects.update_or_create(
                     killmail_id=key,
                     defaults={
@@ -344,7 +345,7 @@ def enter_entitys_to_db(
                         "response_body": data[key], 
                         }
                     )
-            print(f"Successful save to DB {entity}: {key}\n")
+            print(f"Successful save to DB {entity}: {key}")
             return_data[key] = new_entity[0]
         return return_data
 
@@ -358,7 +359,7 @@ def enter_entitys_to_db(
                         "response_body": data[key], 
                         }
                     )
-            print(f"Successful save to DB {entity}: {key}\n")
+            print(f"Successful save to DB {entity}: {key}")
             return_data[key] = new_entity[0]
         return return_data
 

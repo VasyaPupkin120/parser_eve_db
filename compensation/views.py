@@ -26,10 +26,12 @@ def markup_battlereport(request, battlereport_id):
     killmails_ids = [killmail.killmail_id for killmail in killmails]
 
     # блок для проверки, какие киллмыла нужно заранее помечать как готовые к компенсациям.
-    friend_alliances = [99012122, 99004905]
+    friend_alliances = [99012122, 99012328, 99011248]
+    friend_corporations = [98733526]
     this_friend_alliance = Q(victim__alliance_id__in=friend_alliances)
+    this_friend_corporation = Q(victim__corporation_id__in=friend_corporations)
     this_more_than = Q(sumv__gt=100000)
-    checked_killmails = killmails.filter(this_friend_alliance & this_more_than)
+    checked_killmails = killmails.filter((this_friend_alliance | this_friend_corporation) & this_more_than)
     checked_killmails_ids = [checked_killmail.killmail_id for checked_killmail in checked_killmails]
 
     # блок добавления вычислимых полей
@@ -44,6 +46,7 @@ def markup_battlereport(request, battlereport_id):
                 output_field=BooleanField()
                 )
             )
+    print(killmails.first())
     killmails = killmails.order_by("-checked_for_compense","victim__alliance_id", "-round_sumv", )
 
     return render(request, "compensation/markup_battlereport.html",
@@ -58,12 +61,13 @@ def markup_battlereport(request, battlereport_id):
 def notes_compensations(request:HttpRequest):
     if request.method == "POST":
         data = dict(request.POST)
+        print("data: ", data)
         compensations = []
         for key, value in data.items():
             if len(value) == 2 and value[0] == "on":
                 killmail = Killmails.objects.get(killmail_id=key)
                 char = killmail.victim.character
-                one_compensation = f"<url=showinfo:1375//{key}>{char.name}</url> {value[1]}"
+                one_compensation = f"<url=showinfo:1375//{char.character_id}>{char.name}</url> {value[1]} {killmail.victim.ship.name}"
                 compensations.append(one_compensation)
         print(compensations)
         return render(request, "compensation/notes_compensations.html", {"compensations": compensations})
