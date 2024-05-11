@@ -302,7 +302,7 @@ def enter_entitys_to_db(
                         "killmail_id": key,
                         # c помощью целочисленного деления избавляемся от лишних нулей в коце, хз зачем они там
                         "killmail_time": datetime.datetime.fromtimestamp(data[key]["time"] // 1000), 
-                        "sumv": data[key]["totalValue"],
+                        "sumv": data[key]["sumV"],
                         "response_body": response_body, 
                         }
                     )

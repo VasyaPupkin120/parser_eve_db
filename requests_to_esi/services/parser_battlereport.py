@@ -27,10 +27,10 @@ def get_ids_associated_entities_from_battlereport(battlereport_id):
     corporations_ids = []
     characters_ids = []
     for killmail in killmails:
-        alliances_ids.append(killmail["victim"].get("ally"))
-        corporations_ids.append(killmail["victim"].get("corp"))
-        characters_ids.append(killmail["victim"].get("char"))
-        for attacker in killmail["attackers"]:
+        alliances_ids.append(killmail["vict"].get("ally"))
+        corporations_ids.append(killmail["vict"].get("corp"))
+        characters_ids.append(killmail["vict"].get("char"))
+        for attacker in killmail["atts"]:
             alliances_ids.append(attacker.get("ally"))
             corporations_ids.append(attacker.get("corp"))
             characters_ids.append(attacker.get("char"))
@@ -139,7 +139,7 @@ async def linking_killmails_and_associated_entities(killmails_ids):
     for killmail in killmails:
         br_data = killmail.response_body["br_data"]
 
-        victim = br_data["victim"]
+        victim = br_data["vict"]
         # вручную формируем id жертвы из id киллмыла и id чара
         victim_id = str(killmail.killmail_id) + "_" + str(victim.get("char"))
         # вручную добавляем id киллмыла в будущий response_body
@@ -147,7 +147,7 @@ async def linking_killmails_and_associated_entities(killmails_ids):
         victim["victim_id"] = victim_id
         victim_data[victim_id] = victim
 
-        for attacker in br_data["attackers"]:
+        for attacker in br_data["atts"]:
             # вручную формируем id атакующего из id киллмыла, id чара, id фракции, id корпорации
             attacker_id = str(killmail.killmail_id) + "_" + str(attacker.get("char")) + "_" + str(attacker.get("fctn")) + "_" + str(attacker.get("corp")) + "_" + str(attacker.get("ship"))
             attacker["attacker_id"] = attacker_id
@@ -249,7 +249,8 @@ async def create_battlereport(battlereport_id):
     #     print(f"Successfull load associated data.")
     #     return
 
-    url = "https://br.evetools.org/api/v1/composition/get/" + battlereport_id
+    # всегда использовать шорт-вариант - не-шорт вариант иногда отдает тот же шорт.
+    url = f"https://br.evetools.org/api/v1/composition/get/{battlereport_id}/?short=true"
 
     print(f"Start load battlereport {battlereport_id}")
     battlereport = GET_request_to_esi(url).json()

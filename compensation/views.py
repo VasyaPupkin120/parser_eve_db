@@ -1,9 +1,14 @@
+import asyncio
+
+
 from django.db.models import F, Q, BooleanField, Case, When
 from django.db.models.functions import Ceil
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.urls import resolve, reverse
 
 from dbeve_social.models import Battlereports, Characters, Killmails
+from requests_to_esi.services import parser_battlereport, base_requests
 
 # Create your views here.
 
@@ -61,7 +66,6 @@ def markup_battlereport(request, battlereport_id):
 def notes_compensations(request:HttpRequest):
     if request.method == "POST":
         data = dict(request.POST)
-        print("data: ", data)
         compensations = []
         for key, value in data.items():
             if len(value) == 2 and value[0] == "on":
@@ -72,3 +76,26 @@ def notes_compensations(request:HttpRequest):
         print(compensations)
         return render(request, "compensation/notes_compensations.html", {"compensations": compensations})
         
+
+
+def parse_battlereport(request):
+    """
+    На post-запрос парсит бр с помощью уже имеющегося парсера бр-ов 
+    и выполняет перенаправление на страничку разметки только что спарсенного бр-а.
+
+    На get-запрос выполняет перенаправление на общую страничку компенсаций - 
+    нефиг сюда вообще заходить по get-запросу.
+    """
+    if request.method == "POST":
+        battlereport_id = request.POST.get("battlereport_id")
+        if not battlereport_id:
+            return
+        try:
+            asyncio.run(parser_battlereport.create_battlereport(battlereport_id))
+        except base_requests.StatusCodeNot200Exception as e:
+            #FIXME
+            #FIXME
+            # вызов какой то там странички в случае ошибки, я устал уже надо потом исправить
+            return render(request, "requests_to_esi/dbeve_social/parse_one_battlereport.html", {"exception": e})
+        return redirect(reverse("compensation:markup_battlereport", kwargs={"battlereport_id": battlereport_id}))
+    return redirect(reverse("compensation:brs_and_parsing"))
