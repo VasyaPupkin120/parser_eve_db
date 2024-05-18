@@ -1,7 +1,10 @@
-version: "3.8"
+version: "3"
+
 services:
   webapp:
     # python + poetry + gunicorn + psycopg2-binary + environs[django] + django + сайт
+    # установка сначала в локальное окружение на хосте с помощью скрипта, 
+    #потом установка в контейнер на основе poetry.lock-файла
     build: .
     depends_on:
       - db
@@ -32,9 +35,10 @@ services:
     depends_on:
       - webapp
     volumes:
+      # флаг :ro - чтобы не изменялись файлы внутри контейнеров.
       - ./deploy/log/nginx:/var/log/nginx #log файлы.
       - ./deploy/conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro #Конфигурация nginx.
-      - ./deploy/conf/nginx/conf.d:/etc/nginx/conf.d:ro #Конфигурация nginx
+      - ./deploy/conf/nginx/conf.d:/etc/nginx/conf.d:ro #Конфигурация nginx, более ручная
       - ./deploy/conf/nginx/ssl:/etc/nginx/ssl:ro #сертификаты
     ports:
       - 80:80

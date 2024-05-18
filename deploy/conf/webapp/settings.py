@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("DJANGO_SECRET_KEY", default="000000000000000000")
+SECRET_KEY = env("DJANGO_SECRET_KEY")
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 
 # HSTS
@@ -39,10 +39,6 @@ CSRF_COOKIE_SECURE = env.bool("DJANGO_CSRF_COOKIE_SECURE", default=True)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DJANGO_DEBUG", False)
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'webapp']
-
-# для добавления локалхоста в список доверенных хостов
-# чтобы посредник csrf не ругался
-CSRF_TRUSTED_ORIGINS=["http://127.0.0.1", "https://127.0.0.1",]
 
 
 # Application definition
@@ -64,16 +60,11 @@ INSTALLED_APPS = [
 
     # local
     'users',
-    'pages',
-    'dbeve_universe',
-    'dbeve_social',
-    'dbeve_items',
-    'requests_to_esi',
-    'compensation',
+    # 'pages',
 ]
 
 MIDDLEWARE = [
-    # 'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -85,7 +76,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 
-    # 'django.middleware.cache.FetchFromCacheMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -162,18 +153,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/staticfiles/'
-# STATICFILES_DIRS = (str(BASE_DIR.joinpath('static')),)
-STATICFILES_DIRS = (BASE_DIR.joinpath('static'),)
-# STATIC_ROOT = str(BASE_DIR.joinpath('staticfiles'))
-STATIC_ROOT = BASE_DIR.joinpath('staticfiles')
+STATICFILES_DIRS = (str(BASE_DIR.joinpath('static')),)
+STATIC_ROOT = str(BASE_DIR.joinpath('staticfiles'))
 STATICFILES_FINDERS = [
         "django.contrib.staticfiles.finders.FileSystemFinder",
         "django.contrib.staticfiles.finders.AppDirectoriesFinder",
         ]
 
 MEDIA_URL = '/media/'
-# MEDIA_ROOT = str(BASE_DIR.joinpath("media"))
-MEDIA_ROOT = BASE_DIR.joinpath("media")
+MEDIA_ROOT = str(BASE_DIR.joinpath("media"))
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -189,7 +177,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 ## django-allauth config
 SITE_ID = 1
 AUTHENTICATION_BACKENDS = (
-        # 'django.contrib.auth.backends.ModelBackend',
+        'django.contrib.auth.backends.ModelBackend',
         'allauth.account.auth_backends.AuthenticationBackend',
         )
 # за перенаправление при логоуте теперь отвечает allauth, перенаправление при логине - по умолчанию
