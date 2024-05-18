@@ -1,13 +1,16 @@
-version: "3.8"
+version: '3.8'
 services:
-  webapp:
+  web:
     # python + poetry + gunicorn + psycopg2-binary + environs[django] + django + сайт
     build: .
-    depends_on:
-      - db
+    command: python3 /code/manage.py runserver 0.0.0.0:8000
+    # command: gunicorn config.wsgi -b 0.0.0.0:8000
     volumes:
       - .:/code
-    # env_file: .env
+    # ports:
+    #   - 8000:8000
+    depends_on:
+      - db
     environment:
       - "DJANGO_SECRET_KEY=django-insecure-t#lsan$$1-a@ci)o2bimd1yez5_9#nau+@nh$$hw%ugaw+oc5^g_"
       - "DJANGO_DEBUG=True"
@@ -17,27 +20,21 @@ services:
       - "DJANGO_SECURE_HSTS_PRELOAD=False"
       - "DJANGO_SESSION_COOKIE_SECURE=False"
       - "DJANGO_CSRF_COOKIE_SECURE=False"
-    command: python3 /code/manage.py runserver 0.0.0.0:8000
-    # command: gunicorn config.wsgi -b 0.0.0.0:8000
   db:
-    build: './deploy/build/db'
+    build: './deploy/db'
     volumes:
       - db_eve:/var/lib/postgresql/data/
     environment:
+      # - "POSTGRES_HOST_AUTH_METHOD=trust"
       - "POSTGRES_PASSWORD=postgres"
       - "POSTGRES_USER=postgres"
       - "POSTGRES_DB=postgres"
   nginx:
-    build: './deploy/build/nginx'
-    depends_on:
-      - webapp
-    volumes:
-      - ./deploy/log/nginx:/var/log/nginx #log файлы.
-      - ./deploy/conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro #Конфигурация nginx.
-      - ./deploy/conf/nginx/conf.d:/etc/nginx/conf.d:ro #Конфигурация nginx
-      - ./deploy/conf/nginx/ssl:/etc/nginx/ssl:ro #сертификаты
+    build: './deploy/nginx'
     ports:
-      - 80:80
+      - 8000:80
 volumes:
   db_eve:
     external: true
+
+
