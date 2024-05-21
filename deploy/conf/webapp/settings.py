@@ -25,7 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("DJANGO_SECRET_KEY")
-SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
+
+# редирект на https не стоит включать по умолчанию - сайты без сертификатов перестают работать. 
+# Также это плохо для тестовых деплоев. Если нужно True - то задавать через переменные окружения
+SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=False)
 
 # HSTS
 SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=2592000)
@@ -39,6 +42,15 @@ CSRF_COOKIE_SECURE = env.bool("DJANGO_CSRF_COOKIE_SECURE", default=True)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DJANGO_DEBUG", False)
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'webapp']
+
+# для добавления локалхоста и ip хоста в список доверенных хостов - 
+# чтобы посредник csrf не ругался. Добавлять также домен или ip того хоста, на котором будет крутиться сайт
+# приходит строка с ip и хостами, разделенными запятыми - кривой docker-compose не передает нормально списки
+CSRF_TRUSTED_ORIGINS=[]
+csrf_trusted_hosts = env("CSRF_TRUSTED_HOSTS").split(",")
+for host in csrf_trusted_hosts:
+    CSRF_TRUSTED_ORIGINS.append("http://" + host)
+    CSRF_TRUSTED_ORIGINS.append("https://" + host)
 
 
 # Application definition

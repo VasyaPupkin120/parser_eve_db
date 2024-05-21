@@ -1,8 +1,9 @@
+# конфиг для локальной разработки
 version: "3"
 
 services:
+  # python + poetry + gunicorn + psycopg2-binary + environs[django] + django + сайт
   webapp:
-    # python + poetry + gunicorn + psycopg2-binary + environs[django] + django + сайт
     # установка сначала в локальное окружение на хосте с помощью скрипта, 
     #потом установка в контейнер на основе poetry.lock-файла
     build: .
@@ -10,22 +11,17 @@ services:
       - db
     volumes:
       - .:/code
-    # env_file: .env
     environment:
       - "DJANGO_SECRET_KEY=django-insecure-t#lsan$$1-a@ci)o2bimd1yez5_9#nau+@nh$$hw%ugaw+oc5^g_"
       - "DJANGO_DEBUG=True"
-      - "DJANGO_SECURE_SSL_REDIRECT=False"
-      - "DJANGO_SECURE_HSTS_SECONDS=0"
-      - "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=False"
-      - "DJANGO_SECURE_HSTS_PRELOAD=False"
-      - "DJANGO_SESSION_COOKIE_SECURE=False"
-      - "DJANGO_CSRF_COOKIE_SECURE=False"
+      - "CSRF_TRUSTED_HOSTS=127.0.0.1,localhost"
     command: python3 /code/manage.py runserver 0.0.0.0:8000
-    # command: gunicorn config.wsgi -b 0.0.0.0:8000
   db:
     build: './deploy/build/db'
-    volumes:
-      - db_eve:/var/lib/postgresql/data/
+    # том создавать и монтировать только на проекте, 
+    # для отладки  не создавать - чтобы не возиться с очисткой БД
+    # volumes:
+    #   - postgres_data:/var/lib/postgresql/data/
     environment:
       - "POSTGRES_PASSWORD=postgres"
       - "POSTGRES_USER=postgres"
@@ -42,6 +38,5 @@ services:
       - ./deploy/conf/nginx/ssl:/etc/nginx/ssl:ro #сертификаты
     ports:
       - 80:80
-volumes:
-  db_eve:
-    external: true
+# volumes:
+#   postgres_data:
