@@ -24,8 +24,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("DJANGO_SECRET_KEY", default="000000000000000000")
-SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
+SECRET_KEY = env("DJANGO_SECRET_KEY")
+SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=False)
 
 # HSTS
 SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=2592000)
@@ -40,9 +40,15 @@ CSRF_COOKIE_SECURE = env.bool("DJANGO_CSRF_COOKIE_SECURE", default=True)
 DEBUG = env.bool("DJANGO_DEBUG", False)
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'webapp']
 
-# для добавления локалхоста в список доверенных хостов
-# чтобы посредник csrf не ругался
-CSRF_TRUSTED_ORIGINS=["http://127.0.0.1", "https://127.0.0.1",]
+# для добавления локалхоста и ip хоста в список доверенных хостов - 
+# чтобы посредник csrf не ругался. Добавлять также домен или ip того хоста, на котором будет крутиться сайт
+# приходит строка с ip и хостами, разделенными запятыми - кривой docker-compose не передает нормально списки
+CSRF_TRUSTED_ORIGINS=[]
+csrf_trusted_hosts = env("CSRF_TRUSTED_HOSTS").split(",")
+for host in csrf_trusted_hosts:
+    CSRF_TRUSTED_ORIGINS.append("http://" + host)
+    CSRF_TRUSTED_ORIGINS.append("https://" + host)
+print("CSRF_TRUSTED_ORIGINS", CSRF_TRUSTED_ORIGINS)
 
 
 # Application definition
