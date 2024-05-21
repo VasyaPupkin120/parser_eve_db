@@ -48,7 +48,6 @@ csrf_trusted_hosts = env("CSRF_TRUSTED_HOSTS").split(",")
 for host in csrf_trusted_hosts:
     CSRF_TRUSTED_ORIGINS.append("http://" + host)
     CSRF_TRUSTED_ORIGINS.append("https://" + host)
-print("CSRF_TRUSTED_ORIGINS", CSRF_TRUSTED_ORIGINS)
 
 
 # Application definition
