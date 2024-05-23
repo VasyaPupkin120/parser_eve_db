@@ -92,25 +92,6 @@ class Victims(BaseEntity):
     killmail = models.OneToOneField("Killmails", on_delete=models.CASCADE, null=True, related_name="victim")
 
 
-class Attackers(BaseEntity):
-    """
-    Вспомогательная модель для киллмыла - запись об одном атакующем.
-    """
-    attacker_id = models.CharField(primary_key=True, max_length=150) # состоит из сочетания id киллмыла, id чара, id фракции, id корпорации, id шипа
-
-    damage_done = models.BigIntegerField(null=True)
-    final_blow = models.BooleanField(null=True)
-    security_status = models.FloatField(null=True)
-
-    alliance = models.ForeignKey("Alliances", on_delete=models.SET_NULL, null=True)
-    corporation = models.ForeignKey("Corporations", on_delete=models.SET_NULL, null=True)
-    character = models.ForeignKey("Characters", on_delete=models.CASCADE, null=True)
-    ship = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_ship_type")
-    weapon = models.ForeignKey(Types, on_delete=models.SET_NULL, null=True, related_name = "attackers_weapon_type")
-
-    killmail = models.ForeignKey("Killmails", on_delete=models.CASCADE, null=True, related_name="attackers")
-
-
 class Killmails(BaseEntity):
     """
     Модель одиночного киллмыла.

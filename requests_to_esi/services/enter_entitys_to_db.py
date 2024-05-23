@@ -3,10 +3,9 @@ import datetime
 
 
 from .errors import raise_entity_not_processed, raise_action_not_allowed
-from .base_requests import GET_request_to_esi
 from .conf import entity_list_type
 
-from dbeve_social.models import Alliances, Characters, Corporations, Killmails, Battlereports, Victims, Attackers
+from dbeve_social.models import Alliances, Characters, Corporations, Killmails, Battlereports, Victims
 from dbeve_universe.models import Constellations, Regions, Stars, Systems
 from dbeve_items.models import Categories, Groups, Types
 
@@ -295,7 +294,6 @@ def enter_entitys_to_db(
         for key in data:
             response_body = {}
             response_body["br_data"] = data[key]
-            print(data[key])
             new_entity = Killmails.objects.update_or_create(
                     killmail_id=key,
                     defaults={
@@ -342,20 +340,6 @@ def enter_entitys_to_db(
                     victim_id=key,
                     defaults={
                         "dmg": data[key].get("dmg"),
-                        "response_body": data[key], 
-                        }
-                    )
-            print(f"Successful save to DB {entity}: {key}")
-            return_data[key] = new_entity[0]
-        return return_data
-
-    # атакущий в киллмыле
-    elif entity == "attacker":
-        for key in data:
-            new_entity = Attackers.objects.update_or_create(
-                    attacker_id=key,
-                    defaults={
-                        "damage_done": data[key].get("dmg"),
                         "response_body": data[key], 
                         }
                     )
