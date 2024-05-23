@@ -11,27 +11,44 @@
     <div>
         <form method="post" action={% url 'compensation:notes_compensations' %}>
             {% csrf_token %}
-            {% for killmail in killmails %}
-                <div>
-                    {% if killmail.checked_for_compense %}
-                        <input type="checkbox" value="on" checked name="{{ killmail.killmail_id }}" >
-                    {% else %}
-                        <input type="checkbox" value="on" name="{{ killmail.killmail_id }}">
-                    {% endif %}
-                    <img src="https://images.evetech.net/alliances/{{ killmail.victim.alliance_id }}/logo?size=32">
-                    <img src="https://images.evetech.net/corporations/{{ killmail.victim.corporation_id }}/logo?size=32">
-                    <img src="https://images.evetech.net/characters/{{ killmail.victim.character_id }}/portrait?size=32">
-                    <img src="https://images.evetech.net/types/{{ killmail.victim.ship_id }}/render?size=32">
-                    <a class="p-2 text-dark" href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/">{{ killmail.victim.ship.name }}</a>
-                    <a class="p-2 text-dark" href="https://zkillboard.com/character/{{ killmail.victim.character_id }}/">{{ killmail.victim.character.name }}</a>
-                    {{ killmail.round_sumv }} kk ISK
-                    {% if killmail.checked_for_compense %}
+                {% for killmail in killmails %}
+                <div class="row justify-content-md-center my-1">
+                    <div class="col col-md-auto pr-1 pl-1">
+                        {% if killmail.checked_for_compense %}
+                            <input type="checkbox" value="on" checked name="{{ killmail.killmail_id }}" >
+                        {% else %}
+                            <input type="checkbox" value="on" name="{{ killmail.killmail_id }}">
+                        {% endif %}
+                    </div>
+                    <div class="col col-md-auto pr-1 pl-1">
+                        <img src="https://images.evetech.net/alliances/{{ killmail.victim.alliance_id }}/logo?size=32" title="{{killmail.victim.alliance.name}}">
+                    </div>
+                    <div class="col col-md-auto pr-1 pl-1">
+                        <img src="https://images.evetech.net/corporations/{{ killmail.victim.corporation_id }}/logo?size=32" title="{{killmail.victim.corporation.name}}">
+                    </div>
+                    <div class="col col-md-auto pr-1 pl-1">
+                        <img src="https://images.evetech.net/characters/{{ killmail.victim.character_id }}/portrait?size=32" title="{{killmail.victim.character.name}}">
+                    </div>
+                    <div class="col col-md-auto pr-1 pl-1">
+                        <img src="https://images.evetech.net/types/{{ killmail.victim.ship_id }}/render?size=32" title="{{killmail.victim.ship.name}}">
+                    </div>
+                    <div class="col px-1">
+                        <a class="text-dark" href="https://zkillboard.com/character/{{ killmail.victim.character_id }}/">{{ killmail.victim.character.name|truncatechars:20 }}</a>
+                    </div>
+                    <div class="col px-1">
+                        <a class="text-dark" href="https://zkillboard.com/corporation/{{ killmail.victim.corporation_id }}/">{{ killmail.victim.corporation.name|truncatechars:20 }}</a>
+                    </div>
+                    <div class="col px-1">
+                        <a class="text-dark" href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/">{{ killmail.victim.ship.name|truncatechars:20 }}</a>
+                    </div>
+                    <div class="col px-1">
+                        {{ killmail.round_sumv }} kk ISK
+                    </div>
+                    <div class="col px-1">
                         <input type="number" value="{{ killmail.round_sumv }}" name="{{ killmail.killmail_id }}">
-                    {% else %}
-                        <input type="number" name="{{ killmail.killmail_id }}">
-                    {% endif %}
+                    </div>
                 </div>
-            {% endfor %}
+                {% endfor %}
             <br>
             <div>
                 <input type="submit" value="Create list compenstaions">
