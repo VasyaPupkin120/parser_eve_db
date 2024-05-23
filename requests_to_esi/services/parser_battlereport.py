@@ -52,40 +52,10 @@ def get_ids_associated_entities_from_battlereport(battlereport_id):
 
     return alliances_ids, corporations_ids, characters_ids
 
-
-@sync_to_async
-def linking_killmail_and_attacker(attacker:Attackers):
-    """
-    Получает экземпляр Attackers, выполняет множество линковок
-    """
-    alliance_id = attacker.response_body["ally"]
-    corporation_id = attacker.response_body["corp"]
-    character_id = attacker.response_body["char"]
-    ship_id = attacker.response_body["ship"]
-    weapon_id = attacker.response_body["weap"]
-    killmail_id = attacker.response_body["kml_id"]
-
-    alliance = Alliances.objects.get(alliance_id=alliance_id)
-    corporation = Corporations.objects.get(corporation_id=corporation_id)
-    character = Characters.objects.get(character_id=character_id)
-    ship = Types.objects.get(type_id=ship_id)
-    weapon = Types.objects.get(type_id=weapon_id)
-    killmail = Killmails.objects.get(killmail_id=killmail_id)
-
-    attacker.alliance = alliance
-    attacker.corporation = corporation
-    attacker.character = character
-    attacker.ship = ship
-    attacker.weapon = weapon
-    attacker.killmail = killmail
-
-    attacker.save()
-
-
 @sync_to_async
 def linking_killmail_and_victim(victim:Victims):
     """
-    Получает экземпляр Attackers, выполняет множество линковок
+    Получает экземпляр Victims, выполняет множество линковок
     """
     alliance_id = victim.response_body["ally"]
     corporation_id = victim.response_body["corp"]
@@ -119,10 +89,11 @@ def linking_battlereport_and_killmails(battlereport_id, killmails_ids):
         killmail.save()
 
 
-async def linking_killmails_and_associated_entities(killmails_ids):
+async def create_and_linking_victims(killmails_ids):
     """
-    Создаем экземпляры Victim и  Attackers на основе алли, корп, чаров, шипа
-    и линковка киллмыл с ними
+    Создаем экземпляры Victim и линковка киллмыл с ними. 
+    Под атакующих не нужно отдельную модель - слишком много бесполезных
+    записей в БД получается. Пусть хранятся в br_data как json.
     """
     @sync_to_async
     def get_killmails(killmails_ids):
@@ -135,10 +106,8 @@ async def linking_killmails_and_associated_entities(killmails_ids):
     killmails = await get_killmails(killmails_ids)
 
     victim_data = {}
-    attackers_data = {}
     for killmail in killmails:
         br_data = killmail.response_body["br_data"]
-
         victim = br_data["vict"]
         # вручную формируем id жертвы из id киллмыла и id чара
         victim_id = str(killmail.killmail_id) + "_" + str(victim.get("char"))
@@ -147,19 +116,8 @@ async def linking_killmails_and_associated_entities(killmails_ids):
         victim["victim_id"] = victim_id
         victim_data[victim_id] = victim
 
-        for attacker in br_data["atts"]:
-            # вручную формируем id атакующего из id киллмыла, id чара, id фракции, id корпорации
-            attacker_id = str(killmail.killmail_id) + "_" + str(attacker.get("char")) + "_" + str(attacker.get("fctn")) + "_" + str(attacker.get("corp")) + "_" + str(attacker.get("ship"))
-            attacker["attacker_id"] = attacker_id
-            # вручную добавляем id киллмыла в будущий response_body
-            attacker["kml_id"] = killmail.killmail_id
-            attackers_data[attacker_id] = attacker
-
-    attackers = await enter_entitys_to_db("attacker", attackers_data)
     victims = await enter_entitys_to_db("victim", victim_data)
-    for attacker_key in attackers.keys():
-        attacker = attackers[attacker_key]
-        await linking_killmail_and_attacker(attacker)
+
     for victim_key in victims.keys():
         victim = victims[victim_key]
         await linking_killmail_and_victim(victim)
@@ -176,9 +134,6 @@ async def create_associated_entities(battlereport_id):
 
     После создания киллмыл, создаем все упомянутые в релейте корпы, альянсы, чары 
     все они создаются с флагом create_missing - чтобы не гонять лишние запросы
-
-    Также после создания этих сущностей, создаем экземпляры Victim и Attackers
-    и связываем их с киллмылом.
     """
 
     @sync_to_async
@@ -196,7 +151,6 @@ async def create_associated_entities(battlereport_id):
     temp_killmails = []
     for related in relateds:
         temp_killmails.extend(related["kms"])
-    print("199 line: ", temp_killmails[0])
     killmails = {killmail["id"]:killmail for killmail in temp_killmails}
     await enter_entitys_to_db("killmail_from_br", killmails)
 
@@ -219,7 +173,7 @@ async def create_associated_entities(battlereport_id):
 
     # линковка киллмыл с вновь созданными сопуствующими сущностями
     print(f"Start linking killmails")
-    await linking_killmails_and_associated_entities(killmails_ids)
+    await create_and_linking_victims(killmails_ids)
     print(f"Successful linking killmails")
 
 
@@ -229,9 +183,6 @@ async def create_battlereport(battlereport_id):
     ограниченную запись киллмыла (без хэша) и начинет 
     парсить все связанные с ним сущности (алли, корпы, чары).
 
-    так как в api периодически меняются ключи словарей (в частности totalLost-totalValue,
-    attackers-atts, victim-vict) то в enter_entitys_to_db нужно привести response_body к
-    однообразому виду. 
     """
     @sync_to_async
     def check_exists_br(battlereport_id):
