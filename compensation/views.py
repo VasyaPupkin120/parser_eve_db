@@ -31,7 +31,7 @@ def markup_battlereport(request, battlereport_id):
     killmails_ids = [killmail.killmail_id for killmail in killmails]
 
     # блок для проверки, какие киллмыла нужно заранее помечать как готовые к компенсациям.
-    friend_alliances = [99012122, 99012328, 99011248]
+    friend_alliances = [99012122, 99012328, 99011248, 99012287]
     friend_corporations = [98733526]
     this_friend_alliance = Q(victim__alliance_id__in=friend_alliances)
     this_friend_corporation = Q(victim__corporation_id__in=friend_corporations)
@@ -52,7 +52,7 @@ def markup_battlereport(request, battlereport_id):
                 )
             )
     print(killmails.first())
-    killmails = killmails.order_by("-checked_for_compense","victim__alliance_id", "-round_sumv", )
+    killmails = killmails.order_by("-checked_for_compense","victim__alliance_id", "victim__corporation_id", "-round_sumv", )
 
     return render(request, "compensation/markup_battlereport.html",
                   context={
