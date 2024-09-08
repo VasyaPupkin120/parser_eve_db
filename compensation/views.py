@@ -17,7 +17,7 @@ def brs_and_parsing(request):
     Страничка с формой ввода для парсинга бр-а и с выводом списка уже 
     спарсенных бр-ов. 
     """
-    battlereports = Battlereports.objects.all()[:100]
+    battlereports = Battlereports.objects.all().order_by("-time_end")[:100]
     return render(request, "compensation/brs_and_parsing.html", context={"battlereports": battlereports,})
     
 
