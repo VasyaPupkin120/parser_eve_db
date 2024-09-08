@@ -51,8 +51,8 @@ def markup_battlereport(request, battlereport_id):
                 output_field=BooleanField()
                 )
             )
-    print(killmails.first())
-    killmails = killmails.order_by("-checked_for_compense","victim__alliance_id", "victim__corporation_id", "-round_sumv", )
+
+    killmails = killmails.order_by("-checked_for_compense","victim__alliance_id", "victim__corporation_id", "victim__character_id", "-round_sumv", )
 
     return render(request, "compensation/markup_battlereport.html",
                   context={
