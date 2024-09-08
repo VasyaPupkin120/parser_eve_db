@@ -67,14 +67,20 @@ def notes_compensations(request:HttpRequest):
     if request.method == "POST":
         data = dict(request.POST)
         compensations = []
+        names_for_email = []
         for key, value in data.items():
             if len(value) == 2 and value[0] == "on":
                 killmail = Killmails.objects.get(killmail_id=key)
                 char = killmail.victim.character
                 one_compensation = f"<url=showinfo:1375//{char.character_id}>{char.name}</url> {value[1]} {killmail.victim.ship.name}"
                 compensations.append(one_compensation)
-        print(compensations)
-        return render(request, "compensation/notes_compensations.html", {"compensations": compensations})
+                if char.name not in names_for_email:
+                     names_for_email.append(char.name)
+        names_for_email =  ", ".join(names_for_email)
+        battlereport = data["battlereport"][0] # не понимаю почему поле формы hidden отправляет список, но окей
+        body_mail = f'<font size="14" color="#bfffffff"></font><font size="13" color="#bfffffff">Привет! <br><br>Отправил компенс за бой </font><font size="13" color="#ffffe400"><loc><a href="http://br.evetools.org/br/{battlereport}">https://br.evetools.org/br/{battlereport}</a></loc><br><br></font><font size="13" color="#bfffffff">Проверьте, на всякий случай :)<br><br>Вы лучшие!</font>'
+
+        return render(request, "compensation/notes_compensations.html", {"compensations": compensations, "battlereport": battlereport, "names_for_email": names_for_email, "body_mail": body_mail})
         
 
 

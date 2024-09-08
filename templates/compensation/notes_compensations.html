@@ -5,16 +5,49 @@
 
 {% block content %}
     <br>
+    <div>
+        <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ battlereport }}/">br.evetools.org</a>
+    </div>
 
-    <div id="toCopy">
+    <!-- блок списка компенсов -->
+    <hr>
+    <br>
+    <div id="toCompensations">
         {% for compensation in compensations %}
             {{ compensation }}
             <br>
         {% endfor %}
     </div>
+    <br>
+    <button onclick="CopyTextContainer('toCompensations')" title="Copy compensations">Copy compensations</button>
+    <br>
+
+    <!-- блок имен для письма -->
+    <hr>
+    <br>
+    <div id="toNames">
+        {{ names_for_email }}
+    </div>
+    <br>
+    <button onclick="CopyTextContainer('toNames')" title="Copy names">Copy names</button>
+    <br>
+
+    <!-- блок тела письма -->
+    <hr>
+    <br>
+    <div id="toBodyMail">
+        {{ body_mail }}
+    </div>
+    <br>
+    <button onclick="CopyTextContainer('toBodyMail')" title="Copy body mail">Copy body mail</button>
+    <br>
+    <hr>
+    <br>
+
+
 
     <script type="text/javascript" >
-    function Copy(containerid) {
+    function CopyTextContainer(containerid) {
             let textarea = document.createElement('textarea');
             textarea.id = 'temp';
             textarea.style.height = 0;
@@ -26,9 +59,5 @@
             document.body.removeChild(textarea);
     }
     </script>
-    <br>
-    <button onclick="Copy('toCopy')" title="Copy">Copy</button>
-    <br>
-    <br>
 
 {% endblock content %}
