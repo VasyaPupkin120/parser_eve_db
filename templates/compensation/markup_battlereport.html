@@ -21,22 +21,22 @@
                         {% endif %}
                     </div>
                     <div class="col col-md-auto pr-1 pl-1">
-                        <img src="https://images.evetech.net/alliances/{{ killmail.victim.alliance_id }}/logo?size=32" title="{{killmail.victim.alliance.name}}">
+                        <a href="https://zkillboard.com/alliance/{{ killmail.victim.alliance_id }}/"><img src="https://images.evetech.net/alliances/{{ killmail.victim.alliance_id }}/logo?size=32" title="{{killmail.victim.alliance.name}}"></a>
                     </div>
                     <div class="col col-md-auto pr-1 pl-1">
-                        <img src="https://images.evetech.net/corporations/{{ killmail.victim.corporation_id }}/logo?size=32" title="{{killmail.victim.corporation.name}}">
+                        <a href="https://zkillboard.com/corporation/{{ killmail.victim.corporation_id }}/"><img src="https://images.evetech.net/corporations/{{ killmail.victim.corporation_id }}/logo?size=32" title="{{killmail.victim.corporation.name}}"></a>
                     </div>
                     <div class="col col-md-auto pr-1 pl-1">
-                        <img src="https://images.evetech.net/characters/{{ killmail.victim.character_id }}/portrait?size=32" title="{{killmail.victim.character.name}}">
+                        <a href="https://zkillboard.com/character/{{ killmail.victim.character_id }}/"><img src="https://images.evetech.net/characters/{{ killmail.victim.character_id }}/portrait?size=32" title="{{killmail.victim.character.name}}"></a>
                     </div>
                     <div class="col col-md-auto pr-1 pl-1">
-                        <img src="https://images.evetech.net/types/{{ killmail.victim.ship_id }}/render?size=32" title="{{killmail.victim.ship.name}}">
+                        <a href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/"><img src="https://images.evetech.net/types/{{ killmail.victim.ship_id }}/render?size=32" title="{{killmail.victim.ship.name}}"></a>
                     </div>
                     <div class="col px-1">
                         <a class="text-dark" href="https://zkillboard.com/character/{{ killmail.victim.character_id }}/">{{ killmail.victim.character.name|truncatechars:20 }}</a>
                     </div>
                     <div class="col px-1">
-                        <a class="text-dark" href="https://zkillboard.com/corporation/{{ killmail.victim.corporation_id }}/">{{ killmail.victim.corporation.name|truncatechars:20 }}</a>
+                        <a class="text-dark" href="https://zkillboard.com/alliance/{{ killmail.victim.alliance_id }}/">{{ killmail.victim.alliance.ticker }}</a> / <a class="text-dark" href="https://zkillboard.com/corporation/{{ killmail.victim.corporation_id }}/">{{ killmail.victim.corporation.ticker }}</a>
                     </div>
                     <div class="col px-1">
                         <a class="text-dark" href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/">{{ killmail.victim.ship.name|truncatechars:20 }}</a>
