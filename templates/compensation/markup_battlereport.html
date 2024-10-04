@@ -4,79 +4,105 @@
 {% block title %}Markup battlereport{% endblock title %}
 
 {% block content %}
-    <hr>
     <!-- -------------------- Блок ссылки на БР -------------------- -->
+    <hr>
     <h4>Battlereport</h4>
+    <hr>
     <div class="show_battlereport">
         <a class="p-2 text-dark" href="https://br.evetools.org/br/{{ battlereport.battlereport_id }}/">br.evetools.org</a>
     </div>
-    <hr>
-    <!-- -------------------- Блок выбора типов шипов -------------------- -->
-    <h4>Ships</h4>
-    <div id="block_shiptypes">
-        {% for shiptype in shiptypes %}
-            <div class="row justify-content-md-left my-1">
-                <div class="col col-md-auto pr-1 pl-1">
-                    <input type="checkbox" class="checkbox_shiptypes" ship_id="{{ shiptype.type_id }}" value="on" checked>
-                </div>
-                <div class="col col-md-auto pr-1 pl-1">
-                    <img src="https://images.evetech.net/types/{{ shiptype.type_id }}/render?size=32" title="{{shiptype.name}}">
-                    <label>
-                        {{shiptype.name}}
-                    </label>
-                </div>
-            </div>
-        {% endfor %}
-        <button type="button" onclick="SetCheckboxesInThisBlock(this)">Set</button>
-        <button type="button" onclick="ClearCheckboxesInThisBlock(this)">Clear</button>
-        <button type="button" onclick="UpdateKillmails(this)">Update killmails</button>
-    </div>
-    <hr>
-    <!-- -------------------- Блок выбора альянсов -------------------- -->
-    <h4>Alliances</h4>
-    <div id="block_alliances">
-        {% for alliance in alliances %}
-            <div class="row justify-content-md-left my-1">
-                <div class="col col-md-auto pr-1 pl-1">
-                    <input type="checkbox" class="checkbox_alliances" alliance_id="{{ alliance.alliance_id }}" value="on" checked>
-                </div>
-                <div class="col col-md-auto pr-1 pl-1">
-                    <img src="https://images.evetech.net/alliances/{{ alliance.alliance_id }}/logo?size=32" title="{{alliance.name}}">
-                    <label>
-                        {{alliance.name}}
-                    </label>
-                </div>
-            </div>
-        {% endfor %}
-        <button type="button" onclick="SetCheckboxesInThisBlock(this)">Set</button>
-        <button type="button" onclick="ClearCheckboxesInThisBlock(this)">Clear</button>
-        <button type="button" onclick="UpdateKillmails(this)">Update killmails</button>
-    </div>
-    <hr>
-    <!-- -------------------- Блок выбора корпорации -------------------- -->
-    <h4>Corporations</h4>
-    <div id="block_corporations">
-        {% for corporation in corporations %}
-            <div class="row justify-content-md-left my-1">
-                <div class="col col-md-auto pr-1 pl-1">
-                    <input type="checkbox" class="checkbox_corporations" corporation_id="{{ corporation.corporation_id }}" value="on" checked>
-                </div>
-                <div class="col col-md-auto pr-1 pl-1">
-                    <img src="https://images.evetech.net/corporations/{{ corporation.corporation_id }}/logo?size=32" title="{{corporation.name}}">
-                    <label>
-                        {{corporation.name}}
-                    </label>
-                </div>
-            </div>
-        {% endfor %}
-        <button type="button" onclick="SetCheckboxesInThisBlock(this)">Set</button>
-        <button type="button" onclick="ClearCheckboxesInThisBlock(this)">Clear</button>
-        <button type="button" onclick="UpdateKillmails(this)">Update killmails</button>
-    </div>
-    <hr>
-    <!-- -------------------- Блок всех киллмыл -------------------- -->
-    <h4>Killmails</h4>
     <br>
+    <!-- -------------------- Блок выбора типов шипов -------------------- -->
+    <hr>
+    <h4>Ships</h4>
+    <hr>
+    <div id="block_shiptypes" class="container">
+        {% for chunk in shiptypes4 %}
+            <div class="row">
+                {% for shiptype in chunk %}
+                    <div class="col-3">
+                        <div class="row justify-content-md-left my-1">
+                            <div class="col col-md-auto pr-1 pl-1">
+                                <input type="checkbox" class="checkbox_shiptypes" ship_id="{{ shiptype.type_id }}" value="on" checked>
+                            </div>
+                            <div class="col col-md-auto pr-1 pl-1">
+                                <img src="https://images.evetech.net/types/{{ shiptype.type_id }}/render?size=32" title="{{shiptype.name}}">
+                                <label>
+                                    {{shiptype.name|truncatechars:20}}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="button" onclick="SetCheckboxesInThisBlock(this)">Set</button>
+        <button type="button" onclick="ClearCheckboxesInThisBlock(this)">Clear</button>
+        <button type="button" onclick="UpdateKillmails(this)">Update killmails</button>
+    </div>
+    <br>
+    <!-- -------------------- Блок выбора альянсов -------------------- -->
+    <hr>
+    <h4>Alliances</h4>
+    <hr>
+    <div id="block_alliances" class="container">
+        {% for chunk in alliances4 %}
+            <div class="row">
+                {% for alliance in chunk %}
+                    <div class="col-3">
+                        <div class="row justify-content-md-left my-1">
+                            <div class="col col-md-auto pr-1 pl-1">
+                                <input type="checkbox" class="checkbox_alliances" alliance_id="{{ alliance.alliance_id }}" value="on" checked>
+                            </div>
+                            <div class="col col-md-auto pr-1 pl-1">
+                                <img src="https://images.evetech.net/alliances/{{ alliance.alliance_id }}/logo?size=32" title="{{alliance.name}}">
+                                <label>
+                                    {{alliance.name|truncatechars:20}}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="button" onclick="SetCheckboxesInThisBlock(this)">Set</button>
+        <button type="button" onclick="ClearCheckboxesInThisBlock(this)">Clear</button>
+        <button type="button" onclick="UpdateKillmails(this)">Update killmails</button>
+    </div>
+    <br>
+    <!-- -------------------- Блок выбора корпорации -------------------- -->
+    <hr>
+    <h4>Corporations</h4>
+    <hr>
+    <div id="block_corporations" class="container">
+        {% for chunk in corporations4 %}
+            <div class="row">
+                {% for corporation in chunk %}
+                    <div class="col-3">
+                        <div class="row justify-content-md-left my-1">
+                            <div class="col col-md-auto pr-1 pl-1">
+                                <input type="checkbox" class="checkbox_corporations" corporation_id="{{ corporation.corporation_id }}" value="on" checked>
+                            </div>
+                            <div class="col col-md-auto pr-1 pl-1">
+                                <img src="https://images.evetech.net/corporations/{{ corporation.corporation_id }}/logo?size=32" title="{{corporation.name}}">
+                                <label>
+                                    {{corporation.name|truncatechars:20}}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="button" onclick="SetCheckboxesInThisBlock(this)">Set</button>
+        <button type="button" onclick="ClearCheckboxesInThisBlock(this)">Clear</button>
+        <button type="button" onclick="UpdateKillmails(this)">Update killmails</button>
+    </div>
+    <br>
+    <!-- -------------------- Блок всех киллмыл -------------------- -->
+    <hr>
+    <h4>Killmails</h4>
+    <hr>
     <div id="block_killmails">
         <form method="post" action={% url 'compensation:notes_compensations' %}>
             {% csrf_token %}
@@ -133,18 +159,13 @@
 {% block jsscript %}
 
 <script>
+// на основе отметок типов шипов, алли, корп выставляет галочки на киллмылах
 function UpdateKillmails(button)
 {
-    var block_shiptypes = document.getElementById('block_shiptypes');
-    var block_alliances = document.getElementById('block_alliances');
-    var block_corporations = document.getElementById('block_corporations');
-    var block_killmails = document.getElementById('block_killmails');
-
-
-    checkboxes_shiptypes = block_shiptypes.getElementsByClassName('checkbox_shiptypes');
-    checkboxes_alliances = block_alliances.getElementsByClassName('checkbox_alliances');
-    checkboxes_corporations = block_corporations.getElementsByClassName('checkbox_corporations');
-    checkboxes_killmails = block_killmails.getElementsByClassName('checkbox_killmails');
+    checkboxes_shiptypes = document.getElementsByClassName('checkbox_shiptypes');
+    checkboxes_alliances = document.getElementsByClassName('checkbox_alliances');
+    checkboxes_corporations = document.getElementsByClassName('checkbox_corporations');
+    checkboxes_killmails = document.getElementsByClassName('checkbox_killmails');
 
 
     var checked_ships = [];
@@ -179,14 +200,6 @@ function UpdateKillmails(button)
         this_alliance_checked = checked_alliances.includes(killmail_alliance_id);
         this_corporation_checked = checked_corporations.includes(killmail_corporation_id);
 
-        console.log(killmail_ship_id)
-        console.log(killmail_alliance_id)
-        console.log(killmail_corporation_id)
-
-        console.log(this_ship_checked)
-        console.log(this_alliance_checked)
-        console.log(this_corporation_checked)
-
         if (this_ship_checked && (this_alliance_checked || this_corporation_checked)) {
             checkboxes_killmails[i].checked = true
         }
@@ -195,9 +208,7 @@ function UpdateKillmails(button)
         }
     }
 }
-</script>
 
-<script>
 function SetCheckboxesInThisBlock(button)
 {
     var block = button.parentElement;
@@ -206,6 +217,7 @@ function SetCheckboxesInThisBlock(button)
         checkboxes[i].checked = true;
     }
 }
+
 function ClearCheckboxesInThisBlock(button)
 {
     var block = button.parentElement;
@@ -214,5 +226,67 @@ function ClearCheckboxesInThisBlock(button)
         checkboxes[i].checked = false;
     }
 }
+
+// состояния управляющих чекбоксов в самом начале.
+function ZeroCheckes() {
+    checkboxes_shiptypes = document.getElementsByClassName('checkbox_shiptypes');
+    checkboxes_alliances = document.getElementsByClassName('checkbox_alliances');
+    checkboxes_corporations = document.getElementsByClassName('checkbox_corporations');
+    checkboxes_killmails = document.getElementsByClassName('checkbox_killmails');
+
+    unchecked_ships_id = [
+        "670",  //Capsule
+        "33328" //genolution auroral capsule
+    ]
+    checked_alliances_id = [
+        "99012122",  //HOLD MY PROBS
+        "99012328",  //STAKAN UNIVERSE
+        "99011248",  //Big Green Fly 
+        "99012287"   //New Horizons all
+    ];
+    checked_corporations_id = [
+        "98733526" //Prom Teh Akadem
+    ];
+
+    for (var i=0; i<checkboxes_shiptypes.length; i++) {
+        ship_id = checkboxes_shiptypes[i].getAttribute("ship_id");
+        this_ship_checked = !unchecked_ships_id.includes(ship_id);
+        if (this_ship_checked) {
+            checkboxes_shiptypes[i].checked = true;
+        }
+        else {
+            checkboxes_shiptypes[i].checked = false;
+        }
+    }
+    for (var i=0; i<checkboxes_alliances.length; i++) {
+        alliance_id = checkboxes_alliances[i].getAttribute("alliance_id");
+        this_alliance_checked = checked_alliances_id.includes(alliance_id);
+        if (this_alliance_checked) {
+            checkboxes_alliances[i].checked = true;
+        }
+        else {
+            checkboxes_alliances[i].checked = false;
+        }
+    }
+    for (var i=0; i<checkboxes_corporations.length; i++) {
+        corporation_id = checkboxes_corporations[i].getAttribute("corporation_id");
+        this_corporation_checked = checked_corporations_id.includes(corporation_id);
+        if (this_corporation_checked) {
+            checkboxes_corporations[i].checked = true;
+        }
+        else {
+            checkboxes_corporations[i].checked = false;
+        }
+    }
+
+
+}
+// выставляет управляющие чекбоксы и применяет их. Нужна как точка вызова нескольких функций
+function ZeroState() {
+    ZeroCheckes();
+    UpdateKillmails();
+
+}
+document.addEventListener("DOMContentLoaded", ZeroState);
 </script>
 {% endblock jsscript %}

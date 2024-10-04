@@ -12,6 +12,23 @@ from requests_to_esi.services import parser_battlereport, base_requests
 
 # Create your views here.
 
+def to_two_dimensional_list(one_dimensional:list):
+    temp = []
+    out_list = []
+    for i in enumerate(one_dimensional):
+        if i[0] == 0:
+            temp.append(i[1])
+            continue
+        elif i[0] % 4 == 0:
+            out_list.append(temp[:])
+            temp = []
+            temp.append(i[1])
+        else:
+            temp.append(i[1])
+    out_list.append(temp[:])
+    return out_list
+
+
 def brs_and_parsing(request):
     """
     Страничка с формой ввода для парсинга бр-а и с выводом списка уже 
@@ -43,10 +60,22 @@ def markup_battlereport(request, battlereport_id):
     alliances = list(set(alliances)) 
     corporations = list(set(corporations))
 
+    shiptypes4 = to_two_dimensional_list(shiptypes)
+    alliances4 = to_two_dimensional_list(alliances)
+    corporations4 = to_two_dimensional_list(corporations)
+
 
     # блок для проверки, какие киллмыла нужно заранее помечать как готовые к компенсациям.
-    friend_alliances = [99012122, 99012328, 99011248, 99012287]
-    friend_corporations = [98733526]
+    friend_alliances = [
+        99012122,  #HOLD MY PROBS
+        99012328,  #STAKAN UNIVERSE
+        99011248,  #Big Green Fly 
+        99012287   #New Horizons all
+    ]
+
+    friend_corporations = [
+        98733526 #Prom Teh Akadem
+    ]
     this_friend_alliance = Q(victim__alliance_id__in=friend_alliances)
     this_friend_corporation = Q(victim__corporation_id__in=friend_corporations)
     this_more_than = Q(sumv__gt=100000)
@@ -75,6 +104,9 @@ def markup_battlereport(request, battlereport_id):
                       "shiptypes": shiptypes,
                       "alliances": alliances,
                       "corporations": corporations,
+                      "shiptypes4": shiptypes4,
+                      "alliances4": alliances4,
+                      "corporations4": corporations4,
                       # "checked_killmails": checked_killmails,
                       })
 
