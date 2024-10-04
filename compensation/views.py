@@ -28,7 +28,21 @@ def markup_battlereport(request, battlereport_id):
     battlereport = Battlereports.objects.get(battlereport_id=battlereport_id)
 
     killmails = battlereport.killmails.all()
+
     killmails_ids = [killmail.killmail_id for killmail in killmails]
+    killmails_ids = []
+    shiptypes = []
+    alliances = []
+    corporations = []
+    for killmail in killmails:
+        killmails_ids.append(killmail.killmail_id)
+        shiptypes.append(killmail.victim.ship)
+        alliances.append(killmail.victim.alliance)
+        corporations.append(killmail.victim.corporation)
+    shiptypes = list(set(shiptypes))
+    alliances = list(set(alliances)) 
+    corporations = list(set(corporations))
+
 
     # блок для проверки, какие киллмыла нужно заранее помечать как готовые к компенсациям.
     friend_alliances = [99012122, 99012328, 99011248, 99012287]
@@ -58,6 +72,9 @@ def markup_battlereport(request, battlereport_id):
                   context={
                       "killmails": killmails,
                       "battlereport": battlereport,
+                      "shiptypes": shiptypes,
+                      "alliances": alliances,
+                      "corporations": corporations,
                       # "checked_killmails": checked_killmails,
                       })
 
