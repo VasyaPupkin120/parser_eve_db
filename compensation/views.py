@@ -28,6 +28,15 @@ def to_two_dimensional_list(one_dimensional:list):
     out_list.append(temp[:])
     return out_list
 
+def sorted_to_name(some):
+    """
+    функция-ключ для sorted. Возвращает строковое представление.
+    """
+    if some.name:
+        return some.name
+    else:
+        return "None"
+
 
 def brs_and_parsing(request):
     """
@@ -56,9 +65,15 @@ def markup_battlereport(request, battlereport_id):
         shiptypes.append(killmail.victim.ship)
         alliances.append(killmail.victim.alliance)
         corporations.append(killmail.victim.corporation)
+
+
     shiptypes = list(set(shiptypes))
     alliances = list(set(alliances)) 
     corporations = list(set(corporations))
+
+    shiptypes = sorted(shiptypes, key=sorted_to_name)
+    alliances = sorted(alliances, key=sorted_to_name)
+    corporations = sorted(corporations, key=sorted_to_name)
 
     shiptypes4 = to_two_dimensional_list(shiptypes)
     alliances4 = to_two_dimensional_list(alliances)
