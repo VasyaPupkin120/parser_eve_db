@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import socket
 from pathlib import Path
 from environs import Env
 
@@ -19,6 +20,13 @@ env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# для django-debug-toolbar
+hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+INTERNAL_IPS = [ip[:-1] + '1' for ip in ips] + ['127.0.0.1']
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda request: True,
+    'RENDER_PANELS': True,
+}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -60,12 +68,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+
     # Third-party
     # 'crispy_forms',
     # 'crispy_bootstrap4',
     'allauth',
     'allauth.account',
-    # 'debug_toolbar',
+    'debug_toolbar',
 
     # local
     'users',
@@ -78,6 +87,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     # 'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -88,7 +98,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     'allauth.account.middleware.AccountMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 
     # 'django.middleware.cache.FetchFromCacheMiddleware',
 ]
@@ -236,3 +245,5 @@ INTERNAL_IPS = [ip[:-1] + "1" for ip in ips]
 # CACHE_MIDDLEWARE_KEY_PREFIX = ''
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
+
+

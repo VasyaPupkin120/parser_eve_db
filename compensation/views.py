@@ -51,17 +51,16 @@ def markup_battlereport(request, battlereport_id):
     """
     Собственно страничка для формирования списка компенсаций.
     """
-    battlereport = Battlereports.objects.get(battlereport_id=battlereport_id)
 
-    killmails = battlereport.killmails.all()
+    killmails = Killmails.objects.filter(battlereports=battlereport_id).prefetch_related('victim', 'victim__ship', 'victim__alliance', 'victim__corporation', 'victim__character')
 
-    killmails_ids = [killmail.killmail_id for killmail in killmails]
-    killmails_ids = []
+    # killmails_ids = [killmail.killmail_id for killmail in killmails]
+    killmails_ids = killmails.values_list('killmail_id', flat=True)
+
     shiptypes = []
     alliances = []
     corporations = []
     for killmail in killmails:
-        killmails_ids.append(killmail.killmail_id)
         shiptypes.append(killmail.victim.ship)
         alliances.append(killmail.victim.alliance)
         corporations.append(killmail.victim.corporation)
@@ -115,7 +114,7 @@ def markup_battlereport(request, battlereport_id):
     return render(request, "compensation/markup_battlereport.html",
                   context={
                       "killmails": killmails,
-                      "battlereport": battlereport,
+                      "battlereport_id": battlereport_id,
                       "shiptypes": shiptypes,
                       "alliances": alliances,
                       "corporations": corporations,

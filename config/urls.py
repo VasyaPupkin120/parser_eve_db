@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from pages.views import index, db_overview
+from django.conf import settings
 
 urlpatterns = [
     path('accounts/', include('allauth.urls')),
@@ -36,6 +37,9 @@ urlpatterns = [
     # app pages - общие для всех странички
     path('dboverview/', db_overview, name="db_overview"),
     path('', index, name="index"),
-
-
 ]
+
+if settings.DEBUG:
+    urlpatterns = [
+        path('__debug__/', include('debug_toolbar.urls')),
+    ] + urlpatterns

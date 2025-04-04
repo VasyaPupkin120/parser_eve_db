@@ -16,6 +16,7 @@ django-stubs = "^4.2.7"
 pillow = "^10.2.0"
 asyncio = "^3.4.3"
 aiohttp = "^3.9.3"
+django-debug-toolbar = "^5.1.0"
 
 
 [build-system]
