@@ -7,7 +7,7 @@ services:
       - db
     volumes:
       - .:/code
-    # env_file: .env
+      - ~/.cache/pypoetry:/root/.cache/pypoetry
     environment:
       - "DJANGO_SECRET_KEY=django-insecure-t#lsan$$1-a@ci)o2bimd1yez5_9#nau+@nh$$hw%ugaw+oc5^g_"
       - "DJANGO_DEBUG=True"

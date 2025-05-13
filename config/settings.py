@@ -20,13 +20,9 @@ env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# для django-debug-toolbar
-hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-INTERNAL_IPS = [ip[:-1] + '1' for ip in ips] + ['127.0.0.1']
-DEBUG_TOOLBAR_CONFIG = {
-    'SHOW_TOOLBAR_CALLBACK': lambda request: True,
-    'RENDER_PANELS': True,
-}
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = env.bool("DJANGO_DEBUG", False)
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'webapp']
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -44,9 +40,6 @@ SECURE_HSTS_PRELOAD = env.bool("DJANGO_SECURE_HSTS_PRELOAD", default=False)
 SESSION_COOKIE_SECURE = env.bool("DJANGO_SESSION_COOKIE_SECURE", default=False)
 CSRF_COOKIE_SECURE = env.bool("DJANGO_CSRF_COOKIE_SECURE", default=False)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DJANGO_DEBUG", False)
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'webapp']
 
 # для добавления локалхоста и ip хоста в список доверенных хостов - 
 # чтобы посредник csrf не ругался. Добавлять также домен или ip того хоста, на котором будет крутиться сайт
@@ -74,7 +67,6 @@ INSTALLED_APPS = [
     # 'crispy_bootstrap4',
     'allauth',
     'allauth.account',
-    'debug_toolbar',
 
     # local
     'users',
@@ -86,8 +78,8 @@ INSTALLED_APPS = [
     'compensation',
 ]
 
+
 MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     # 'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -232,12 +224,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_USE_TLS = True
 
 
-# django-debug-toolbar, ip to network Docker
-import socket
-hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-INTERNAL_IPS = [ip[:-1] + "1" for ip in ips]
-
-
 # settings cache
 # CACHE_MIDDLEWARE_ALIAS = 'default'
 # CACHE_MIDDLEWARE_SECONDS = 6000
@@ -246,4 +232,16 @@ INTERNAL_IPS = [ip[:-1] + "1" for ip in ips]
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
 
+
+# настройки django-debug-toolbar с использованием docker
+if DEBUG:
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    INTERNAL_IPS = [ip[:-1] + '1' for ip in ips] + ['127.0.0.1']
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_TOOLBAR_CALLBACK': lambda request: True,
+        'RENDER_PANELS': True,
+    }
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
+    
 

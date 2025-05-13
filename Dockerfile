@@ -9,6 +9,6 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /code
 
 COPY poetry.lock pyproject.toml /code/
-RUN poetry install --no-ansi --no-interaction
+RUN poetry install --no-ansi --no-interaction --no-root
 
 COPY . /code/

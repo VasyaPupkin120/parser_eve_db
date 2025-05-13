@@ -3,21 +3,20 @@ name = "23-parser-eve-db"
 version = "0.1.0"
 description = ""
 authors = ["VasyaPupkin120 <VPupkinza@yandex.ru>"]
-readme = "README.md"
-package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
 django = "^5.0.2"
 gunicorn = "^21.2.0"
 psycopg2-binary = "^2.9.9"
-environs = {version = "^10.3.0", extras = ["django"]}
 django-allauth = "^0.61.1"
 django-stubs = "^4.2.7"
 pillow = "^10.2.0"
 asyncio = "^3.4.3"
 aiohttp = "^3.9.3"
 django-debug-toolbar = "^5.1.0"
+django-environ = "^0.12.0"
+environs = "^14.1.1"
 
 
 [build-system]
