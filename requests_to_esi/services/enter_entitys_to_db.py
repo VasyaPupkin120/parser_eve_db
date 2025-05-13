@@ -290,10 +290,9 @@ def enter_entitys_to_db(
 
     # запись некоторых данных по киллмылу, полученных с баттлрепорта
     # это первичное создание киллмыла
+    # поле response_body не заполняется - оно не нужно и занимает много ресурсов при больших бр-ах
     elif entity == "killmail_from_br":
         for key in data:
-            response_body = {}
-            response_body["br_data"] = data[key]
             new_entity = Killmails.objects.update_or_create(
                     killmail_id=key,
                     defaults={
@@ -301,7 +300,7 @@ def enter_entitys_to_db(
                         # c помощью целочисленного деления избавляемся от лишних нулей в коце, хз зачем они там
                         "killmail_time": datetime.datetime.fromtimestamp(data[key]["time"] // 1000), 
                         "sumv": data[key]["sumV"],
-                        "response_body": response_body, 
+                        "response_body": None, 
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
@@ -309,15 +308,8 @@ def enter_entitys_to_db(
         return return_data
 
     # запись данных по киллмылу, полученных с esi
-    #FIXME в поле response_body слишком много дублирующейся информации. Если честно, то выглядит что нет вообще нужды в инфе от esi
-    # - достаточно инфы откуда нибудь из релейта.
     elif entity == "killmail_from_esi":
         for key in data:
-            # запрашиваем старое значение поля reponse_body из БД и 
-            # дополняем response_body данными этого запроса - дополняем по новому ключу esi_data
-            response_body = Killmails.objects.get(killmail_id=key).response_body
-            response_body["esi_data"] = data[key]
-
             new_entity = Killmails.objects.update_or_create(
                     killmail_id=key,
                     defaults={
@@ -326,7 +318,7 @@ def enter_entitys_to_db(
                         "position_x": data[key].get("victim").get("position")["x"],
                         "position_y": data[key].get("victim").get("position")["y"],
                         "position_z": data[key].get("victim").get("position")["z"],
-                        "response_body": response_body, 
+                        "response_body": None, 
                         }
                     )
             print(f"Successful save to DB {entity}: {key}\n")
@@ -340,7 +332,7 @@ def enter_entitys_to_db(
                     victim_id=key,
                     defaults={
                         "dmg": data[key].get("dmg"),
-                        "response_body": data[key], 
+                        "response_body": None, 
                         }
                     )
             print(f"Successful save to DB {entity}: {key}")
