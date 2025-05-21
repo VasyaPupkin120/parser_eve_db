@@ -1,6 +1,4 @@
 *.pyc
-static/
-staticfiles/
 deploy/prod
 deploy/log
 docker-compose-prod.yml
