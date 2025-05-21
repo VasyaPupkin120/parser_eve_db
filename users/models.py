@@ -6,12 +6,10 @@ from django.dispatch import receiver  # Декоратор для обработ
 from allauth.account.models import EmailAddress  # Модель для хранения email
 
 class CustomUser(AbstractUser):
-    # Если не нужен username, переопределите:
-    username = None  
     email = models.EmailField(unique=True)
 
     USERNAME_FIELD = 'email'  # Указываем поле для логина
-    REQUIRED_FIELDS = []  # Обязательные поля при createsuperuser
+    REQUIRED_FIELDS = ['username',]  # Обязательные поля при createsuperuser
 
     def __str__(self):
         return self.email

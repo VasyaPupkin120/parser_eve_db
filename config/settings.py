@@ -167,11 +167,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = '/staticfiles/'
+STATIC_URL = '/static/'
 # STATICFILES_DIRS = (str(BASE_DIR.joinpath('static')),)
 STATICFILES_DIRS = (BASE_DIR.joinpath('static'),)
-# STATIC_ROOT = str(BASE_DIR.joinpath('staticfiles'))
-STATIC_ROOT = BASE_DIR.joinpath('staticfiles')
+# STATIC_ROOT определяется так для работы в контейнере, чтобы можно было пробрасывать том в nginx.
+# просто проект не предназначен для запуска без контейнеров
+STATIC_ROOT = '/staticfiles'
 STATICFILES_FINDERS = [
         "django.contrib.staticfiles.finders.FileSystemFinder",
         "django.contrib.staticfiles.finders.AppDirectoriesFinder",
