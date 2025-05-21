@@ -1,4 +1,4 @@
 *.pyc
-deploy/prod
+__pycache__
 deploy/log
 docker-compose-prod.yml
