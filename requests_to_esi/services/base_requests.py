@@ -156,7 +156,6 @@ async def get_urls(entity, id_keys):
         base_url = "https://esi.evetech.net/latest/universe/groups/!/?datasource=tranquility&language=en"
     elif entity == "type":
         base_url = "https://esi.evetech.net/latest/universe/types/!/?datasource=tranquility&language=en"
-        base_url = "https://kb.evetools.org/api/v1/killmails/!/"
     elif entity == "killmail_from_esi":
         urls = await killmail_esi_urls(id_keys)
         return urls

@@ -239,6 +239,18 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
 
 
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
+
+# Redis для кэша
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": env("REDIS_CACHE_URL", "redis://redis:6379/2"),
+    }
+}
+
+
 # настройки django-debug-toolbar с использованием docker
 if DEBUG:
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
@@ -250,4 +262,5 @@ if DEBUG:
     INSTALLED_APPS.append('debug_toolbar')
     MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
     
+
 

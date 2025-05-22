@@ -12,6 +12,8 @@ services:
       - "DJANGO_SECRET_KEY=django-insecure-t#lsan$$1-a@ci)o2bimd1yez5_9#nau+@nh$$hw%ugaw+oc5^g_"
       - "DJANGO_DEBUG=True"
       - "CSRF_TRUSTED_HOSTS=127.0.0.1,localhost"
+      - "CELERY_BROKER_URL=redis://redis:6379/0"
+      - "CELERY_RESULT_BACKEND=redis://redis:6379/1"
     command: python3 /code/manage.py runserver 0.0.0.0:8000
     # command: gunicorn config.wsgi -b 0.0.0.0:8000
   db:
@@ -33,6 +35,28 @@ services:
       - ./deploy/conf/nginx/ssl:/etc/nginx/ssl:ro #сертификаты
     ports:
       - 80:80
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+  celery:
+    build:
+      context: .
+      dockerfile: './deploy/build/celery/Dockerfile'
+    depends_on:
+      - redis
+      - webapp
+    environment:
+      - "CELERY_BROKER_URL=redis://redis:6379/0"
+      - "CELERY_RESULT_BACKEND=redis://redis:6379/1"
+    command: celery -A celerytasks.tasks worker --loglevel=info
+    volumes:
+      - .:/code
+      - ~/.cache/pypoetry:/root/.cache/pypoetry
 volumes:
   db_eve:
     external: true
+  redis_data:
