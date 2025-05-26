@@ -43,19 +43,25 @@ services:
       - redis_data:/data
     restart: unless-stopped
   celery:
-    build:
-      context: .
-      dockerfile: './deploy/build/celery/Dockerfile'
+    build: .
     depends_on:
       - redis
       - webapp
     environment:
       - "CELERY_BROKER_URL=redis://redis:6379/0"
       - "CELERY_RESULT_BACKEND=redis://redis:6379/1"
-    command: celery -A celerytasks.tasks worker --loglevel=info
+    command: celery -A celerytasks.tasks worker --loglevel=info -E
     volumes:
       - .:/code
       - ~/.cache/pypoetry:/root/.cache/pypoetry
+  flower:
+    image: mher/flower
+    command: celery --broker=redis://redis:6379/0 flower --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery
 volumes:
   db_eve:
     external: true
