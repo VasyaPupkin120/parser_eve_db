@@ -32,10 +32,11 @@ def sorted_to_name(some):
     """
     функция-ключ для sorted. Возвращает строковое представление.
     """
-    if some.name:
-        return some.name
-    else:
+    try:
+        name = some.name
+    except AttributeError:
         return "None"
+    return name
 
 
 def brs_and_parsing(request):
