@@ -76,6 +76,9 @@ INSTALLED_APPS = [
     'dbeve_items',
     'requests_to_esi',
     'compensation',
+
+    # для celery-тасок
+    'celerytasks',
 ]
 
 

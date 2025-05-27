@@ -48,9 +48,14 @@ services:
       - redis
       - webapp
     environment:
+      - "DJANGO_SETTINGS_MODULE=config.settings"
+      - "DJANGO_SECRET_KEY=django-insecure-t#lsan$$1-a@ci)o2bimd1yez5_9#nau+@nh$$hw%ugaw+oc5^g_"
+      - "DJANGO_DEBUG=False"
+      - "CSRF_TRUSTED_HOSTS=127.0.0.1,localhost"
       - "CELERY_BROKER_URL=redis://redis:6379/0"
       - "CELERY_RESULT_BACKEND=redis://redis:6379/1"
-    command: celery -A celerytasks.tasks worker --loglevel=info -E
+    # command: celery -A celerytasks.tasks worker --loglevel=info -E
+    command: celery --app config worker --loglevel=info -E
     volumes:
       - .:/code
       - ~/.cache/pypoetry:/root/.cache/pypoetry
