@@ -30,12 +30,16 @@ def to_two_dimensional_list(one_dimensional:list):
 
 def sorted_to_name(some):
     """
-    функция-ключ для sorted. Возвращает строковое представление.
+    функция-ключ для sorted. Возвращает строковое представление в том числе
+    для случаев когда нет в записях вообще нет поля name и для случая когда 
+    поле name есть но содержит None (пустые записи)
     """
     try:
         name = some.name
     except AttributeError:
-        return "None"
+        name = None
+    if name is None:
+        name = ""
     return name
 
 
