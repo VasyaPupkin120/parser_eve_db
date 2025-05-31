@@ -77,13 +77,12 @@ INSTALLED_APPS = [
     'requests_to_esi',
     'compensation',
 
-    # для celery-тасок
-    'celerytasks',
 ]
 
 
+# кэш-посредники будут отключаться кодом ниже, из секции по redis, за счет DummyCache
 MIDDLEWARE = [
-    # 'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -91,10 +90,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
     'allauth.account.middleware.AccountMiddleware',
-
-    # 'django.middleware.cache.FetchFromCacheMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -245,13 +242,22 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
 
-# Redis для кэша
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("REDIS_CACHE_URL", "redis://redis:6379/2"),
+# Redis для кэша + отключение и сброс кэша (за счет DummyCache) в режиме разработки
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.dummy.DummyCache"
+        }
     }
-}
+    CACHE_MIDDLEWARE_SECONDS = 0  # На всякий случай
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://redis:6379/2",
+        }
+    }
+    CACHE_MIDDLEWARE_SECONDS = 60 * 15  # 15 минут
 
 
 # настройки django-debug-toolbar с использованием docker

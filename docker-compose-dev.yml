@@ -1,21 +1,31 @@
 version: "3"
 services:
+  # основное приложение, запускается на отладочном сервере
   webapp:
-    # python + poetry + gunicorn + psycopg2-binary + environs[django] + django + сайт
     build: .
     depends_on:
       - db
     volumes:
       - .:/code
-      - ~/.cache/pypoetry:/root/.cache/pypoetry
+      - ~/.cache/pypoetry:/root/.cache/pypoetry # проброс кэша poetry, чтобы не грузить каждый раз при сборке
+      - staticfiles_volume:/code/staticfiles/  # Общий том для статики
     environment:
-      - "DJANGO_SECRET_KEY=django-insecure-t#lsan$$1-a@ci)o2bimd1yez5_9#nau+@nh$$hw%ugaw+oc5^g_"
+      - "DJANGO_SECRET_KEY=django-insecure-bimd1yez5_9#nau+@nh$$hw%ugaw+oc5^g_"
       - "DJANGO_DEBUG=True"
       - "CSRF_TRUSTED_HOSTS=127.0.0.1,localhost"
       - "CELERY_BROKER_URL=redis://redis:6379/0"
       - "CELERY_RESULT_BACKEND=redis://redis:6379/1"
+      # - "DJANGO_SECURE_SSL_REDIRECT="
+      # - "DJANGO_SECURE_HSTS_SECONDS="
+      # - "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS="
+      # - "DJANGO_SECURE_HSTS_PRELOAD="
+      # - "DJANGO_SESSION_COOKIE_SECURE="
+      # - "DJANGO_CSRF_COOKIE_SECURE="
+      # # данные для почтового сервера для подтверждения регистрации
+      # - "DJANGO_EMAIL_HOST_PASSWORD="
+      # - "DJANGO_EMAIL_HOST_USER="
     command: python3 /code/manage.py runserver 0.0.0.0:8000
-    # command: gunicorn config.wsgi -b 0.0.0.0:8000
+
   db:
     build: './deploy/build/db'
     volumes:
@@ -24,17 +34,20 @@ services:
       - "POSTGRES_PASSWORD=postgres"
       - "POSTGRES_USER=postgres"
       - "POSTGRES_DB=postgres"
+
   nginx:
     build: './deploy/build/nginx'
     depends_on:
       - webapp
     volumes:
+      - staticfiles_volume:/usr/share/nginx/html/static:ro  # Монтируем статику в Nginx
       - ./deploy/log/nginx:/var/log/nginx #log файлы.
       - ./deploy/conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro #Конфигурация nginx.
-      - ./deploy/conf/nginx/conf.d:/etc/nginx/conf.d:ro #Конфигурация nginx
+      - ./deploy/conf/nginx/conf.d:/etc/nginx/conf.d:ro #Конфигурация nginx, более ручная
       - ./deploy/conf/nginx/ssl:/etc/nginx/ssl:ro #сертификаты
     ports:
       - 80:80
+
   redis:
     image: redis:7-alpine
     ports:
@@ -42,22 +55,22 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+
   celery:
     build: .
     depends_on:
       - redis
       - webapp
     environment:
-      - "DJANGO_SETTINGS_MODULE=config.settings"
-      - "DJANGO_SECRET_KEY=django-insecure-t#lsan$$1-a@ci)o2bimd1yez5_9#nau+@nh$$hw%ugaw+oc5^g_"
-      - "DJANGO_DEBUG=False"
+      - "DJANGO_SECRET_KEY=django-insecure-code-a$$+st+m@s!xy9g6h_!%)%v_=1q)5d"
       - "CSRF_TRUSTED_HOSTS=127.0.0.1,localhost"
-      - "CELERY_BROKER_URL=redis://redis:6379/0"
-      - "CELERY_RESULT_BACKEND=redis://redis:6379/1"
-    command: celery -A celery_app.app worker --loglevel=info -E
+      - "DJANGO_DEBUG=False"
+    command: celery -A config.celery_app.app worker --loglevel=info -E
     volumes:
       - .:/code
       - ~/.cache/pypoetry:/root/.cache/pypoetry
+    restart: unless-stopped
+
   flower:
     image: mher/flower
     command: celery --broker=redis://redis:6379/0 flower --port=5555
@@ -66,7 +79,9 @@ services:
     depends_on:
       - redis
       - celery
+
 volumes:
+  staticfiles_volume:
+  redis_data:
   db_eve:
     external: true
-  redis_data:
