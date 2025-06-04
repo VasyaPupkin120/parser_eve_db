@@ -15,6 +15,7 @@ services:
       - "CELERY_BROKER_URL=redis://redis:6379/0"
       - "CELERY_RESULT_BACKEND=redis://redis:6379/1"
     command: python3 /code/manage.py runserver 0.0.0.0:8000
+    restart: unless-stopped
     # command: gunicorn config.wsgi -b 0.0.0.0:8000
   db:
     build: './deploy/build/db'
@@ -24,6 +25,7 @@ services:
       - "POSTGRES_PASSWORD=postgres"
       - "POSTGRES_USER=postgres"
       - "POSTGRES_DB=postgres"
+    restart: unless-stopped
   nginx:
     build: './deploy/build/nginx'
     depends_on:
@@ -35,6 +37,7 @@ services:
       - ./deploy/conf/nginx/ssl:/etc/nginx/ssl:ro #сертификаты
     ports:
       - 80:80
+    restart: unless-stopped
   redis:
     image: redis:7-alpine
     ports:
@@ -54,6 +57,7 @@ services:
     volumes:
       - .:/code
       - ~/.cache/pypoetry:/root/.cache/pypoetry
+    restart: unless-stopped
   flower:
     image: mher/flower
     command: celery --broker=redis://redis:6379/0 flower --port=5555
@@ -62,6 +66,7 @@ services:
     depends_on:
       - redis
       - celery
+    restart: unless-stopped
 volumes:
   db_eve:
     external: true
