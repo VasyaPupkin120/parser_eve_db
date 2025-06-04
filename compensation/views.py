@@ -30,12 +30,17 @@ def to_two_dimensional_list(one_dimensional:list):
 
 def sorted_to_name(some):
     """
-    функция-ключ для sorted. Возвращает строковое представление.
+    функция-ключ для sorted. Возвращает строковое представление в том числе
+    для случаев когда нет в записях вообще нет поля name и для случая когда 
+    поле name есть но содержит None (пустые записи)
     """
-    if some.name:
-        return some.name
-    else:
-        return "None"
+    try:
+        name = some.name
+    except AttributeError:
+        name = None
+    if name is None:
+        name = ""
+    return name
 
 
 def brs_and_parsing(request):
@@ -56,7 +61,7 @@ def markup_battlereport(request, battlereport_id):
     Собственно страничка для формирования списка компенсаций.
     """
 
-    killmails = Killmails.objects.filter(battlereports=battlereport_id).prefetch_related('victim', 'victim__ship', 'victim__alliance', 'victim__corporation', 'victim__character')
+    killmails = Battlereports.objects.only('battlereport_id', 'killmails').get(battlereport_id=battlereport_id).killmails.select_related('victim', 'victim__ship', 'victim__alliance', 'victim__corporation', 'victim__character')
 
     # killmails_ids = [killmail.killmail_id for killmail in killmails]
     killmails_ids = killmails.values_list('killmail_id', flat=True)

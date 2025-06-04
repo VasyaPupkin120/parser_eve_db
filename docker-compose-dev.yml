@@ -25,6 +25,7 @@ services:
       # - "DJANGO_EMAIL_HOST_PASSWORD="
       # - "DJANGO_EMAIL_HOST_USER="
     command: python3 /code/manage.py runserver 0.0.0.0:8000
+    restart: unless-stopped
 
   db:
     build: './deploy/build/db'
@@ -34,6 +35,7 @@ services:
       - "POSTGRES_PASSWORD=postgres"
       - "POSTGRES_USER=postgres"
       - "POSTGRES_DB=postgres"
+    restart: unless-stopped
 
   nginx:
     build: './deploy/build/nginx'
@@ -47,6 +49,7 @@ services:
       - ./deploy/conf/nginx/ssl:/etc/nginx/ssl:ro #сертификаты
     ports:
       - 80:80
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -79,6 +82,7 @@ services:
     depends_on:
       - redis
       - celery
+    restart: unless-stopped
 
 volumes:
   staticfiles_volume:

@@ -273,3 +273,17 @@ if DEBUG:
     
 
 
+# для включения отладки sql-запросов. Выводятся в консоль контейнера с приложением
+if DEBUG:
+    LOGGING = {
+        "version": 1,
+        'handlers': {
+            'console': {'class': 'logging.StreamHandler'}
+        },
+        'loggers': {
+            'django.db.backends': {
+                'handlers': ['console',],
+                'level': 'DEBUG'
+            }
+        }
+    }

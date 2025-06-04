@@ -163,7 +163,7 @@ async def get_urls(entity, id_keys):
         raise_entity_not_processed(entity)
     # формируем список кортежей, 0 элемент - url, 1 элемент - id_key
     base = base_url.split("!")
-    urls_and_ids = [(base[0] + str(id_key) + base[1], id_key) for id_key in id_keys]
+    urls_and_ids = [(base[0] + str(id_key) + base[1], id_key) for id_key in id_keys if id_key != 0]
     return urls_and_ids
 
 @async_timed()
