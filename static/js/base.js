@@ -1,5 +1,5 @@
 // на основе отметок типов шипов, алли, корп выставляет галочки на киллмылах
-function UpdateKillmails(button)
+function UpdateKillmails()
 {
     checkboxes_shiptypes = document.getElementsByClassName('checkbox_shiptypes');
     checkboxes_alliances = document.getElementsByClassName('checkbox_alliances');
@@ -156,15 +156,21 @@ function updateAveragePrices() {
     });
     
     // Для каждого типа корабля вычисляем среднее значение
+    // алгритм такой - сначала вычисляем общее среднее, потом отбрасываем шипы
+    // у которых цена выше средней и заново пересчитываем среднюю
     for (const shipId in ships) {
         const prices = ships[shipId].prices;
-        const average = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-        
+        // 1. Рассчитываем первоначальное среднее
+        const full_average = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+        // 2. Фильтруем цены, оставляя только те, что <= full_average
+        const filteredPrices = prices.filter(price => price <= full_average);
+        // 3. Рассчитываем новое среднее только по отфильтрованным ценам
+        const average = filteredPrices.reduce((sum, price) => sum + price, 0) / filteredPrices.length;
         // Обновляем все строки с этим ship_id
         ships[shipId].rows.forEach(cell => {
             cell.textContent = average.toFixed(2) + ' kk ISK';
         });
-    }
+    };
 }
 
 
@@ -205,8 +211,10 @@ function ZeroState() {
     // Обработчики событий для чекбоксов
     const checkboxes = document.querySelectorAll('.checkbox_killmails');
     checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateAveragePrices);
-        checkbox.addEventListener('change', updateCompensationFields);
+        checkbox.addEventListener('change', () => {
+            updateAveragePrices();
+            updateCompensationFields();
+        });
     });
 
     // Можно вызвать сразу при загрузке, чтобы обновить значения для уже выделенных строк

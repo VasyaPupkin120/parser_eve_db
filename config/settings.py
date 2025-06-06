@@ -174,10 +174,10 @@ if DEBUG:
 else:
     STATIC_URL = '/static/'
 # STATICFILES_DIRS = (str(BASE_DIR.joinpath('static')),)
-STATICFILES_DIRS = (BASE_DIR.joinpath('static'),)
+STATICFILES_DIRS = (BASE_DIR /'static',)
 # STATIC_ROOT определяется так для работы в контейнере, чтобы можно было пробрасывать том в nginx.
 # просто проект не предназначен для запуска без контейнеров
-STATIC_ROOT = '/staticfiles/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_FINDERS = [
         "django.contrib.staticfiles.finders.FileSystemFinder",
         "django.contrib.staticfiles.finders.AppDirectoriesFinder",
