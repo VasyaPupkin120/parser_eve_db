@@ -146,7 +146,7 @@ def notes_compensations(request:HttpRequest):
                 char = killmail.victim.character
                 one_compensation = f"<url=showinfo:1375//{char.character_id}>{char.name}</url> {value[1]} {killmail.victim.ship.name}"
                 compensations.append(one_compensation)
-                if char.name not in names_for_email:
+                if char.name and char.name not in names_for_email:
                      names_for_email.append(char.name)
         names_for_email =  ", ".join(names_for_email)
         battlereport = data["battlereport"][0] # не понимаю почему поле формы hidden отправляет список, но окей
