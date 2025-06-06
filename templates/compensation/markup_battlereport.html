@@ -102,191 +102,88 @@
     <!-- -------------------- Блок всех киллмыл -------------------- -->
     <hr>
     <h4>Killmails</h4>
-    <hr>
-    <div id="block_killmails">
-        <form method="post" action={% url 'compensation:notes_compensations' %}>
-            {% csrf_token %}
-                {% for killmail in killmails %}
-                <div class="row justify-content-md-center my-1">
-                    <div class="col col-md-auto pr-1 pl-1">
+    <form id="form-filter-list-flow" method="POST" class="form-inline" action={% url 'compensation:notes_compensations' %}>
+        {% csrf_token %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th><input type='radio' name='select_price' id ='radio_price' value='select_price'></th>
+                        <th><input type='radio' name='select_price' id ='radio_average_price' value='select_average_price' checked ></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th>Name</th>
+                        <th>Corp/Alli</th>
+                        <th>Shiptype</th>
+                        <th>Price</th>
+                        <th>Average price</th>
+                        <th>Compense</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for killmail in killmails %}
+                    <tr>
+                        <td>
                         {% if killmail.checked_for_compense %}
                             <input type="checkbox" class="checkbox_killmails" ship_id="{{ killmail.victim.ship_id }}" alliance_id="{{ killmail.victim.alliance_id }}" corporation_id="{{ killmail.victim.corporation_id }}" value="on" checked name="{{ killmail.killmail_id }}" >
                         {% else %}
                             <input type="checkbox" class="checkbox_killmails" ship_id="{{ killmail.victim.ship_id }}" alliance_id="{{ killmail.victim.alliance_id }}" corporation_id="{{ killmail.victim.corporation_id }}" value="on" name="{{ killmail.killmail_id }}">
                         {% endif %}
-                    </div>
-                    <div class="col col-md-auto pr-1 pl-1">
-                        <a href="https://zkillboard.com/alliance/{{ killmail.victim.alliance_id }}/"><img src="https://images.evetech.net/alliances/{{ killmail.victim.alliance_id }}/logo?size=32" title="{{killmail.victim.alliance.name}}"></a>
-                    </div>
-                    <div class="col col-md-auto pr-1 pl-1">
-                        <a href="https://zkillboard.com/corporation/{{ killmail.victim.corporation_id }}/"><img src="https://images.evetech.net/corporations/{{ killmail.victim.corporation_id }}/logo?size=32" title="{{killmail.victim.corporation.name}}"></a>
-                    </div>
-                    <div class="col col-md-auto pr-1 pl-1">
-                        <a href="https://zkillboard.com/character/{{ killmail.victim.character_id }}/"><img src="https://images.evetech.net/characters/{{ killmail.victim.character_id }}/portrait?size=32" title="{{killmail.victim.character.name}}"></a>
-                    </div>
-                    <div class="col col-md-auto pr-1 pl-1">
-                        <a href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/"><img src="https://images.evetech.net/types/{{ killmail.victim.ship_id }}/render?size=32" title="{{killmail.victim.ship.name}}"></a>
-                    </div>
-                    <div class="col px-1">
-                        <a class="text-dark" href="https://zkillboard.com/character/{{ killmail.victim.character_id }}/">{{ killmail.victim.character.name|truncatechars:20 }}</a>
-                    </div>
-                    <div class="col px-1">
-                        <a class="text-dark" href="https://zkillboard.com/alliance/{{ killmail.victim.alliance_id }}/">{{ killmail.victim.alliance.ticker }}</a> / <a class="text-dark" href="https://zkillboard.com/corporation/{{ killmail.victim.corporation_id }}/">{{ killmail.victim.corporation.ticker }}</a>
-                    </div>
-                    <div class="col px-1">
+                        </td>
+                        <td>
+                            <a href="https://zkillboard.com/alliance/{{ killmail.victim.alliance_id }}/"><img src="https://images.evetech.net/alliances/{{ killmail.victim.alliance_id }}/logo?size=32" title="{{killmail.victim.alliance.name}}"></a>
+                        </td>
+                        <td>
+                            <a href="https://zkillboard.com/corporation/{{ killmail.victim.corporation_id }}/"><img src="https://images.evetech.net/corporations/{{ killmail.victim.corporation_id }}/logo?size=32" title="{{killmail.victim.corporation.name}}"></a>
+                        </td>
+                        <td>
+                            <a href="https://zkillboard.com/character/{{ killmail.victim.character_id }}/"><img src="https://images.evetech.net/characters/{{ killmail.victim.character_id }}/portrait?size=32" title="{{killmail.victim.character.name}}"></a>
+                        </td>
+                        <td>
+                            <a href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/"><img src="https://images.evetech.net/types/{{ killmail.victim.ship_id }}/render?size=32" title="{{killmail.victim.ship.name}}"></a>
+                        </td>
+                        <td>
+                            <a class="text-dark" href="https://zkillboard.com/character/{{ killmail.victim.character_id }}/">{{ killmail.victim.character.name|truncatechars:20 }}</a>
+                        </td>
+                        <td>
+                            <a class="text-dark" href="https://zkillboard.com/alliance/{{ killmail.victim.alliance_id }}/">{{ killmail.victim.alliance.ticker }}</a> / <a class="text-dark" href="https://zkillboard.com/corporation/{{ killmail.victim.corporation_id }}/">{{ killmail.victim.corporation.ticker }}</a>
+                        </td>
+                        <td>
                         <a class="text-dark" href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/">{{ killmail.victim.ship.name|truncatechars:20 }}</a>
-                    </div>
-                    <div class="col px-1">
+                        </td>
+                        <td>
                         {{ killmail.round_sumv }} kk ISK
-                    </div>
-                    <div class="col px-1">
+                        </td>
+                        <td>
+                        {{ killmail.average_price }} kk ISK
+                        </td>
+                        <td>
                         <input type="number" value="{{ killmail.round_sumv }}" name="{{ killmail.killmail_id }}">
-                    </div>
-                </div>
-                {% endfor %}
-            <br>
-            <div>
-                <input type="hidden" name="battlereport" value="{{ battlereport_id }}">
-                <input type="submit" value="Create list compenstaions">
-                <br>
-                <br>
-            </div>
-        </form>
-    </div>
-
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <input type="hidden" name="battlereport" value="{{ battlereport_id }}">
+            <hr>
+            <button type="submit" class="btn btn-primary">Create list compenstaions</button>
+            <hr>
+        </div>
+    </form>
 {% endblock content %}
-
-{% block jsscript %}
-
-<script>
-// на основе отметок типов шипов, алли, корп выставляет галочки на киллмылах
-function UpdateKillmails(button)
-{
-    checkboxes_shiptypes = document.getElementsByClassName('checkbox_shiptypes');
-    checkboxes_alliances = document.getElementsByClassName('checkbox_alliances');
-    checkboxes_corporations = document.getElementsByClassName('checkbox_corporations');
-    checkboxes_killmails = document.getElementsByClassName('checkbox_killmails');
-
-
-    var checked_ships = [];
-    var checked_alliances = [];
-    var checked_corporations = [];
-
-    // отмеченные шипы
-    for (var i=0; i<checkboxes_shiptypes.length; i++) {
-        if (checkboxes_shiptypes[i].checked) {
-            checked_ships.push(checkboxes_shiptypes[i].getAttribute("ship_id"))
-        }
-    }
-    // отмеченные алли
-    for (var i=0; i<checkboxes_alliances.length; i++) {
-        if (checkboxes_alliances[i].checked) {
-            checked_alliances.push(checkboxes_alliances[i].getAttribute("alliance_id"))
-        }
-    }
-    // отмеченные корпы
-    for (var i=0; i<checkboxes_corporations.length; i++) {
-        if (checkboxes_corporations[i].checked) {
-            checked_corporations.push(checkboxes_corporations[i].getAttribute("corporation_id"))
-        }
-    }
-
-    // выставляем галочки на киллмылах
-    for (var i=0; i<checkboxes_killmails.length; i++) {
-        killmail_ship_id = checkboxes_killmails[i].getAttribute("ship_id");
-        killmail_alliance_id = checkboxes_killmails[i].getAttribute("alliance_id");
-        killmail_corporation_id = checkboxes_killmails[i].getAttribute("corporation_id");
-        this_ship_checked = checked_ships.includes(killmail_ship_id);
-        this_alliance_checked = checked_alliances.includes(killmail_alliance_id);
-        this_corporation_checked = checked_corporations.includes(killmail_corporation_id);
-
-        if (this_ship_checked && (this_alliance_checked || this_corporation_checked)) {
-            checkboxes_killmails[i].checked = true
-        }
-        else {
-            checkboxes_killmails[i].checked = false
-        }
-    }
-}
-
-function SetCheckboxesInThisBlock(button)
-{
-    var block = button.parentElement;
-    var checkboxes = block.getElementsByTagName('input');
-    for (var i=0; i<checkboxes.length; i++) {
-        checkboxes[i].checked = true;
-    }
-}
-
-function ClearCheckboxesInThisBlock(button)
-{
-    var block = button.parentElement;
-    var checkboxes = block.getElementsByTagName('input');
-    for (var i=0; i<checkboxes.length; i++) {
-        checkboxes[i].checked = false;
-    }
-}
-
-// состояния управляющих чекбоксов в самом начале.
-function ZeroCheckes() {
-    checkboxes_shiptypes = document.getElementsByClassName('checkbox_shiptypes');
-    checkboxes_alliances = document.getElementsByClassName('checkbox_alliances');
-    checkboxes_corporations = document.getElementsByClassName('checkbox_corporations');
-    checkboxes_killmails = document.getElementsByClassName('checkbox_killmails');
-
-    unchecked_ships_id = [
-        "670",  //Capsule
-        "33328" //genolution auroral capsule
-    ]
-    checked_alliances_id = [
-        "99012122",  //HOLD MY PROBS
-        "99012328",  //STAKAN UNIVERSE
-        "99011248",  //Big Green Fly 
-        "99012287"   //New Horizons all
-    ];
-    checked_corporations_id = [
-        "98733526" //Prom Teh Akadem
-    ];
-
-    for (var i=0; i<checkboxes_shiptypes.length; i++) {
-        ship_id = checkboxes_shiptypes[i].getAttribute("ship_id");
-        this_ship_checked = !unchecked_ships_id.includes(ship_id);
-        if (this_ship_checked) {
-            checkboxes_shiptypes[i].checked = true;
-        }
-        else {
-            checkboxes_shiptypes[i].checked = false;
-        }
-    }
-    for (var i=0; i<checkboxes_alliances.length; i++) {
-        alliance_id = checkboxes_alliances[i].getAttribute("alliance_id");
-        this_alliance_checked = checked_alliances_id.includes(alliance_id);
-        if (this_alliance_checked) {
-            checkboxes_alliances[i].checked = true;
-        }
-        else {
-            checkboxes_alliances[i].checked = false;
-        }
-    }
-    for (var i=0; i<checkboxes_corporations.length; i++) {
-        corporation_id = checkboxes_corporations[i].getAttribute("corporation_id");
-        this_corporation_checked = checked_corporations_id.includes(corporation_id);
-        if (this_corporation_checked) {
-            checkboxes_corporations[i].checked = true;
-        }
-        else {
-            checkboxes_corporations[i].checked = false;
-        }
-    }
-
-
-}
-// выставляет управляющие чекбоксы и применяет их. Нужна как точка вызова нескольких функций
-function ZeroState() {
-    ZeroCheckes();
-    UpdateKillmails();
-
-}
-document.addEventListener("DOMContentLoaded", ZeroState);
-</script>
-{% endblock jsscript %}
