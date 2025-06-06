@@ -46,6 +46,10 @@ function UpdateKillmails(button)
             checkboxes_killmails[i].checked = false
         }
     }
+    // вызваем пересчет средней цены
+    updateAveragePrices();
+    // вызываем копирование данных в поля ввода
+    updateCompensationFields();
 }
 
 function SetCheckboxesInThisBlock(button)
@@ -120,11 +124,102 @@ function ZeroCheckes() {
 
 
 }
+
+
+// рассчитывает средние цены среди выделенных киллмыл
+function updateAveragePrices() {
+    // Получаем все выделенные чекбоксы
+    const checkedCheckboxes = document.querySelectorAll('.checkbox_killmails:checked');
+    
+    // Группируем строки по ship_id
+    const ships = {};
+    
+    checkedCheckboxes.forEach(checkbox => {
+        const row = checkbox.closest('tr');
+        const shipId = checkbox.getAttribute('ship_id');
+        const priceCell = row.querySelector('td:nth-child(9)'); // Ячейка с ценой (9-я td)
+        const averagePriceCell = row.querySelector('td:nth-child(10)'); // Ячейка для средней цены (10-я td)
+        
+        // Извлекаем числовое значение цены (удаляем " kk ISK")
+        const priceText = priceCell.textContent.trim();
+        const price = parseFloat(priceText.replace(' kk ISK', ''));
+        
+        if (!ships[shipId]) {
+            ships[shipId] = {
+                prices: [],
+                rows: []
+            };
+        }
+        
+        ships[shipId].prices.push(price);
+        ships[shipId].rows.push(averagePriceCell);
+    });
+    
+    // Для каждого типа корабля вычисляем среднее значение
+    for (const shipId in ships) {
+        const prices = ships[shipId].prices;
+        const average = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+        
+        // Обновляем все строки с этим ship_id
+        ships[shipId].rows.forEach(cell => {
+            cell.textContent = average.toFixed(2) + ' kk ISK';
+        });
+    }
+}
+
+
+// Функция для обновления полей компенсации в зависимости от выбранной радиокнопки
+function updateCompensationFields() {
+    const selectedRadio = document.querySelector('input[name="select_price"]:checked');
+    if (!selectedRadio) return;
+    
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const compensationInput = row.querySelector('td:nth-child(11) input[type="number"]');
+        if (!compensationInput) return;
+        
+        // Определяем, из какого столбца брать значение
+        let sourceCell;
+        if (selectedRadio.value === 'select_price') {
+            sourceCell = row.querySelector('td:nth-child(9)'); // Price
+        } else {
+            sourceCell = row.querySelector('td:nth-child(10)'); // Average price
+        }
+        
+        if (sourceCell) {
+            // Извлекаем числовое значение (удаляем " kk ISK")
+            const valueText = sourceCell.textContent.trim();
+            const value = parseFloat(valueText.replace(' kk ISK', ''));
+            compensationInput.value = value.toFixed(0);
+        }
+    });
+}
+
+
 // выставляет управляющие чекбоксы и применяет их. Нужна как точка вызова нескольких функций
+// вычисляет среднюю цену при старте
 function ZeroState() {
     ZeroCheckes();
     UpdateKillmails();
 
+    // Обработчики событий для чекбоксов
+    const checkboxes = document.querySelectorAll('.checkbox_killmails');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateAveragePrices);
+        checkbox.addEventListener('change', updateCompensationFields);
+    });
+
+    // Можно вызвать сразу при загрузке, чтобы обновить значения для уже выделенных строк
+    updateAveragePrices();
+
+    // Обработчики событий для радиокнопок
+    const radioButtons = document.querySelectorAll('input[name="select_price"]');
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', updateCompensationFields);
+    });
+
+    // вызов при старте, чтобы копировалось значение независимо от того, какая цена выбрана
+    updateCompensationFields();
 }
 
 document.addEventListener("DOMContentLoaded", ZeroState);
