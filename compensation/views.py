@@ -144,7 +144,7 @@ def notes_compensations(request:HttpRequest):
             if len(value) == 2 and value[0] == "on":
                 killmail = Killmails.objects.get(killmail_id=key)
                 char = killmail.victim.character
-                one_compensation = f"<url=showinfo:1375//{char.character_id}>{char.name}</url> {value[1]} {killmail.victim.ship.name}"
+                one_compensation = f"<url=showinfo:1375//{char.character_id}>{char.name}</url>,{value[1]} kk,{killmail.victim.ship.name}"
                 compensations.append(one_compensation)
                 if char.name and char.name not in names_for_email:
                      names_for_email.append(char.name)
