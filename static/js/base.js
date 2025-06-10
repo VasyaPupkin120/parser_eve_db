@@ -1,3 +1,17 @@
+// копирует текст из связанного блока
+function CopyTextContainer(containerid) {
+        let textarea = document.createElement('textarea');
+        textarea.id = 'temp';
+        textarea.style.height = 0;
+        document.body.appendChild(textarea);
+        textarea.value = document.getElementById(containerid).innerText;
+        let selector = document.querySelector('#temp');
+        selector.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+}
+
+
 // на основе отметок типов шипов, алли, корп выставляет галочки на киллмылах
 function UpdateKillmails()
 {
@@ -158,14 +172,13 @@ function updateAveragePrices() {
     // Для каждого типа корабля вычисляем среднее значение
     // алгритм такой - сначала вычисляем общее среднее, потом отбрасываем шипы
     // у которых цена выше средней и заново пересчитываем среднюю
-    // хотя это чет слишком сильно режет цены, пробую установить учитываемые цены в +- 10% от первоначальной средней
-    // выглядит лучше, но нужно согласие Коли и Ориемана
     for (const shipId in ships) {
         const prices = ships[shipId].prices;
         // 1. Рассчитываем первоначальное среднее
         const full_average = prices.reduce((sum, price) => sum + price, 0) / prices.length;
         // 2. Фильтруем цены, оставляя только те, что <= full_average
         const filteredPrices = prices.filter(price => price <= full_average);
+        // если захочется другую среднюю
         // const filteredPrices = prices.filter(price => price >= full_average * 0.9 && price <= full_average * 1.1);
         // 3. Рассчитываем новое среднее только по отфильтрованным ценам
         const average = filteredPrices.reduce((sum, price) => sum + price, 0) / filteredPrices.length;

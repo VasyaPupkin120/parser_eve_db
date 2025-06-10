@@ -1,7 +1,7 @@
 import asyncio
 
 
-from django.db.models import F, Q, BooleanField, Case, When
+from django.db.models import F, Q, BooleanField, Case, IntegerField, Value, When
 from django.db.models.functions import Ceil
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
@@ -107,7 +107,9 @@ def markup_battlereport(request, battlereport_id):
 
     # блок добавления вычислимых полей
     # для измерения в миллионах + округление в большую сторону
+    # заглушка для указания средней цены
     killmails = killmails.annotate(round_sumv=Ceil(F('sumv') / 1000000))
+    killmails = killmails.annotate(average_price=Value(0, IntegerField()))
     # С помощью условных выражений СУБД (Case+When) создаю вычислимое поле checked_for_compense, 
     # в котором устанавливается отметка, нужно ли выделять в чекбоксе данное киллмыло
     killmails = killmails.annotate(
@@ -144,9 +146,9 @@ def notes_compensations(request:HttpRequest):
             if len(value) == 2 and value[0] == "on":
                 killmail = Killmails.objects.get(killmail_id=key)
                 char = killmail.victim.character
-                one_compensation = f"<url=showinfo:1375//{char.character_id}>{char.name}</url> {value[1]} {killmail.victim.ship.name}"
+                one_compensation = f"<url=showinfo:1375//{char.character_id}>{char.name}</url>,{value[1]},{killmail.victim.ship.name}"
                 compensations.append(one_compensation)
-                if char.name not in names_for_email:
+                if char.name and char.name not in names_for_email:
                      names_for_email.append(char.name)
         names_for_email =  ", ".join(names_for_email)
         battlereport = data["battlereport"][0] # не понимаю почему поле формы hidden отправляет список, но окей
