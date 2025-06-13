@@ -5,6 +5,11 @@ urlpatterns = [
 
     path('', main_request, name="main_request"),
 
+    # универсальный путь, на замену всем остальным
+    path('parse/<str:entity>/', parse, name="parse"),
+    # статус парсинга
+    path('check_task_status/<str:entity>/', check_task_status, name='check_task_status'),
+
     # dbeve_universe
     path('parse_regions/', parse_regions, name="parse_regions"),
     path('parse_constellations/', parse_constellations, name="parse_constellations"),

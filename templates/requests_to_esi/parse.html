@@ -1,0 +1,59 @@
+{% extends "_base.html" %}
+
+{% block content %}
+    <h1>Parse {{ entity }}s</h1>
+
+    <div id="parse-controls">
+        <!-- Кнопки парсинга (изначально видны) -->
+        <a href="{% url 'requests_to_esi:parse' entity %}?action=update_all" 
+           class="btn btn-primary" role="button">
+            Full parse all {{ entity }}s
+        </a>
+        <a href="{% url 'requests_to_esi:parse' entity %}?action=only_missing" 
+           class="btn btn-primary" role="button">
+            Parse only missing {{ entity }}s
+        </a>
+    </div>
+
+    <hr>
+
+    <!-- Блок статуса (изначально скрыт) -->
+    <div id="task-status" class="alert alert-info" style="display:none;">
+        <p>Парсинг выполняется... <span id="status-text">PENDING</span></p>
+        <div class="progress">
+            <div id="progress-bar" class="progress-bar progress-bar-striped active" style="width:0%"></div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const taskId = "{{ task_id|default:'' }}";
+        if (!taskId) return;
+
+        // Показываем статус, скрываем кнопки
+        document.getElementById('parse-controls').style.display = 'none';
+        const statusDiv = document.getElementById('task-status');
+        statusDiv.style.display = 'block';
+
+        // Опрашиваем статус каждые 3 секунды
+        const checkStatus = setInterval(() => {
+            fetch(`{% url 'requests_to_esi:check_task_status' entity %}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('status-text').textContent = data.status;
+                    
+                    if (data.result) {
+                        clearInterval(checkStatus);
+                        statusDiv.innerHTML = '<div class="alert alert-success">Парсинг завершен!</div>';
+                        document.getElementById('parse-controls').style.display = 'block';
+                    }
+                    if (data.error) {
+                        clearInterval(checkStatus);
+                        statusDiv.innerHTML = '<div class="alert alert-success">Ошибка!!!' + '<br>' + data.error +'</div>';
+                        document.getElementById('parse-controls').style.display = 'block';
+                    }
+                });
+        }, 3000);
+    });
+    </script>
+{% endblock content %}

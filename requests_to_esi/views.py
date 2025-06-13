@@ -1,13 +1,75 @@
+from django.http import HttpRequest, JsonResponse, Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests_to_esi.forms import ParseOneSystemForm
-from .services import base_requests, parser_main, parser_battlereport
+from .services import base_requests, parser_main, parser_battlereport, conf
+from requests_to_esi import tasks
 import asyncio
+import redis
+from celery.result import AsyncResult
+
+
+redis_client = redis.StrictRedis(host='redis', port=6379, db=3)
 
 # Create your views here.
 def main_request(request):
     return render(request, "requests_to_esi/main_request.html")
 
+def parse(request:HttpRequest, entity):
+    """
+    Контроллер для парсинга всех сущностей. Тип сущности указывается вручную в
+    ссылках на страничке, создаваемой main_request(). Имена сущностей совпадают
+    с именами сущностей в conf.entity_list_type.
+    Для асинхронности на уровне всего сайта используется celery, для асинхронности
+    на уровне запросов в eve api используется asyncio (в тасках).
+    """
+    if entity not in conf.entity_list_type.__args__:
+        raise Http404(f"Сущность '{entity}'отстуствует в списке для парсинга.")
+
+    redis_key = f"parse_{entity}:{request.session.session_key}"
+
+    # запуск задачи, если получен параметр action
+    if action := request.GET.get("action"):
+        # удаляем старый ключ, если он есть
+        if redis_client.exists(redis_key):
+            redis_client.delete(redis_key)
+        # сохраняем id таски в redis, ключ redis - session_key
+        task = tasks.parse.delay(action, entity)
+        redis_client.setex(redis_key, 86400, task.id)  # Храним 24 часа
+        return redirect("requests_to_esi:parse", entity=entity)
+    # проверка статуса задачи
+    elif task_id := redis_client.get(redis_key):
+        task = AsyncResult(task_id)
+        # если задача завершена (успешно) - удаляем ключ
+        if task.ready():
+            redis_client.delete(redis_key)
+            return render(request, 'requests_to_esi/parse.html', context = {"entity": entity})
+        return render(request, "requests_to_esi/parse.html", context = {"entity": entity,
+                                                                        'task_status': task.status,
+                                                                        'task_id': task_id})
+    return render(request, 'requests_to_esi/parse.html', context = {"entity": entity})
+
+def check_task_status(request, entity):
+    """
+    Контроллер обработки ajax-запроса статуса таски. Вызывается из js-кода.
+    """
+    redis_key = f"parse_{entity}:{request.session.session_key}"
+    task_id = redis_client.get(redis_key)
+
+    if not task_id:
+        return JsonResponse({'error': 'Task not found'}, status=404)
+
+    task = AsyncResult(task_id)
+
+    # Удаляем ключ, если задача завершена
+    if task.ready():
+        redis_client.delete(redis_key)
+
+    return JsonResponse({
+        'status': task.status,
+        'result': task.result if task.ready() else None, # True/False
+        'error': str(task.result) if task.failed() else None
+    })
 ###############################################################################
 #                   Парсинг по приложению dbeve_universe.                     #
 ###############################################################################
