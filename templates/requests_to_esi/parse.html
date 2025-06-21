@@ -23,6 +23,10 @@
         <div class="progress">
             <div id="progress-bar" class="progress-bar progress-bar-striped active" style="width:0%"></div>
         </div>
+        <a href="{% url 'requests_to_esi:stop_parse' entity %}" 
+           class="btn btn-primary" role="button">
+            Stop parse {{ entity }}s
+        </a>
     </div>
 
     <script>

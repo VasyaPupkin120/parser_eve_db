@@ -5,36 +5,34 @@
 {% block content %}
     <h1>Requests to ESI</h1>
     <h2>Universe</h2>
-    <a href='{% url "requests_to_esi:parse" "region"%}'>Universal parse (regions)</a>
+    <a href='{% url "requests_to_esi:parse" "region"%}'>Parse regions</a>
     <br>
-    <a href='{% url "requests_to_esi:parse_regions"%}'>Parse regions</a>
+    <a href='{% url "requests_to_esi:parse" "constellation"%}'>Parse constellations</a>
     <br>
-    <a href='{% url "requests_to_esi:parse_constellations"%}'>Parse constellations</a>
-    <br>
-    <a href='{% url "requests_to_esi:parse_systems"%}'>Parse systems</a>
+    <a href='{% url "requests_to_esi:parse" "system"%}'>Parse systems</a>
     <!-- <br> -->
     <!-- <a href='{#% url "requests_to_esi:parse_one_system"%}'>Parse one system</a> -->
     <br>
-    <a href='{% url "requests_to_esi:parse_stars"%}'>Parse stars</a>
+    <a href='{% url "requests_to_esi:parse" "star"%}'>Parse stars</a>
     <br>
     <h2>Social</h2>
-    <a href='{% url "requests_to_esi:parse_alliances"%}'>Parse alliances</a>
+    <a href='{% url "requests_to_esi:parse" "alliance"%}'>Parse alliances</a>
     <br>
-    <a href='{% url "requests_to_esi:load_id_associated_corporations"%}'>Update response body - load id associated corporations for alliances</a>
+    <a href='{% url "requests_to_esi:parse" "load_id_associated_corporation"%}'>Update response body - load id associated corporations for alliances</a>
     <br>
-    <a href='{% url "requests_to_esi:parse_corporations"%}'>Parse corporations</a>
+    <a href='{% url "requests_to_esi:parse" "corporation"%}'>Parse corporations</a>
     <br>
-    <a href='{% url "requests_to_esi:parse_characters"%}'>Parse characters</a>
+    <a href='{% url "requests_to_esi:parse" "character"%}'>Parse characters</a>
     <br>
-    <a href='{% url "requests_to_esi:load_corporation_history"%}'>Update response body - load corporation history characters</a>
+    <a href='{% url "requests_to_esi:parse" "load_corporation_history"%}'>Update response body - load corporation history characters</a>
     <br>
-    <a href="{% url 'requests_to_esi:parse_one_battlereport' %}">Parse one battlereport</a>
+    <a href="{% url 'requests_to_esi:parse_one_battlereport' %}">Parse one battlereport ( NOT CELERY!!! FIXME!! )</a>
     <br>
     <h2>Items</h2>
-    <a href='{% url "requests_to_esi:parse_categories"%}'>Parse categories</a>
+    <a href='{% url "requests_to_esi:parse" "category"%}'>Parse categories</a>
     <br>
-    <a href='{% url "requests_to_esi:parse_groups"%}'>Parse groups</a>
+    <a href='{% url "requests_to_esi:parse" "group"%}'>Parse groups</a>
     <br>
-    <a href='{% url "requests_to_esi:parse_types"%}'>Parse types</a>
+    <a href='{% url "requests_to_esi:parse" "type"%}'>Parse types</a>
     <br>
 {% endblock content %}
