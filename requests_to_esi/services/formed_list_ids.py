@@ -61,7 +61,7 @@ def get_some_pages_external_ids(entity:entity_list_type):
             external_ids.extend(temp)
             page += 1
         except errors.StatusCodeNot200Exception as e:
-            if e.full_body_response.json()["error"] == "Undefined 404 response. Original message: Requested page does not exist!":
+            if e.full_body_response.json()["error"] == "Requested page does not exist!":
                 print(f"Succesful load all {entity} ids. Total {len(external_ids)} ids. ")
                 # этот блок - на случай отладки сущностей с множестовм id - чтобы не грузить их повторно с esi
                 # with open(f"{entity}_external_ids.json", "w") as file:
@@ -70,6 +70,7 @@ def get_some_pages_external_ids(entity:entity_list_type):
                 return external_ids
             else:
                 print("\nSome unknown error.\n")
+                print(e)
                 raise e
 
 
